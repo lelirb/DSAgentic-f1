@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "component.schema.json",
+  "title": "Component",
+  "description": "Spec section 19.",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string" },
+    "source": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "evaluation_status": {
+      "type": "string",
+      "enum": ["FOUND", "NOT_EVALUABLE"],
+      "default": "FOUND",
+      "description": "Decision 4 (METHODOLOGY_DECISIONS.md #4): a component the extractor detected but could not actually inspect (e.g. the page 403'd after being listed in an index). Excluded from D3.1/D6.1 coverage denominators, unlike a component that was inspected and simply found undocumented. Absence of this field means FOUND (backward compatible)."
+    },
+    "props": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": ["string", "null"] },
+          "allowed_values": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          },
+          "default": { "type": ["string", "number", "boolean", "null"] },
+          "description": { "type": ["string", "null"] },
+          "evidence_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "variants": { "type": "array", "items": { "type": "string" } },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["FOUND", "NOT_FOUND", "NOT_EVALUABLE", "NOT_APPLICABLE"]
+          }
+        }
+      },
+      "description": "Section 25 (D3.6): states not applicable to a component must use NOT_APPLICABLE, not NOT_FOUND."
+    },
+    "examples": { "type": "array" },
+    "usage": {
+      "type": "object",
+      "description": "Semantic clarity evidence: when_to_use, when_not_to_use, disambiguation, restrictions. Feeds D4.",
+      "properties": {
+        "purpose": { "type": ["string", "null"] },
+        "when_to_use": { "type": ["string", "null"] },
+        "when_not_to_use": { "type": ["string", "null"] },
+        "competing_components": { "type": "array", "items": { "type": "string" } },
+        "disambiguation_rules": { "type": "array", "items": { "type": "string" } },
+        "restrictions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "composition": { "type": "array", "description": "Composition/nesting rules involving this component (D5)." },
+    "accessibility": { "type": ["object", "null"] },
+    "code_examples_count": { "type": "integer", "minimum": 0 },
+    "executable_examples_count": { "type": "integer", "minimum": 0 },
+    "evidence_ids": { "type": "array", "items": { "type": "string" } }
+  }
+}

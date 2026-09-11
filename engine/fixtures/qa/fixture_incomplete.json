@@ -1,0 +1,41 @@
+{
+  "schema_version": "0.1",
+  "system": { "url": "https://example-incomplete-ds.com", "name": "Incomplete DS", "version": null },
+  "coverage": {
+    "pages_found": 30,
+    "pages_retrieved": 25,
+    "pages_failed": 5,
+    "components_detected": 12,
+    "components_evaluated": 10,
+    "crawl_limited": true,
+    "evaluation_status": "COMPLETE"
+  },
+  "access": {
+    "documentation_recoverability": "MOSTLY_RECOVERABLE",
+    "component_index": "COMPLETE",
+    "props_types_accessibility": "PROPS_AND_TYPES",
+    "structured_tokens": "UNKNOWN_VALUE_NOT_IN_TABLE",
+    "types_or_schema": "COMPLETE",
+    "agent_manifest": "NONE",
+    "agent_interface": "NONE"
+  },
+  "evidence": [],
+  "components": [
+    { "name": "Button", "props": [{ "name": "variant", "type": "string", "allowed_values": ["primary"], "default": "primary", "description": "Main action.", "evidence_ids": [] }], "variants": ["primary"], "states": [], "usage": { "purpose": "Triggers an action." }, "composition": [], "code_examples_count": 1, "executable_examples_count": 0, "evidence_ids": [] }
+  ],
+  "tokens": [],
+  "foundations": [],
+  "patterns": [],
+  "manifests": [],
+  "schemas": [],
+  "accessibility": [],
+  "documentation": {
+    "components_documented": 1,
+    "components_with_code_examples": 1,
+    "components_with_executable_examples": 0,
+    "components_with_variants_states_explained": 0,
+    "versioning_present": false
+  },
+  "contradictions": [],
+  "metadata": { "tokens_status": "NOT_EVALUABLE" }
+}

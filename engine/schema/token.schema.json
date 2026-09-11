@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "token.schema.json",
+  "title": "Token",
+  "description": "Spec section 20.",
+  "type": "object",
+  "required": ["name", "type"],
+  "properties": {
+    "name": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": ["color", "spacing", "sizing", "typography", "radius", "shadow", "border", "motion", "opacity", "z-index", "other"]
+    },
+    "value": { "type": ["string", "number", "null"] },
+    "category": {
+      "type": ["string", "null"],
+      "enum": ["primitive", "semantic", null]
+    },
+    "alias_of": { "type": ["string", "null"] },
+    "mode": { "type": ["string", "null"], "description": "e.g. 'light', 'dark'" },
+    "intent": { "type": ["string", "null"], "description": "Documented usage intent, feeds D2.10" },
+    "evidence_ids": { "type": "array", "items": { "type": "string" } }
+  }
+}

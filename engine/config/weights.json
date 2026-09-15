@@ -1,0 +1,12 @@
+{
+  "methodology_version": "0.1",
+  "weights": {
+    "D1": 0.20,
+    "D2": 0.15,
+    "D3": 0.20,
+    "D4": 0.25,
+    "D5": 0.10,
+    "D6": 0.10
+  },
+  "_note": "Must sum to 1.0. Changing these is a METHODOLOGY DECISION, flagged not silently resolved (spec section 59)."
+}

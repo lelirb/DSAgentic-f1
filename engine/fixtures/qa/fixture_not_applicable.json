@@ -1,0 +1,48 @@
+{
+  "schema_version": "0.1",
+  "system": { "url": "https://example-na-ds.com", "name": "NotApplicable DS", "version": "1.0.0" },
+  "coverage": { "pages_found": 5, "pages_retrieved": 5, "pages_failed": 0, "components_detected": 1, "components_evaluated": 1, "crawl_limited": false, "evaluation_status": "COMPLETE" },
+  "access": {
+    "documentation_recoverability": "FULLY_RECOVERABLE", "component_index": "COMPLETE",
+    "props_types_accessibility": "PROPS_TYPES_AND_VALUES", "structured_tokens": "COMPLETE",
+    "types_or_schema": "COMPLETE", "agent_manifest": "COMPLETE", "agent_interface": "PRESENT"
+  },
+  "evidence": [],
+  "components": [
+    {
+      "name": "Divider",
+      "props": [{ "name": "orientation", "type": "string", "allowed_values": ["horizontal", "vertical"], "default": "horizontal", "description": "Axis of the divider line.", "evidence_ids": [] }],
+      "variants": ["horizontal", "vertical"],
+      "states": [
+        { "name": "hover", "status": "NOT_APPLICABLE" },
+        { "name": "focus", "status": "NOT_APPLICABLE" },
+        { "name": "disabled", "status": "NOT_APPLICABLE" }
+      ],
+      "usage": {
+        "purpose": "A static visual separator between content sections.",
+        "when_to_use": "Use to separate unrelated content blocks.",
+        "when_not_to_use": null,
+        "competing_components": [],
+        "disambiguation_rules": [],
+        "restrictions": []
+      },
+      "composition": [],
+      "code_examples_count": 1,
+      "executable_examples_count": 1,
+      "evidence_ids": []
+    }
+  ],
+  "tokens": [
+    { "name": "color.border.subtle", "type": "color", "value": "#E5E5E5", "category": "semantic", "alias_of": "gray.200", "mode": null, "intent": "Used for non-interactive dividers.", "evidence_ids": [] }
+  ],
+  "foundations": [], "patterns": [], "manifests": [], "schemas": [], "accessibility": [],
+  "documentation": { "components_documented": 1, "components_with_code_examples": 1, "components_with_executable_examples": 1, "components_with_variants_states_explained": 1, "versioning_present": true },
+  "contradictions": [],
+  "metadata": { "tokens_status": "FOUND" },
+
+  "_qa_expected": {
+    "note": "A non-interactive component (Divider) has ALL states genuinely NOT_APPLICABLE — it has no hover/focus/disabled behavior by nature, not because documentation is missing.",
+    "D3_states_should_not_be_zero": "states sub-criterion should be NOT_EVALUABLE-ish/neutral (no evaluable FOUND/NOT_FOUND states), not penalized to 0, since the only states present are NOT_APPLICABLE.",
+    "D4_disambiguation_should_be_full_credit": "competing_components=[] means disambiguation is NOT_APPLICABLE for this component and must get full marks, not be zeroed."
+  }
+}

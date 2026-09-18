@@ -1,0 +1,63 @@
+{
+  "schema_version": "0.1",
+  "system": { "url": "https://example-contradictory-ds.com", "name": "Contradictory DS", "version": "2.0.0" },
+  "coverage": {
+    "pages_found": 20,
+    "pages_retrieved": 20,
+    "pages_failed": 0,
+    "components_detected": 2,
+    "components_evaluated": 2,
+    "crawl_limited": false,
+    "evaluation_status": "COMPLETE"
+  },
+  "access": {
+    "documentation_recoverability": "FULLY_RECOVERABLE",
+    "component_index": "COMPLETE",
+    "props_types_accessibility": "PROPS_AND_TYPES",
+    "structured_tokens": "COMPLETE",
+    "types_or_schema": "COMPLETE",
+    "agent_manifest": "NONE",
+    "agent_interface": "NONE"
+  },
+  "evidence": [],
+  "components": [
+    {
+      "name": "Button",
+      "props": [
+        { "name": "variant", "type": "string", "allowed_values": ["primary", "secondary"], "default": "primary", "description": "Style variant (per docs page).", "evidence_ids": ["ev-doc"] }
+      ],
+      "variants": ["primary", "secondary"],
+      "states": [],
+      "usage": { "purpose": "Triggers an action.", "when_to_use": "Use for actions.", "when_not_to_use": null, "competing_components": [], "disambiguation_rules": [], "restrictions": [] },
+      "composition": [],
+      "code_examples_count": 1,
+      "executable_examples_count": 1,
+      "evidence_ids": ["ev-doc"]
+    },
+    { "name": "Alert", "props": [], "variants": [], "states": [], "usage": {}, "composition": [], "code_examples_count": 0, "executable_examples_count": 0, "evidence_ids": [] }
+  ],
+  "tokens": [
+    { "name": "color.action.primary", "type": "color", "value": "#3B82F6", "category": "semantic", "alias_of": "blue.500", "mode": null, "intent": "primary actions", "evidence_ids": [] }
+  ],
+  "foundations": [],
+  "patterns": [],
+  "manifests": [],
+  "schemas": [{ "type": "d.ts", "url": "https://example-contradictory-ds.com/types.d.ts" }],
+  "accessibility": [],
+  "documentation": {
+    "components_documented": 1,
+    "components_with_code_examples": 1,
+    "components_with_executable_examples": 1,
+    "components_with_variants_states_explained": 1,
+    "versioning_present": true
+  },
+  "contradictions": [
+    {
+      "component": "Button",
+      "field": "button.variant.allowed_values",
+      "sources": ["https://example-contradictory-ds.com/docs/button", "https://example-contradictory-ds.com/types.d.ts"],
+      "values": [["primary", "secondary"], ["primary", "secondary", "tertiary"]]
+    }
+  ],
+  "metadata": { "tokens_status": "FOUND" }
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic DS — Cómo funciona</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#0B1220; --ink-800:#12172B; --ink-600:#3B4258;
+    --gray-500:#5B6472; --gray-300:#9AA3B2; --gray-100:#E7EAF0;
+    --paper:#FFFFFF; --paper-tint:#F3F5FA;
+    --indigo-600:#3D5AFE; --indigo-700:#2F46D6; --indigo-100:#E8ECFF; --indigo-050:#F3F5FF;
+    --green-700:#15803D; --green-100:#DCFCE7;
+    --amber-700:#A15C00; --amber-100:#FEF3C7;
+    --red-700:#B91C1C; --red-100:#FEE2E2;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'IBM Plex Sans', system-ui, sans-serif;color:var(--ink-800);background:var(--paper-tint);-webkit-font-smoothing:antialiased;line-height:1.6;}
+  code{font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:.92em;background:var(--indigo-050);padding:1px 5px;border-radius:4px;}
+  a{color:var(--indigo-700);}
+  button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:3px solid var(--indigo-600);outline-offset:2px;border-radius:4px;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px;}
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--gray-100);}
+  nav.wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px;max-width:880px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;color:var(--ink-900);text-decoration:none;}
+  .nav-right{display:flex;align-items:center;gap:16px;}
+  .back-link{font-size:14px;font-weight:600;color:var(--indigo-700);text-decoration:none;}
+  .lang-toggle{display:flex;align-items:center;background:var(--gray-100);border-radius:999px;padding:3px;gap:2px;}
+  .lang-toggle button{border:none;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--gray-500);}
+  .lang-toggle button[aria-pressed="true"]{background:var(--paper);color:var(--indigo-700);}
+  main{padding:48px 0 96px;}
+  h1{font-size:40px;line-height:1.15;letter-spacing:-.02em;margin:0 0 16px;color:var(--ink-900);}
+  .lead{font-size:19px;color:var(--ink-600);margin:0 0 40px;}
+  h2{font-size:22px;margin:48px 0 12px;color:var(--ink-900);}
+  p{margin:0 0 14px;}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:20px 0 0;}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 22px 52px;border-left:2px solid var(--indigo-100);margin-left:17px;}
+  ol.steps li:last-child{border-left-color:transparent;}
+  ol.steps li::before{content:counter(s);position:absolute;left:-18px;top:-2px;width:34px;height:34px;border-radius:50%;background:var(--indigo-600);color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  ol.steps h3{margin:0 0 4px;font-size:17px;color:var(--ink-900);}
+  ol.steps p{margin:0;color:var(--ink-600);}
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px;}
+  .state{background:var(--paper);border:1px solid var(--gray-100);border-radius:10px;padding:14px;}
+  .state b{display:block;margin-bottom:4px;}
+  .state span{font-size:14px;color:var(--ink-600);}
+  .s-found b{color:var(--green-700);} .s-nf b{color:var(--amber-700);} .s-abs b{color:var(--red-700);} .s-ne b{color:var(--gray-500);}
+  .rule{background:var(--paper);border-left:4px solid var(--indigo-600);padding:16px 18px;border-radius:0 8px 8px 0;margin-top:16px;}
+  ul.plain{padding-left:20px;margin:8px 0 0;}
+  ul.plain li{margin-bottom:6px;}
+  .cta{display:inline-block;margin-top:40px;background:var(--indigo-600);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px;}
+  .cta:hover{background:var(--indigo-700);}
+  @media (max-width:560px){h1{font-size:30px;}.lead{font-size:17px;}}
+</style>
+</head>
+<body>
+<header>
+  <nav class="wrap">
+    <a href="index.html" class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 17l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      Agentic DS
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link" data-t="back"></a>
+      <div class="lang-toggle" role="group" aria-label="Language selector / Selector de idioma">
+        <button type="button" id="btn-es" aria-pressed="true">ES</button>
+        <button type="button" id="btn-en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </nav>
+</header>
+<main class="wrap" id="content"></main>
+
+<script>
+(function () {
+  const T = {
+    es: {
+      title: "Agentic DS — Cómo funciona",
+      back: "Volver al inicio",
+      h1: "Cómo funciona",
+      lead: "Agentic DS revisa la documentación pública de un Design System y mide qué tan bien la podría usar un agente de IA. No usa IA para calificar: el resultado sale de reglas fijas, y siempre da lo mismo con la misma evidencia.",
+      stepsTitle: "Qué pasa cuando pegás una dirección",
+      steps: [
+        ["Reconoce el Design System", "Podés pegar la dirección principal o la de cualquier componente. Si pegás, por ejemplo, la página del botón, la herramienta detecta dónde empieza el Design System (todo lo que está antes de secciones como «components», «foundations» o «patterns»)."],
+        ["Busca la lista de páginas", "Primero busca un llms.txt y un sitemap.xml en el inicio del Design System y del sitio. Si no los encuentra, usa el menú de navegación. Si tampoco hay menú legible, sigue los enlaces desde la dirección que pegaste."],
+        ["Arma una muestra ordenada", "En lugar de leer las primeras páginas que aparezcan, elige algunos componentes repartidos a lo largo de la lista (con todas sus pestañas: uso, estilo, código, accesibilidad), algunos patrones, las páginas de tokens y el changelog. Lee hasta 45 páginas en menos de un minuto."],
+        ["Lee cada página", "Reconoce tablas de propiedades, variantes y tokens; secciones de estados, accesibilidad y anatomía; guías de uso («Cuándo usar», «When not to use»); restricciones («No uses…», «Don't…»); alternativas («en lugar de», «instead of»); demos en vivo; versión o fecha de actualización; y si el sistema declara un servidor MCP. Todo en español y en inglés."],
+        ["Anota las fuentes oficiales", "Si la documentación enlaza su Storybook, su repositorio o sus paquetes publicados, los anota como fuentes oficiales. Esta versión todavía no las lee: lo que vive solo ahí queda fuera de la nota, no cuenta como 0."],
+      ],
+      statesTitle: "Cuatro estados para cada cosa que busca",
+      states: [
+        ["s-found", "Encontrado", "Lo buscó y está. Suma puntos."],
+        ["s-nf", "No encontrado", "Lo buscó en lo que leyó y no apareció. Podría estar en otra página. Cuenta como 0."],
+        ["s-abs", "No existe", "Hay certeza de que falta; por ejemplo, un llms.txt buscado en su dirección estándar. Cuenta como 0."],
+        ["s-ne", "No se pudo leer", "No lo pudo buscar: la página no abrió, se arma con JavaScript o está en una fuente que todavía no lee. Queda fuera de la nota."],
+      ],
+      statesNote: "La diferencia entre «No encontrado» y «No existe» cambia la recomendación: en el primer caso se sugiere verificar si existe y hacerlo más fácil de encontrar; en el segundo, crearlo.",
+      ruleTitle: "La regla de la mitad",
+      rule: "La nota se calcula solo con lo que se pudo revisar. Si eso es menos de la mitad de lo que compone la nota, el informe muestra el número con un aviso y no asigna nivel (Opaco, Legible, Interpretable u Operable), porque con tan poca evidencia el nivel afirmaría más de lo que se sabe.",
+      limitsTitle: "Qué todavía no puede leer",
+      limits: [
+        "Contenido que solo aparece al ejecutar JavaScript.",
+        "Páginas que piden iniciar sesión.",
+        "Archivos de Figma (por eso D7, la consistencia entre diseño y código, no se evalúa).",
+        "Storybook, repositorios y paquetes publicados: se anotan, pero todavía no se leen.",
+        "Sitios de otros dominios que la documentación no declara como oficiales.",
+      ],
+      safetyTitle: "Límites y seguridad",
+      safety: "Cada evaluación tiene un tiempo máximo de 45 segundos, hasta 45 páginas y 5 MB por respuesta. No se visitan direcciones internas ni privadas. No se guarda nada en el servidor: el resultado vive en tu navegador hasta que lo descargues.",
+      cta: "Evaluar un Design System",
+    },
+    en: {
+      title: "Agentic DS — How it works",
+      back: "Back to home",
+      h1: "How it works",
+      lead: "Agentic DS reviews a Design System's public documentation and measures how well an AI agent could use it. It doesn't use AI to score: the result comes from fixed rules, and the same evidence always gives the same result.",
+      stepsTitle: "What happens when you paste an address",
+      steps: [
+        ["It recognizes the Design System", "You can paste the main address or any component's address. If you paste, say, the button page, the tool detects where the Design System starts (everything before sections like “components”, “foundations” or “patterns”)."],
+        ["It looks for the page list", "First it looks for llms.txt and sitemap.xml at the Design System's home and at the site's root. If it can't find them, it uses the navigation menu. If there's no readable menu either, it follows links from the address you pasted."],
+        ["It builds an ordered sample", "Instead of reading whichever pages show up first, it picks components spread across the list (with all their tabs: usage, style, code, accessibility), some patterns, the token pages and the changelog. It reads up to 45 pages in under a minute."],
+        ["It reads each page", "It recognizes property, variant and token tables; state, accessibility and anatomy sections; usage guidance (“When to use”, “Cuándo usar”); restrictions (“Don't…”, “No uses…”); alternatives (“instead of”, “en lugar de”); live demos; version or last-updated date; and whether the system declares an MCP server. All in English and Spanish."],
+        ["It notes the official sources", "If the documentation links to its Storybook, repository or published packages, it notes them as official sources. This version doesn't read them yet: whatever lives only there is left out of the score, not counted as 0."],
+      ],
+      statesTitle: "Four states for everything it looks for",
+      states: [
+        ["s-found", "Found", "It looked and it's there. Adds points."],
+        ["s-nf", "Not found", "It looked in what it read and it didn't show up. It may be on another page. Counts as 0."],
+        ["s-abs", "Doesn't exist", "It's certain it's missing; for example, an llms.txt checked at its standard address. Counts as 0."],
+        ["s-ne", "Couldn't be read", "It couldn't look: the page didn't open, it's built with JavaScript, or it lives in a source not read yet. Left out of the score."],
+      ],
+      statesNote: "The difference between “Not found” and “Doesn't exist” changes the recommendation: in the first case, check whether it exists and make it easier to find; in the second, create it.",
+      ruleTitle: "The half rule",
+      rule: "The score is calculated only from what could be reviewed. If that's less than half of what makes up the score, the report shows the number with a notice and doesn't assign a level (Opaque, Readable, Interpretable or Operable), because with so little evidence the level would claim more than is known.",
+      limitsTitle: "What it can't read yet",
+      limits: [
+        "Content that only appears when JavaScript runs.",
+        "Pages behind a login.",
+        "Figma files (that's why D7, design–code consistency, isn't evaluated).",
+        "Storybook, repositories and published packages: they're noted, but not read yet.",
+        "Sites on other domains that the documentation doesn't declare as official.",
+      ],
+      safetyTitle: "Limits and safety",
+      safety: "Each evaluation has a 45-second limit, up to 45 pages and 5 MB per response. Internal or private addresses are never visited. Nothing is stored on the server: the result lives in your browser until you download it.",
+      cta: "Evaluate a Design System",
+    },
+  };
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  let lang = "es";
+  try { lang = localStorage.getItem("agentic-ds-lang") === "en" ? "en" : "es"; } catch {}
+
+  function render() {
+    const t = T[lang];
+    document.documentElement.lang = lang;
+    document.title = t.title;
+    document.querySelector('[data-t="back"]').textContent = t.back;
+    document.getElementById("btn-es").setAttribute("aria-pressed", String(lang === "es"));
+    document.getElementById("btn-en").setAttribute("aria-pressed", String(lang === "en"));
+    document.getElementById("content").innerHTML = `
+      <h1>${esc(t.h1)}</h1>
+      <p class="lead">${esc(t.lead)}</p>
+      <h2>${esc(t.stepsTitle)}</h2>
+      <ol class="steps">${t.steps.map(([h, p]) => `<li><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join("")}</ol>
+      <h2>${esc(t.statesTitle)}</h2>
+      <div class="states">${t.states.map(([c, b, s]) => `<div class="state ${c}"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
+      <p style="margin-top:14px">${esc(t.statesNote)}</p>
+      <h2>${esc(t.ruleTitle)}</h2>
+      <div class="rule"><p style="margin:0">${esc(t.rule)}</p></div>
+      <h2>${esc(t.limitsTitle)}</h2>
+      <ul class="plain">${t.limits.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
+      <h2>${esc(t.safetyTitle)}</h2>
+      <p>${esc(t.safety)}</p>
+      <a class="cta" href="index.html#evaluate">${esc(t.cta)}</a>`;
+  }
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem("agentic-ds-lang", l); } catch {}
+    render();
+  }
+  document.getElementById("btn-es").addEventListener("click", () => setLang("es"));
+  document.getElementById("btn-en").addEventListener("click", () => setLang("en"));
+  render();
+})();
+</script>
+</body>
+</html>

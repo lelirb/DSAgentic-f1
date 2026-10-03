@@ -79,6 +79,11 @@ export function computeGlobalScore(dimensionResults, weightsConfig, rules) {
     readiness_level: displayScore === null || lowCoverage ? null : readinessLevel(displayScore, rules.readiness_levels),
     gate: {
       applied: gateApplied,
+      // `applied` dice que D1 quedó bajo el umbral; `capped`, que el tope de 40
+      // realmente bajó el número. El aviso "el acceso limita el resultado a un
+      // máximo de 40" solo es cierto cuando `capped` es true: con una nota cruda
+      // de 22 el tope no cambia nada y decirlo desinforma.
+      capped: gated !== null && rawGlobal !== null && gated < rawGlobal - 1e-9,
       undetermined: gateUndetermined,
       rule: "IF D1 < 25 THEN Global <= 40",
       methodology_decision_required: gateUndetermined

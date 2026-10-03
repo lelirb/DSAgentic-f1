@@ -8,23 +8,23 @@ después en internet (Render), sin tocar código en ningún momento.
 
 ## A. Probarlo en tu computadora (opcional, para verificar antes de subirlo)
 
-1. Instalá [Node.js](https://nodejs.org) si no lo tenés (botón "LTS").
+1. Instala [Node.js](https://nodejs.org) si no lo tienes (botón "LTS").
 2. Descomprimí este ZIP en cualquier carpeta.
-3. Abrí la Terminal (Mac) o Símbolo del sistema (Windows) en esa carpeta.
+3. Abre la Terminal (Mac) o Símbolo del sistema (Windows) en esa carpeta.
 4. Escribí `npm install` y Enter (tarda unos segundos, no requiere internet real).
 5. Escribí `npm start` y Enter.
-6. Abrí `http://localhost:8787` en el navegador.
+6. Abre `http://localhost:8787` en el navegador.
 
 Si ves la pantalla con el botón "Evaluate a Design System", funcionó.
 
-*(Este paso es opcional — podés saltarlo directamente al paso B si
-preferís ver primero la versión online.)*
+*(Este paso es opcional — puedes saltarlo directamente al paso B si
+prefieres ver primero la versión online.)*
 
 ---
 
 ## B. Subir el proyecto a GitHub
 
-1. Andá a [github.com](https://github.com) y creá una cuenta gratis (si no tenés).
+1. Ve a [github.com](https://github.com) y crea una cuenta gratis (si no tienes).
 2. Arriba a la derecha, botón verde **"New"** (o el símbolo `+` → "New repository").
 3. Ponele un nombre (ej. `agentic-ds`) → **"Create repository"**.
 4. En la página del repo recién creado, buscá el link que dice
@@ -39,11 +39,11 @@ Listo — tu código ya está en GitHub.
 
 ## C. Conectar GitHub con Render
 
-1. Andá a [render.com](https://render.com) y creá una cuenta gratis
+1. Ve a [render.com](https://render.com) y crea una cuenta gratis
    (te conviene entrar con "Sign up with GitHub" para que quede conectado de una).
 2. Botón **"New"** → elegí **"Blueprint"** (no "Web Service" — Blueprint es el
    que lee la configuración que ya te dejé preparada y no te pregunta nada raro).
-3. Elegí el repositorio que creaste en el paso B.
+3. Elige el repositorio que creaste en el paso B.
 4. Render va a detectar automáticamente el archivo `render.yaml` que está
    incluido en el proyecto — no hace falta que completes ningún campo a mano.
 
@@ -52,7 +52,7 @@ Listo — tu código ya está en GitHub.
 ## D. Primer deploy
 
 1. Apretá **"Apply"** (o "Deploy Blueprint", según cómo lo muestre Render).
-2. Esperá 2 a 4 minutos — vas a ver logs pasando, es normal.
+2. Espera 2 a 4 minutos — vas a ver logs pasando, es normal.
 3. Cuando el estado cambie a **"Live"**, ya está online.
 
 ---
@@ -61,8 +61,8 @@ Listo — tu código ya está en GitHub.
 
 1. Arriba de la página del servicio en Render vas a ver una URL, algo como
    `https://agentic-ds-xxxx.onrender.com`.
-2. Hacé clic ahí (o copialo y pegalo en el navegador).
-3. Esa es tu app real, funcionando, con un link que podés compartir.
+2. Haz clic ahí (o cópialo y pégalo en el navegador).
+3. Esa es tu app real, funcionando, con un link que puedes compartir.
 
 **Aviso importante**: el plan gratis de Render "duerme" la app si nadie
 la visita por un rato. La primera vez que alguien entra después de estar
@@ -73,7 +73,7 @@ como funciona el plan gratuito. Los usos siguientes son instantáneos.
 
 ## Qué hace esta app
 
-- **Home** — pegás la URL de un Design System (o probás una demo).
+- **Home** — pegas la URL de un Design System (o pruebas una demo).
 - **Results** — el informe completo: puntaje, las 6 dimensiones con
   detalle (qué funciona, qué falta, por qué importa, recomendación),
   todos los hallazgos, y las limitaciones de esa evaluación.
@@ -99,7 +99,7 @@ como funciona el plan gratuito. Los usos siguientes son instantáneos.
 - Sin LLM en el motor — el puntaje es 100% determinístico (reglas), no
   hay una IA a la que se le pueda "inyectar" instrucciones.
 
-Detalle completo más abajo en este mismo archivo, si querés profundizar
+Detalle completo más abajo en este mismo archivo, si quieres profundizar
 — no hace falta leerlo para poder usar la app.
 
 ---

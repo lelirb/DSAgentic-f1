@@ -116,7 +116,10 @@
     const u = T().ui, out = [];
     if (ctx.limited) out.push(u.rLimited);
     if (ctx.failed) out.push(fmt(u.rFailed, { n: ctx.failed }));
-    if (report.gate && report.gate.applied) out.push(u.rGate);
+    // Solo si el tope bajó el número. Los informes guardados antes de este campo
+    // no lo traen: para ellos se mantiene el criterio anterior (`applied`).
+    const g = report.gate;
+    if (g && (typeof g.capped === "boolean" ? g.capped : g.applied)) out.push(u.rGate);
     const all = Object.values(analysis);
     const hasReason = (r) => all.some((c) => c.items.some((i) => i.reason === r));
     if (hasReason("rsExternal")) out.push(u.rExternal);
@@ -344,7 +347,16 @@
       }
       found = `<div class="measure">${parts.join("")}</div>`;
 
-      let m = td.meaning[meaningKey(d, cls)];
+      let mk = meaningKey(d, cls);
+      // El texto de banda baja afirma algo sobre el sistema ("el agente tiene
+      // serias dificultades para llegar a la información"). Si la dimensión
+      // quedó incompleta y AUN ASÍ se demostró algún criterio, esa afirmación
+      // contradice al propio informe: en Carbon aparecía junto a un llms.txt
+      // encontrado y 49 componentes descubiertos. En ese caso se dice lo único
+      // que la evidencia sostiene: no alcanzó para demostrarlo.
+      let m = mk === "low" && cls.incomplete && cls.demonstrated.length > 0
+        ? fmt(u.meaningLowIncomplete, { can: td.can })
+        : td.meaning[mk];
       if (cls.incomplete) m = `${u.meaningIncomplete} ${m.charAt(0).toLowerCase()}${m.slice(1)}`;
       if (cls.incomplete && d.score <= 50) m += " " + fmt(u.notDemonstratedCap, { verb: td.verb.toUpperCase() });
       meaning = `<p class="measure">${esc(m)}</p>`;
@@ -482,7 +494,7 @@
     const link = href
       ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer nofollow">${esc(item.url)}</a>`
       : `<span>${esc(item.url)}</span>`;
-    const roleKey = { well_known: "roleWellKnown", entry: "roleEntry", root: "roleRoot", official_external: "roleOfficial", listed: "roleListed" }[item.role];
+    const roleKey = { well_known: "roleWellKnown", entry: "roleEntry", root: "roleRoot", official_external: "roleOfficial", listed: "roleListed", adapter: "roleAdapter", official_read: "roleOfficialRead" }[item.role];
     const role = roleKey && T().ui[roleKey] ? ` <span class="src-role">${esc(T().ui[roleKey])}</span>` : "";
     const detail = withUse ? usedAsText(item) : sourceReasonText(item);
     return `<li>${link}${role}${detail ? `<span class="src-detail">${esc(detail)}</span>` : ""}</li>`;

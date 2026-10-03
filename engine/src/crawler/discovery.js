@@ -33,7 +33,7 @@ export function normalizeUrl(raw, baseUrl) {
 export function extractLinks(html, baseUrl) {
   const links = new Set();
   const current = normalizeUrl(baseUrl, baseUrl);
-  const re = /<a\s[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
+  const re = /<a\s[^<>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
   let m;
   while ((m = re.exec(html))) {
     const raw = m[1] ?? m[2] ?? m[3] ?? "";

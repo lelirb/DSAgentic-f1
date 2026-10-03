@@ -387,3 +387,263 @@ Módulo nuevo `extractor/readPage.js`; también `detectPatterns.js` (nuevo).
   las reglas en sí son genéricas.
 - Etapa 7: documentación final con lo que quede funcionando.
 - Sigue abierto: DNS rebinding.
+
+---
+
+# Cambios — correcciones de las primeras corridas en vivo (2026-09-18)
+
+Origen: corridas reales contra Apple HIG, Fluent 2 y Carbon. Las tres daban
+informes que no distinguían entre Design Systems. Ninguna corrección toca la
+metodología ni los pesos: todas son del recorrido y de cómo se redacta lo que
+no se pudo ver. Regresión en `tests/live-runs.test.js` (6 pruebas nuevas;
+`npm test` pasa 107).
+
+1. **La raíz adivinada descartaba el sistema entero.** `findDsRoot` deduce la
+   raíz del DS de la dirección PEGADA. Con `/design-principles` (segmento que no
+   está en `SECTION_SEGMENTS`) la raíz quedó en `/design-principles/`, y el
+   filtro `inRoot` de `buildSample` redujo un sitemap de ~140 direcciones de
+   Fluent 2 a 1. Ahora, si la lista del sitio existe pero no sobrevive ningún
+   componente, se reintenta la muestra desde el origen del sitio y se registra
+   en `discovery.root_widened_from`.
+   Archivo: `crawler/crawl.js`.
+2. **Una candidata caída se tomaba como evidencia de ausencia.** El `llms.txt`
+   de Carbon lista páginas que hoy dan 404; las tres de fundamentos que el
+   muestreador eligió eran tres de ellas, y D2 daba 0 sin haber leído una sola
+   página de fundamentos. `buildSample` ahora devuelve `reserves` por tipo y
+   `readSample` repone las caídas (máx. 12, 3 rondas, dentro del presupuesto).
+   Archivos: `crawler/siteMap.js`, `crawler/crawl.js`.
+3. **D2 afirmaba ausencia sobre cero evidencia.** `tokenPlacesRead` daba
+   verdadero por una paleta de data-viz (el clasificador la cuenta como tokens
+   porque contiene "color"), mientras las páginas de fundamentos fallaban. Ahora
+   si alguna página de tokens/fundamentos falló, el estado es `NOT_EVALUABLE`
+   en vez de `NOT_FOUND`.
+   Archivo: `extractor/normalize.js`.
+4. **`documentation_recoverability` medía éxito HTTP, no documentación.** El
+   criterio se presenta como "el contenido está en el HTML del servidor y las
+   páginas responden", pero era `páginas recuperadas / páginas pedidas` sobre
+   TODO lo pedido. Consecuencias medidas: Fluent 2 sacaba 15/15 con 3 de sus 4
+   "páginas" siendo `robots.txt` y dos sitemaps, y quedaba por encima de Apple;
+   y la página de Apple que dice "This page requires JavaScript" aprobaba en
+   parte el criterio de no requerir JavaScript. Ahora los archivos técnicos se
+   excluyen del cálculo, el numerador exige texto visible en el HTML, y sin
+   ninguna página de documentación intentada el criterio queda `NOT_EVALUABLE`
+   (null) en vez de 0.
+   Archivo: `extractor/detectAccess.js`.
+5. **Texto de interpretación que contradecía al informe.** La banda baja de D1
+   afirma "el agente tiene serias dificultades para llegar a la información del
+   sistema"; en Carbon aparecía junto a un `llms.txt` encontrado y 49
+   componentes descubiertos. Cuando la dimensión está incompleta y aun así hay
+   criterios demostrados, ahora se usa un texto que dice lo único que la
+   evidencia sostiene: no alcanzó para demostrarlo.
+   Archivos: `public/report.js`, `public/report-texts.js`.
+
+## Pendiente (no incluido en esta tanda)
+
+- **Alcance por dominio registrable.** `isInScope` exige el mismo hostname y
+  `allowed_domains` está declarado en `DEFAULTS` pero nunca se pasa a
+  `isInScope`: es una opción muerta. Mientras siga así, `component_index` (20),
+  `types_or_schema` (10) y `structured_tokens` (15) son inalcanzables para casi
+  cualquier DS, porque viven en el Storybook, el repo o el paquete npm.
+- **Contenido renderizado con JavaScript** (Apple DocC sirve todo en
+  `/tutorials/data/<ruta>.json` y en Markdown con sufijo `.md`).
+- **Rótulo "Evidencia completa"** en D6 cuando la muestra fueron 3 componentes
+  de 49, y encabezado que dice "evaluamos 8" cuando 5 de esos 8 dieron 404.
+
+## Puertas alternativas (adaptadores) — 2026-09-18
+
+Requisito de producto: el diseñador pega el link público de su Design System y
+obtiene un resultado. Saber si ese sitio entrega HTML, JSON o Markdown no es su
+problema, es del evaluador.
+
+6. **Contenido renderizado con JavaScript.** Si una página llega sin texto
+   visible (o dice explícitamente que requiere JavaScript), el evaluador prueba
+   ahora la dirección paralela donde el sitio publica lo mismo en un formato
+   legible por máquina, que es lo que haría un agente real. Primer adaptador:
+   DocC (Apple, Swift, y cualquier sitio publicado con esa herramienta), que
+   sirve el contenido en `/tutorials/data/<ruta>.md` y `.json`. El Markdown y el
+   modelo de contenido de DocC se convierten a un HTML simple —encabezados,
+   párrafos, listas, tablas, código y enlaces— para que el extractor no tenga
+   que duplicar lógica por formato. Los enlaces recuperados permiten además
+   seguir recorriendo el sistema: sin ellos la HIG moría en 1 página.
+   Se registra en el informe como una fuente propia ("misma página en formato
+   legible por máquina") con la dirección de la que salió el contenido, para que
+   el diseñador vea por qué puerta se entró.
+   Archivos: `crawler/adapters.js` (nuevo), `crawler/crawl.js`,
+   `public/report.js`, `public/report-texts.js`.
+   Se desactiva con `adapters: false` en las opciones del crawl.
+
+   Si NO hay adaptador que aplique, un cascarón sigue contando como ilegible: la
+   recuperación no puede convertirse en una forma de aprobar el criterio sin
+   haber leído nada.
+
+## Fuentes oficiales: salir del dominio, con regla — 2026-09-18
+
+Decisión de producto: el diseñador pega el link de su documentación y el
+evaluador va a buscar la evidencia donde el sistema dice que está. Alcance
+acotado: SOLO se entra a lo que el propio Design System declara como fuente
+oficial (enlazado desde su documentación o su `llms.txt`). Un enlace a un blog
+que menciona el sistema no habilita nada.
+
+7. **El Storybook declarado ahora se lee.** Storybook publica su índice de
+   componentes en `index.json` (v7+) o `stories.json` (v6). Ese archivo es
+   exactamente el "índice de componentes legible por máquinas" que pide D1 y que
+   Carbon tenía publicado mientras el informe le recomendaba publicarlo.
+   Archivos: `crawler/officialSources.js` (nuevo), `crawler/crawl.js`.
+   Se desactiva con `official_sources: false`.
+8. **Detección de fuentes por la etiqueta del enlace, no solo por el host.** El
+   Storybook de Carbon vive en `react.carbondesignsystem.com`: no contiene la
+   palabra "storybook" y por eso nunca se detectaba. Ahora también se mira el
+   texto del enlace ("Storybook (React)").
+9. **El `llms.txt` se mira para descubrir fuentes oficiales.** Se leía como lista
+   de páginas, pero su contenido nunca se inspeccionaba en busca del Storybook o
+   el repositorio, que es justo donde muchos sistemas los declaran.
+10. **Los artefactos para máquinas no entran en la legibilidad de documentación.**
+    `index.json` / `stories.json` puntúan en su criterio propio y quedan fuera
+    del denominador de `documentation_recoverability`.
+
+### Sigue pendiente (requiere trabajo de pantallas)
+
+- Leer el repositorio y los paquetes publicados (tipos `.d.ts`, tokens del
+  paquete). Hoy se declaran y se marcan como no leídos, nunca como ausentes.
+- Preguntarle al diseñador por las direcciones que falten, DESPUÉS del resultado
+  automático y pidiendo direcciones, nunca respuestas: si se le cree lo que dice
+  tener, el evaluador deja de medir evidencia y pasa a ser una autoevaluación.
+
+## Alineación con el diseño de la home — 2026-09-18
+
+Revisión de los cambios anteriores contra lo que `public/index.html` ya promete.
+
+11. **El aviso de la home decía de menos.** `form.note.notEvaluable` afirmaba que
+    el evaluador no puede leer contenido con JavaScript ni el Storybook. Ambas
+    cosas cambiaron con los puntos 6 y 7: ahora se busca la versión legible por
+    máquina de una página renderizada con JavaScript, y el Storybook declarado se
+    lee. El aviso ahora describe lo que el evaluador hace hoy y deja explícito
+    lo que sigue fuera (login, Figma, repositorios y paquetes).
+    Archivos: `public/i18n.js`, `tests/sources.test.js`.
+
+### Confirmado contra el diseño
+
+- El campo de entrada dice "Pegá la dirección principal o la de cualquier
+  componente". El bug de Fluent (una entrada profunda descartaba el sistema
+  entero) no era una decisión pendiente: era el código incumpliendo la home. La
+  corrección 1 lo alinea.
+- La home ya declara las limitaciones bajo el campo, que era justo el "aviso
+  honesto" pendiente. No hacía falta inventarlo, solo mantenerlo al día.
+
+### Desajustes con el diseño que quedan abiertos
+
+- La home dice "Six dimensions. One goal." y lista 01 a 06, pero el informe
+  muestra siete (D7, Consistencia Design–Code, "requiere conectar Figma"). O la
+  home suma la séptima o el informe deja de mostrarla en esta fase.
+- La navegación tiene "Methodology" y "About" apuntando a anclas (`#method`,
+  `#about`) dentro de la misma página; no hay páginas de metodología. Falta
+  también el documento `METHODOLOGY_DECISIONS.md` que el motor cita siete veces
+  (`scoring.js`, `d1.js`, `d2.js`, `detectAccess.js`) y que no está en el
+  repositorio: sin él no se puede verificar que el escalado de D1 y la regla
+  "tokens NOT_FOUND = 0" sigan respetándose.
+
+## Bandas de nivel y redondeo — 2026-09-18 (METHODOLOGY_DECISION aprobada)
+
+12. **Los cortes de banda pasan a múltiplos de 5.** El score global se muestra
+    redondeado a múltiplos de 5 (`round5`, para no fingir precisión) pero los
+    cortes de la Build Specification v0.1 estaban en 26, 51 y 76 — números que
+    `round5` nunca produce. Como el nivel se calcula sobre el número mostrado,
+    los umbrales EFECTIVOS eran 27,5 / 52,5 / 77,5: cada banda corrida 1,5
+    puntos hacia arriba, siempre en contra del sistema evaluado. Un DS con 76
+    —Operable según la metodología— se mostraba como 75 y se etiquetaba
+    Interpretable.
+    Nuevos cortes: Opaco 0–24, Legible 25–49, Interpretable 50–74,
+    Operable 75–100. Ahora el número que se muestra y la tabla que el propio
+    informe imprime coinciden siempre, que es la propiedad que el diseñador
+    puede verificar a ojo.
+    Queda como consecuencia aceptada del redondeo: el score mostrado tiene una
+    granularidad de ±2,5 respecto del crudo. `global_score_raw` sigue en el JSON
+    para trazabilidad.
+    Archivos: `engine/config/rules.json`, `public/report-texts.js` (tabla
+    impresa, ES y EN).
+
+13. **`readinessLevel` ya no cae en silencio a la peor banda.** Buscaba
+    `score >= min && score <= max`; entre banda y banda había huecos (25–26,
+    50–51, 75–76) y un score caído ahí no encontraba ninguna, devolviendo el
+    valor por defecto "Opaco". Un 75,5 se reportaba como Opaco. Ahora los cortes
+    se leen como intervalos semiabiertos por su `min`: no hay huecos posibles.
+    Con un score no numérico devuelve `null` en vez de inventar un nivel.
+    Archivo: `engine/src/evaluator/utils.js`.
+
+Nota: las bandas por dimensión usan la misma tabla, así que el cambio aplica a
+las seis dimensiones y al global por igual.
+
+# Correcciones tras la revisión del zip y las pruebas con Carbon, Fluent 2 y Material 3 — 2026-10-03
+
+`npm test`: 123 pruebas (10 nuevas), todas pasando. No se tocaron pesos, tablas de
+puntos ni la rúbrica. Las demos producen las mismas cifras.
+
+14. **Una sola página hostil bloqueaba el servidor para todos.** Las lecturas de
+    HTML usaban expresiones del tipo `<p[^>]*>([\s\S]*?)<\/p>`, que son
+    cuadráticas cuando hay muchas etiquetas sin cierre: cada `<p>` volvía a
+    recorrer el documento entero. Medido con páginas de 300 KB: ~98 s para `<p>`,
+    ~34 s para `<h2>` y ~17 s para `<li>` por evaluación (3 páginas). Como Node usa
+    un solo hilo, mientras tanto no se atendía a nadie, ni la home. El tope de 2
+    evaluaciones simultáneas y el límite por IP no ayudaban: el bloqueo era
+    interno. Ahora todas las lecturas de bloques usan `findBlocks`
+    (`engine/src/extractor/blocks.js`), de tiempo lineal y con la misma salida en
+    HTML normal. Con páginas de 900 KB: de 0,04 a 0,6 s. `stripTags` se reescribió
+    sin expresiones regulares sobre el documento completo. Otros patrones con
+    `[^>]*` se cambiaron por `[^<>]*` (`discovery.js`, `crawl.js`, `siteMap.js`,
+    `readPage.js`).
+    Archivos: `extractor/blocks.js` (nuevo), `parseHtml.js`, `readPage.js`,
+    `crawler/siteMap.js`, `crawler/crawl.js`, `crawler/discovery.js`.
+    Prueba: `tests/linear-parsing.test.js`.
+
+15. **La lectura de fuentes oficiales no respetaba el límite de tiempo.** Corría
+    después del rastreo sin tope. Con 10 Storybooks lentos: 6 s frente a un
+    presupuesto de 1,5 s. Con tiempos reales (hasta 8 s por petición) la cota era
+    de ~160 s frente a 45 s. Ahora tiene su propio presupuesto
+    (`official_sources_max_ms`, 10 s por defecto, solo cuando el rastreo tiene
+    límite de tiempo). Lo que no alcanza a leerse queda marcado `time_limited` en
+    la fuente (declarada, no leída) y el resultado cuenta como limitado por tiempo.
+    El peor caso total pasa a ~55 s en vez de ~160 s.
+    Archivos: `crawler/officialSources.js`, `crawler/crawl.js`.
+    Prueba: `tests/official-sources-budget.test.js`.
+
+16. **Una página cascarón contaba como "leída".** `visibleTextLength` sumaba
+    todo el HTML (título y aviso de `<noscript>` incluidos) y bastaban 40
+    caracteres, o cualquier `<p>` con texto (un aviso de cookies), para que la
+    página contara como legible. Efecto visible en Material 3: D1 decía "el
+    contenido está en el HTML" (15/15) y, en esas mismas páginas, D3, D4 y D5 no
+    hallaban nada y lo puntuaban 0 en vez de "no se pudo leer". Ahora el texto
+    visible es el del `<body>` sin `<head>`, menús, `<noscript>` ni `<template>`, y el
+    mínimo es `MIN_READABLE_TEXT` (200 caracteres), igual en D1 y en la lectura de
+    componentes; ya no existe el atajo del `<p>`. Una página por debajo queda
+    `NOT_EVALUABLE` (fuera de la nota).
+    Es un umbral de producto. Se ajustaron los textos de relleno de 3 pruebas
+    que usaban páginas de una línea.
+    Archivos: `extractor/readPage.js`, `detectAccess.js`, `detectComponents.js`.
+    Prueba: `tests/readability.test.js`.
+    **No verificado:** que Material 3 o Fluent 2 sirvan hoy un cascarón; sin
+    acceso a esos sitios desde el entorno de desarrollo no se pudo comprobar.
+    La prueba es abrir una página de componente, Ctrl+U, y buscar un título
+    visible. Si aparece en el código fuente, la causa de los ceros no es esta.
+
+17. **El aviso "el acceso limita el resultado a un máximo de 40" aparecía aunque
+    el tope no cambiara nada.** Con D1 < 25 se mostraba siempre; en Fluent 2 y
+    Material 3 la nota cruda ya era 22 y 4. Ahora el motor expone
+    `gate.capped` (el tope bajó el número) y el informe solo avisa en ese caso.
+    Los informes guardados sin ese campo mantienen el criterio anterior.
+    Archivos: `evaluator/scoring.js`, `public/report.js`.
+
+18. **Español neutro.** Se quitó el voseo ("Pegá", "Probá", "Podés"…) de la
+    pantalla de inicio, los mensajes de error, "Cómo funciona" y el README.
+
+**Pendiente, sin decidir ni tocar:**
+- D2 y los criterios `component_index` y `structured_tokens` de D1 puntúan 0
+  cuando la evidencia vive en fuentes oficiales declaradas pero no leídas
+  (Storybook, paquete, repositorio). El mismo faltante se penaliza dos veces
+  (15 puntos en D1 y toda D2). Es una decisión de metodología.
+- La desambiguación de D4 se da por encontrada con una sola frase "instead of";
+  Fluent 2 sacó 20/20 con ese detector. Sin comparar contra la página real.
+- Bandas 25/50/75: el nivel se calcula sobre la nota redondeada a 5, lo que ahora
+  favorece al sistema evaluado (~2,5 puntos) en vez de perjudicarlo. La rúbrica
+  original sigue diciendo 26/51/76.
+- Tabla "Design System → cómo entrega su contenido" (HTML completo, parcial,
+  JavaScript) para el README, con pruebas reales, empezando por Material 3.

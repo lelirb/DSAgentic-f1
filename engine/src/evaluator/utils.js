@@ -36,8 +36,18 @@ export function round5(n) {
 }
 
 export function readinessLevel(score, levels) {
-  const found = levels.find((l) => score >= l.min && score <= l.max);
-  return found ? found.label : "Opaco";
+  // Antes buscaba `score >= min && score <= max`. Entre banda y banda había
+  // huecos (25–26, 50–51, 75–76) y un score caído ahí no encontraba ninguna:
+  // devolvía el valor por defecto, que era "Opaco" — la PEOR banda, elegida en
+  // silencio. Un 75,5 se reportaba como Opaco.
+  //
+  // Ahora los cortes se leen como intervalos semiabiertos por su `min`, de mayor
+  // a menor: no hay huecos posibles y `max` queda solo como documentación.
+  if (!Array.isArray(levels) || !levels.length) return null;
+  if (typeof score !== "number" || !Number.isFinite(score)) return null;
+  const ordered = [...levels].sort((a, b) => b.min - a.min);
+  for (const l of ordered) if (score >= l.min) return l.label;
+  return ordered[ordered.length - 1].label;
 }
 
 // Counts evidence-style items by status, excluding NOT_APPLICABLE from denominator (section 16/34).

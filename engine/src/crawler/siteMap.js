@@ -1,5 +1,6 @@
 // Etapa 3 — encontrar el Design System completo desde cualquier dirección.
 // Todo es determinístico y genérico: no hay nombres de Design Systems concretos.
+import { findBlocks } from "../extractor/blocks.js";
 import { normalizeUrl, extractLinks } from "./discovery.js";
 import { isLikelyComponentPage, componentIdentity } from "../extractor/detectComponents.js";
 
@@ -53,10 +54,9 @@ export function parseSitemap(xml) {
   const urls = [];
   const children = [];
   const isIndex = /<sitemapindex[\s>]/i.test(xml);
-  const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
-  let m;
-  while ((m = re.exec(xml)) && urls.length + children.length < MAX_LISTED_URLS) {
-    const loc = m[1].replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&amp;/g, "&").trim();
+  for (const b of findBlocks(xml, "loc", MAX_LISTED_URLS)) {
+    if (urls.length + children.length >= MAX_LISTED_URLS) break;
+    const loc = b.inner.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&amp;/g, "&").trim();
     (isIndex ? children : urls).push(loc);
   }
   return { urls, children, isIndex };
@@ -86,12 +86,21 @@ export function parseLlmsTxt(text, baseUrl) {
 // Enlaces del menú de navegación (<nav>, <aside>, <header>). Si la página no
 // tiene ninguno de esos bloques, devuelve [] y se usa el recorrido de enlaces.
 export function extractNavLinks(html, baseUrl) {
-  const blocks = [];
-  const re = /<(nav|aside|header)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  const source = String(html ?? "");
+  const blocks = findBlocks(source, "nav|aside|header").map((b) => b.inner);
+  // Bloques con role="navigation": se busca la apertura y luego su cierre dentro
+  // de 200 000 caracteres. Tope de 200 aperturas para que una página hostil con
+  // miles de ellas no multiplique el trabajo.
+  const roleRe = /<[a-z]+\b[^<>]*role\s*=\s*["']navigation["'][^<>]*>/gi;
+  const closeRe = /<\/(?:div|ul|section)>/gi;
   let m;
-  while ((m = re.exec(html))) blocks.push(m[2]);
-  const roleRe = /<[a-z]+\b[^>]*role\s*=\s*["']navigation["'][^>]*>([\s\S]{0,200000}?)<\/(?:div|ul|section)>/gi;
-  while ((m = roleRe.exec(html))) blocks.push(m[1]);
+  for (let n = 0; n < 200 && (m = roleRe.exec(source)); n++) {
+    const from = m.index + m[0].length;
+    const window = source.slice(from, from + 200000);
+    closeRe.lastIndex = 0;
+    const c = closeRe.exec(window);
+    if (c) blocks.push(window.slice(0, c.index));
+  }
   const out = new Set();
   for (const b of blocks) for (const l of extractLinks(b, baseUrl)) out.add(l);
   return [...out];
@@ -212,8 +221,26 @@ export function buildSample(urls, { rootUrl, limits = SAMPLE_DEFAULTS, maxPages 
     ...byKind.changelog.slice(0, limits.changelog),
   ];
   const sample = [...new Set(ordered)].slice(0, maxPages);
+  // Candidatas que NO entraron en la muestra, por tipo y en orden. Sirven para
+  // REPONER las que fallen: si las 3 páginas de tokens elegidas dan 404, el
+  // evaluador debe probar las siguientes antes de afirmar "no hay tokens"
+  // (visto en vivo con Carbon: su llms.txt lista páginas de fundamentos que ya
+  // no existen, y D2 daba 0 sin haber leído una sola página de fundamentos).
+  const chosen = new Set(sample);
+  const reserves = { component: [], pattern: [], pattern_index: [], tokens: [], changelog: [] };
+  for (const [id, tabs] of byKind.component) {
+    if (chosenIds.includes(id)) continue;
+    for (const u of tabs.sort((a, b) => a.length - b.length || (a < b ? -1 : 1)).slice(0, limits.tabs_per_component)) {
+      if (!chosen.has(u)) reserves.component.push(u);
+    }
+  }
+  for (const kind of ["pattern", "pattern_index", "changelog"]) {
+    for (const u of byKind[kind]) if (!chosen.has(u)) reserves[kind].push(u);
+  }
+  for (const u of tokenUrls) if (!chosen.has(u)) reserves.tokens.push(u);
   return {
     sample,
+    reserves,
     counts: {
       components_found: componentIds.length,
       components_sampled: chosenIds.length,

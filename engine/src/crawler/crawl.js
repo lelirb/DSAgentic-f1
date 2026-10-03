@@ -1,8 +1,10 @@
 import { fetchWithTimeout } from "./fetcher.js";
+import { adapterFor, isScriptShell, markdownToHtml, doccJsonToHtml } from "./adapters.js";
+import { readOfficialSources } from "./officialSources.js";
 import { extractLinks, isInScope, normalizeUrl } from "./discovery.js";
 import {
   findDsRoot, parseLlmsTxt, parseSitemap, parseRobotsSitemaps, extractNavLinks,
-  buildSample, officialSourceKind, officialSourceKey,
+  buildSample, officialSourceKind, officialSourceKey, classifyUrl,
 } from "./siteMap.js";
 import { isLikelyComponentPage, componentIdentity } from "../extractor/detectComponents.js";
 
@@ -27,6 +29,8 @@ const DEFAULTS = {
   max_query_variants_per_path: 3,
 };
 
+const MAX_REPLACEMENTS = 12;
+
 const QUERY_IS_PAGE = /(^|&)(path|id|story|selectedKind)=/i;
 
 // URL -> Discovery -> Crawl. Never lets one failed page abort the whole run (section 9).
@@ -40,7 +44,7 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
   const st = {
     opts, fetchImpl,
     visited: new Set(), queued: new Set([entryUrl]), pages: [], pageRecords: [],
-    outOfScopeSeen: new Set(), variantsPerPath: new Map(),
+    outOfScopeSeen: new Set(), variantsPerPath: new Map(), listingDocs: [],
     limited: false, timeLimited: false,
     deadline: opts.max_duration_ms ? Date.now() + opts.max_duration_ms : Infinity,
     // Scope is anchored to where the entry URL actually LANDS (apex -> www, etc.).
@@ -78,12 +82,30 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
       }
     }
 
-    const planned = listing.urls.length ? buildSample(listing.urls, { rootUrl: root, maxPages: opts.max_pages }) : null;
+    let planned = listing.urls.length ? buildSample(listing.urls, { rootUrl: root, maxPages: opts.max_pages }) : null;
+    // La raíz se adivina a partir de la dirección PEGADA. Si el usuario pegó una
+    // página profunda cuyo segmento no está en SECTION_SEGMENTS (p. ej.
+    // /design-principles), la raíz queda demasiado abajo y el filtro `inRoot`
+    // descarta el sistema entero: visto en vivo con Fluent 2, donde un sitemap
+    // de ~140 direcciones quedó reducido a 1. Si la lista existe pero no
+    // sobrevive ningún componente, se reintenta desde el origen del sitio.
+    if (listing.urls.length && planned && planned.counts.components_found === 0) {
+      let origin = null;
+      try { origin = `${new URL(root).origin}/`; } catch { origin = null; }
+      if (origin && origin !== root) {
+        const wider = buildSample(listing.urls, { rootUrl: origin, maxPages: opts.max_pages });
+        if (wider.counts.components_found > 0) {
+          planned = wider;
+          discovery.root_url = origin;
+          discovery.root_widened_from = root;
+        }
+      }
+    }
     if (planned && planned.counts.components_found > 0) {
       discovery.method = listing.method;
       discovery.listing_url = listing.url;
       Object.assign(discovery, planned.counts);
-      await readSample(st, planned.sample, listing.urls);
+      await readSample(st, planned.sample, listing.urls, planned.reserves);
     } else {
       // Plan B: recorrido de enlaces desde la entrada (comportamiento anterior).
       queue = enqueueLinks(st, [entry]);
@@ -92,6 +114,19 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
       discovery.components_sampled = names.size;
     }
     discovery.official_sources = collectOfficialSources(st);
+    // Lo que el sistema declara como suyo se lee; lo que no se pueda leer queda
+    // marcado como declarado-no-leído, nunca como ausente.
+    if (opts.official_sources !== false) {
+      discovery.official_sources_read = await readOfficialSources(
+        discovery.official_sources, opts, fetchImpl, st.ctx, st.pages, st.pageRecords
+      );
+      // Si el presupuesto de lectura se agotó, el resultado cuenta como limitado
+      // por tiempo (el informe ya sabe explicar eso).
+      if (discovery.official_sources.some((x) => x.time_limited)) {
+        st.limited = true;
+        st.timeLimited = true;
+      }
+    }
   }
 
   // Links discovered but never read because the page or time budget ran out.
@@ -197,7 +232,44 @@ async function bfs(st, queue) {
 // Lee la muestra planificada. Las pestañas de un componente elegido (uso,
 // estilo, código, accesibilidad…) que no estaban en el listado se agregan
 // cuando aparecen enlazadas desde su propia página.
-async function readSample(st, sample, listedUrls) {
+// Una candidata caída no es evidencia de ausencia: si la lista del sitio ofrece
+// otra página del mismo tipo, hay que leerla antes de concluir "no lo tiene".
+async function refillFailures(st, plannedSet, reserves) {
+  if (!reserves) return 0;
+  const kinds = ["tokens", "component", "pattern", "pattern_index", "changelog"];
+  const attempted = new Set(plannedSet);
+  const used = Object.fromEntries(kinds.map((k) => [k, 0]));
+  let replaced = 0;
+  for (let round = 0; round < 3 && replaced < MAX_REPLACEMENTS; round++) {
+    if (outOfBudget(st)) break;
+    const need = Object.fromEntries(kinds.map((k) => [k, 0]));
+    for (const r of st.pageRecords) {
+      if (r.status !== "FAILED" || !attempted.has(r.url)) continue;
+      const k = classifyUrl(r.url);
+      if (k in need) need[k] += 1;
+    }
+    const batch = [];
+    for (const kind of kinds) {
+      const pool = reserves[kind] || [];
+      let take = need[kind] - used[kind];
+      while (take > 0 && used[kind] < pool.length && replaced < MAX_REPLACEMENTS) {
+        const url = pool[used[kind]++];
+        if (st.visited.has(url) || st.queued.has(url)) continue;
+        st.queued.add(url);
+        st.ctx.sources.add({ url, role: "listed", depth: 1, status: "PENDING", reason: "REPLACEMENT" });
+        batch.push({ url, depth: 1 });
+        attempted.add(url);
+        replaced += 1;
+        take -= 1;
+      }
+    }
+    if (!batch.length) break;
+    await fetchBatch(st, batch);
+  }
+  return replaced;
+}
+
+async function readSample(st, sample, listedUrls, reserves) {
   const sources = st.ctx.sources;
   const listed = new Set(listedUrls);
   const plannedSet = new Set(sample);
@@ -231,6 +303,7 @@ async function readSample(st, sample, listedUrls) {
     }
   }
   for (const item of queue) sources.update(item.url, { status: "SKIPPED", reason: st.timeLimited ? "TIME_LIMIT" : "PAGE_LIMIT" });
+  await refillFailures(st, plannedSet, reserves);
   // Lo listado que no entró en la muestra queda registrado como "no leído".
   let n = 0;
   for (const u of listed) {
@@ -257,6 +330,10 @@ async function fetchListingFile(st, url) {
     log.add({ ...base, status: "OUT_OF_SCOPE", reason: "REDIRECTED_OUTSIDE", final_url: res.url });
     return { missing: false, failed: true };
   }
+  // El llms.txt suele declarar el Storybook y el repositorio. No es una página
+  // de documentación (no va a st.pages), pero su contenido hay que mirarlo para
+  // descubrir las fuentes oficiales del sistema.
+  st.listingDocs.push({ url, contentType: res.contentType || "text/plain", body: res.body });
   return { res, log, base };
 }
 
@@ -342,12 +419,48 @@ async function discoverListing(st, root, discovery) {
   return { method: null, urls: [], url: null };
 }
 
+// Enlaces con su etiqueta. El host no siempre delata la fuente: el Storybook de
+// Carbon vive en react.carbondesignsystem.com, sin la palabra "storybook" por
+// ningún lado. Lo que sí lo dice es el texto del enlace.
+function labelledLinks(body, contentType, baseUrl) {
+  const out = [];
+  if (typeof body !== "string") return out;
+  if (/html/.test(contentType || "")) {
+    const re = /<a\s[^<>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))[^<>]*>([\s\S]{0,200}?)<\/a>/gi;
+    let m;
+    while ((m = re.exec(body))) {
+      const raw = m[1] ?? m[2] ?? m[3] ?? "";
+      const link = normalizeUrl(raw, baseUrl);
+      if (link) out.push({ url: link, label: (m[4] || "").replace(/<[^>]*>/g, " ").trim() });
+    }
+    return out;
+  }
+  const md = /\[([^\]]{0,120})\]\((https?:\/\/[^\s)]+)\)/g;
+  let m;
+  while ((m = md.exec(body))) out.push({ url: m[2], label: m[1].trim() });
+  for (const u of body.match(/https?:\/\/[^\s)<>"'\]]+/g) || []) {
+    if (!out.some((e) => e.url === u)) out.push({ url: u, label: "" });
+  }
+  return out;
+}
+
+// El sistema puede declarar su Storybook sin que la dirección lo diga.
+const LABEL_KINDS = [
+  [/storybook/i, "storybook"],
+  [/\brepositorio\b|\brepository\b|source code|codigo fuente|c\u00f3digo fuente/i, "repository"],
+];
+function kindFromLabel(label) {
+  for (const [re, kind] of LABEL_KINDS) if (re.test(label || "")) return kind;
+  return null;
+}
+
 function collectOfficialSources(st) {
   const found = new Map();
-  for (const p of st.pages) {
-    if (!/html/.test(p.contentType || "")) continue;
-    for (const link of extractLinks(p.body, p.url)) {
-      const kind = officialSourceKind(link);
+  for (const p of [...st.pages, ...st.listingDocs]) {
+    // El llms.txt es donde muchos sistemas declaran su Storybook y su repo, y no
+    // es HTML: antes no se miraba y esas fuentes quedaban invisibles.
+    for (const { url: link, label } of labelledLinks(p.body, p.contentType, p.url)) {
+      const kind = officialSourceKind(link) || kindFromLabel(label);
       if (!kind || sameHost(link, st.ctx.scopeUrl)) continue;
       const key = officialSourceKey(link, kind);
       if (!found.has(key)) found.set(key, { url: key, kind, found_on: p.url });
@@ -405,13 +518,49 @@ async function processOne({ url, depth, soft = false }, opts, visited, pageRecor
   }
 
   pageRecords.push({ url: finalUrl, status: "CRAWLED", reason: null });
+
+  // Si la página llegó vacía porque se arma con JavaScript, se prueba la puerta
+  // alternativa antes de darla por ilegible. El diseñador pegó el link público:
+  // averiguar en qué formato publica su sitio es trabajo del evaluador.
+  let contentType = res.contentType;
+  let body = res.body;
+  let recovered = null;
+  if (opts.adapters !== false && isScriptShell(contentType, body)) {
+    recovered = await recoverContent(finalUrl, body, opts, fetchImpl, log);
+    if (recovered) { body = recovered.body; contentType = "text/html"; }
+  }
+
   log && log.update(url, {
     status: "READ", reason: null, http_status: res.status, content_type: res.contentType || null,
     final_url: finalUrl !== url ? finalUrl : null,
-    bytes: typeof res.body === "string" ? Buffer.byteLength(res.body, "utf-8") : 0,
+    recovered_from: recovered ? recovered.url : null,
+    bytes: typeof body === "string" ? Buffer.byteLength(body, "utf-8") : 0,
   });
-  pages.push({ url: finalUrl, depth, contentType: res.contentType, body: res.body });
-  return { url: finalUrl, depth, body: res.body, contentType: res.contentType };
+  pages.push({ url: finalUrl, depth, contentType, body, recovered_from: recovered ? recovered.url : null });
+  return { url: finalUrl, depth, body, contentType };
+}
+
+// Pide las direcciones paralelas que declara el adaptador y devuelve la primera
+// que traiga contenido real, convertida a HTML simple para el extractor.
+async function recoverContent(url, shellBody, opts, fetchImpl, log) {
+  const adapter = adapterFor(url, shellBody);
+  if (!adapter) return null;
+  for (const candidate of adapter.candidates) {
+    const res = await fetchWithTimeout(candidate, {
+      timeoutMs: Math.min(opts.request_timeout, 6000), fetchImpl, hostCheck: opts.host_check,
+    });
+    if (!res.ok || !res.body) continue;
+    const html = /json/.test(res.contentType || "") || candidate.endsWith(".json")
+      ? doccJsonToHtml(res.body)
+      : markdownToHtml(res.body);
+    if (!html || isScriptShell("text/html", html)) continue;
+    log && log.add({
+      url: candidate, role: "adapter", depth: 0, status: "READ",
+      reason: `RECOVERED_${adapter.name.toUpperCase()}`, used_for: "page_content",
+    });
+    return { url: candidate, body: html };
+  }
+  return null;
 }
 
 // llms.txt lives at a well-known location and is almost never LINKED from HTML —

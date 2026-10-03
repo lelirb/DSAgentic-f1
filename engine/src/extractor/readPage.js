@@ -2,6 +2,7 @@
 // Conservador: solo se toma lo que tiene una forma reconocible (una tabla con
 // encabezados, una sección con título). Nada se inventa.
 import { stripTags } from "./parseHtml.js";
+import { findBlocks, removeBlocks } from "./blocks.js";
 
 // ---------- vocabulario (ES / EN) ----------
 // Etiquetas de sección: se comparan contra el título ENTERO de la sección.
@@ -43,20 +44,27 @@ export const STATE_NAMES = {
 
 // ---------- estructura ----------
 
-// Texto visible de la página. Una página con muy poco texto suele ser una
-// aplicación que arma su contenido con JavaScript: no se puede leer desde HTML.
+// Texto visible de la página: el del <body>, sin menús (nav, header, footer), sin
+// <noscript> ni <template>. Antes se contaba TODO el HTML, incluidos el <title> y
+// el aviso de <noscript> ("necesitas activar JavaScript"), así que un cascarón
+// vacío armado con JavaScript sumaba más de 40 caracteres y contaba como página
+// leída. Resultado: D1 decía "el contenido está en el HTML" (15/15) mientras D3,
+// D4 y D5 no encontraban nada en esas mismas páginas y lo puntuaban como 0.
 export function visibleTextLength(html) {
-  return stripTags(String(html || "").replace(/<(nav|header|footer)\b[\s\S]*?<\/\1>/gi, " ")).length;
+  const s = String(html || "");
+  const body = findBlocks(s, "body", 1)[0];
+  const scope = body ? body.inner : s;
+  return stripTags(removeBlocks(scope, "head|nav|header|footer|noscript|template")).length;
 }
+// Una página con menos texto que esto se trata como "no se pudo leer" (se
+// excluye de la nota), no como "se leyó y no apareció" (0 puntos). Es un umbral
+// de producto: se usa igual en D1 y en la lectura de componentes.
 export const MIN_READABLE_TEXT = 200;
 
 // Divide la página por títulos h1–h4. Cada sección incluye su HTML hasta el
 // siguiente título del mismo nivel o superior.
 export function extractSections(html) {
-  const re = /<h([1-4])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
-  const heads = [];
-  let m;
-  while ((m = re.exec(html))) heads.push({ level: Number(m[1]), title: cleanTitle(stripTags(m[2])), start: m.index, bodyStart: m.index + m[0].length });
+  const heads = findBlocks(html, "h[1-4]").map((b) => ({ level: Number(b.tag[1]), title: cleanTitle(stripTags(b.inner)), start: b.start, bodyStart: b.end }));
   return heads.map((h, i) => {
     let end = html.length;
     for (let j = i + 1; j < heads.length; j++) {
@@ -79,18 +87,10 @@ export function findSections(sections, patterns) {
 
 export function extractTables(html) {
   const out = [];
-  const re = /<table\b[\s\S]*?<\/table>/gi;
-  let m;
-  while ((m = re.exec(html)) && out.length < 40) {
-    const t = m[0];
+  for (const table of findBlocks(html, "table", 40)) {
     const rows = [];
-    const rowRe = /<tr\b[\s\S]*?<\/tr>/gi;
-    let r;
-    while ((r = rowRe.exec(t)) && rows.length < 300) {
-      const cells = [];
-      const cellRe = /<t([hd])\b[^>]*>([\s\S]*?)<\/t\1>/gi;
-      let c;
-      while ((c = cellRe.exec(r[0]))) cells.push({ th: c[1].toLowerCase() === "h", text: stripTags(c[2]) });
+    for (const r of findBlocks(table.inner, "tr", 300)) {
+      const cells = findBlocks(r.inner, "t[hd]").map((c) => ({ th: c.tag === "th", text: stripTags(c.inner) }));
       if (cells.length) rows.push(cells);
     }
     if (rows.length < 2) continue;
@@ -170,17 +170,14 @@ export function tokensFromTables(tables) {
 export function variantsFrom(sections, html) {
   const out = new Set();
   for (const s of findSections(sections, VOCAB.variants)) {
-    const subRe = /<h([3-5])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
-    let m;
-    while ((m = subRe.exec(s.html))) {
-      const t = cleanTitle(stripTags(m[2]));
+    for (const sub of findBlocks(s.html, "h[3-5]")) {
+      const t = cleanTitle(stripTags(sub.inner));
       if (t && t.length <= 40) out.add(t);
     }
     for (const tb of extractTables(s.html)) for (const row of tb.rows) if (row[0] && row[0].length <= 40) out.add(row[0].trim());
     if (!out.size) {
-      const liRe = /<li\b[^>]*>([\s\S]*?)<\/li>/gi;
-      while ((m = liRe.exec(s.html))) {
-        const t = stripTags(m[1]).split(/[:.–—-]/)[0].trim();
+      for (const li of findBlocks(s.html, "li")) {
+        const t = stripTags(li.inner).split(/[:.–—-]/)[0].trim();
         if (t && t.length <= 30) out.add(t);
       }
     }
@@ -205,7 +202,7 @@ export function hasSection(sections, patterns) {
 }
 
 // Demos en vivo: iframes o enlaces a entornos que ejecutan el componente.
-const LIVE_DEMO_RE = /<iframe\b[^>]*\bsrc\s*=\s*["'][^"']*(storybook|iframe\.html|codesandbox|stackblitz|codepen|playground|sandbox|demo)[^"']*["']|<a\b[^>]*\bhref\s*=\s*["'][^"']*(codesandbox\.io|stackblitz\.com|codepen\.io)[^"']*["']|\b(data-)?(playground|live-?demo|live-?code|sandpack)\b/gi;
+const LIVE_DEMO_RE = /<iframe\b[^<>]*\bsrc\s*=\s*["'][^"']*(storybook|iframe\.html|codesandbox|stackblitz|codepen|playground|sandbox|demo)[^"']*["']|<a\b[^<>]*\bhref\s*=\s*["'][^"']*(codesandbox\.io|stackblitz\.com|codepen\.io)[^"']*["']|\b(data-)?(playground|live-?demo|live-?code|sandpack)\b/gi;
 export function liveDemoCount(html) {
   return (String(html || "").match(LIVE_DEMO_RE) || []).length;
 }
@@ -215,7 +212,7 @@ export function versionSignal(text) {
   const t = String(text || "");
   return /\b(version|versi[oó]n|v)\s?\d+\.\d+(\.\d+)?\b/i.test(t) ||
     /\b(last updated|updated on|last modified|[uú]ltima actualizaci[oó]n|actualizado el)\b/i.test(t) ||
-    /<time\b[^>]*datetime=/i.test(t);
+    /<time\b[^<>]*datetime=/i.test(t);
 }
 
 // Declaración de un servidor MCP (Model Context Protocol).
@@ -226,10 +223,8 @@ export function mcpSignal(text) {
 // Oraciones con restricciones o con desambiguación, en ES y EN.
 export function sentencesFrom(html) {
   const out = [];
-  const re = /<(p|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
-  let m;
-  while ((m = re.exec(html))) {
-    const text = stripTags(m[2]);
+  for (const b of findBlocks(html, "p|li")) {
+    const text = stripTags(b.inner);
     if (!text) continue;
     for (const raw of text.split(/(?<=[.!?])\s+/)) {
       const s = raw.trim().replace(/[.!?]+$/, "");

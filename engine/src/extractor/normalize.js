@@ -11,9 +11,16 @@ export function normalize(entryUrl, crawlResult, access, components, tokens, ext
   // (páginas de fundamentos/tokens o un archivo de tokens). Si nunca se miró
   // ahí, no se puede afirmar nada: queda fuera de la nota.
   const tokenPlacesRead = crawlResult.pages.some((p) => classifyUrl(p.url) === "tokens" || /token/i.test(p.url));
+  // Si alguna página de fundamentos/tokens NO se pudo abrir, no hay base para
+  // afirmar que el sistema no tiene tokens. Carbon daba D2 = 0 con sus tres
+  // páginas de fundamentos en 404: la única que sí se leyó era una paleta de
+  // data-viz que el clasificador cuenta como "tokens" por contener "color".
+  const tokenPlacesFailed = crawlResult.pageRecords.some(
+    (r) => r.status === "FAILED" && (classifyUrl(r.url) === "tokens" || /token/i.test(r.url))
+  );
   let tokensStatus = "NOT_EVALUABLE";
   if (tokens.length > 0) tokensStatus = "FOUND";
-  else if (tokenPlacesRead) tokensStatus = "NOT_FOUND";
+  else if (tokenPlacesRead && !tokenPlacesFailed) tokensStatus = "NOT_FOUND";
 
   return {
     schema_version: "0.1",

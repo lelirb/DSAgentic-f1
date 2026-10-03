@@ -1,6 +1,18 @@
 // Populates input.access — raw signals only, no scoring happens here (section 6:
 // extractor answers "what did I find", evaluator answers "what does that mean").
-import { mcpSignal } from "./readPage.js";
+import { mcpSignal, visibleTextLength, MIN_READABLE_TEXT } from "./readPage.js";
+
+// Archivos técnicos que el evaluador pide siempre: no son documentación y no
+// deben contar ni a favor ni en contra en la recuperabilidad.
+export function isUtilityFile(url) {
+  let p;
+  try { p = new URL(url).pathname.toLowerCase(); } catch { return false; }
+  return /(^|\/)(robots\.txt|llms\.txt|agents\.md|humans\.txt|security\.txt)$/.test(p) ||
+    /(^|\/)sitemap[^/]*\.xml$/.test(p) ||
+    // Artefactos para máquinas (el índice del Storybook): cuentan para su
+    // criterio propio, no como "página de documentación legible".
+    /(^|\/)(index|stories)\.json$/.test(p);
+}
 
 export function detectAccess(crawlResult, { tokens = [], components = [] } = {}) {
   // Section 6/22: D1 measures whether content can actually be RECOVERED, not
@@ -20,14 +32,31 @@ export function detectAccess(crawlResult, { tokens = [], components = [] } = {})
   const hasMcp = urls.some((u) => /(^|[/.-])mcp([/.-]|$)/.test(u)) ||
     crawlResult.pages.some((p) => /html|text|markdown/.test(p.contentType || "") && mcpSignal(p.body));
 
-  const attempted = crawlResult.pageRecords.filter((r) => r.status === "CRAWLED" || r.status === "FAILED");
-  const retrieved = crawlResult.pages.length;
-  const ratio = attempted.length > 0 ? retrieved / attempted.length : 0;
-
-  let documentation_recoverability = "NOT_RECOVERABLE";
-  if (ratio >= 0.9) documentation_recoverability = "FULLY_RECOVERABLE";
-  else if (ratio >= 0.5) documentation_recoverability = "MOSTLY_RECOVERABLE";
-  else if (ratio > 0) documentation_recoverability = "PARTIAL";
+  // Este criterio dice dos cosas: que las páginas respondan y que su contenido
+  // venga en el HTML del servidor. Antes medía SOLO la tasa de éxito HTTP sobre
+  // todo lo pedido, así que robots.txt y sitemap.xml contaban como documentación
+  // recuperada (Fluent 2 sacaba 15/15 con 3 de sus 4 "páginas" siendo archivos
+  // técnicos) y una página que solo dice "requires JavaScript" aprobaba el
+  // criterio de no requerir JavaScript (Apple HIG). Ahora el denominador son las
+  // páginas de documentación intentadas, y el numerador las que además traen
+  // texto real en el HTML.
+  const attempted = crawlResult.pageRecords.filter(
+    (r) => (r.status === "CRAWLED" || r.status === "FAILED") && !isUtilityFile(r.url)
+  );
+  const readable = crawlResult.pages.filter(
+    (p) => !isUtilityFile(p.url) && /html/.test(p.contentType || "") && visibleTextLength(p.body) >= MIN_READABLE_TEXT
+  );
+  // Sin ninguna página de documentación intentada no se puede afirmar nada:
+  // queda NOT_EVALUABLE (bandPoints devuelve null ante un valor desconocido).
+  let documentation_recoverability = null;
+  if (attempted.length > 0) {
+    const ratio = readable.length / attempted.length;
+    documentation_recoverability =
+      ratio >= 0.9 ? "FULLY_RECOVERABLE"
+      : ratio >= 0.5 ? "MOSTLY_RECOVERABLE"
+      : ratio > 0 ? "PARTIAL"
+      : "NOT_RECOVERABLE";
+  }
 
   return {
     documentation_recoverability,

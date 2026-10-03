@@ -1,46 +1,64 @@
+import { findBlocks, removeBlocks } from "./blocks.js";
+
 // Deliberately minimal. No HTML-parsing library is available offline in this
 // build environment, and per section 44 ("El extractor debe ser conservador")
 // it is preferable to extract less, correctly, than to guess with a fragile
 // parser and call it evidence. This is Extractor v0.1 — section 54 explicitly
 // anticipates it being swapped for a more capable version later.
 
+// Tiempo lineal: ninguna de las expresiones de aquí vuelve a recorrer el
+// documento por cada etiqueta sin cierre (ver blocks.js). Misma salida que la
+// versión con expresiones regulares para HTML normal.
 export function stripTags(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  let s = removeBlocks(removeBlocks(String(html ?? ""), "script"), "style");
+  // Equivale a replace(/<[^>]+>/g, " ") pero sin volver a buscar un ">" desde
+  // cada "<" cuando no queda ninguno.
+  let out = "";
+  let i = 0;
+  for (;;) {
+    const lt = s.indexOf("<", i);
+    if (lt === -1) {
+      out += s.slice(i);
+      break;
+    }
+    out += s.slice(i, lt);
+    const gt = s.indexOf(">", lt + 1);
+    if (gt === -1) {
+      out += s.slice(lt);
+      break;
+    }
+    if (gt === lt + 1) {
+      out += "<"; // "<>" no es una etiqueta
+      i = lt + 1;
+    } else {
+      out += " ";
+      i = gt + 1;
+    }
+  }
+  return out.replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function extractHeadings(html) {
-  const re = /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi;
   const out = [];
-  let m;
-  while ((m = re.exec(html))) {
-    const text = stripTags(m[1]);
+  for (const b of findBlocks(html, "h[1-3]")) {
+    const text = stripTags(b.inner);
     if (text) out.push(text);
   }
   return out;
 }
 
 export function extractCodeBlocks(html) {
-  const re = /<pre[^>]*>([\s\S]*?)<\/pre>/gi;
-  const out = [];
-  let m;
-  while ((m = re.exec(html))) out.push(stripTags(m[1]));
-  return out;
+  return findBlocks(html, "pre").map((b) => stripTags(b.inner));
 }
 
 // Best-effort: first <p> that appears after the first heading. Low-confidence
 // signal used only to populate `description`/`purpose`; never invented if absent.
 export function extractFirstParagraphAfterHeading(html) {
-  const headingMatch = /<h[1-3][^>]*>[\s\S]*?<\/h[1-3]>/i.exec(html);
-  const searchFrom = headingMatch ? headingMatch.index + headingMatch[0].length : 0;
-  const pMatch = /<p[^>]*>([\s\S]*?)<\/p>/i.exec(html.slice(searchFrom));
-  if (!pMatch) return null;
-  const text = stripTags(pMatch[1]);
+  const heading = findBlocks(html, "h[1-3]", 1)[0];
+  const rest = heading ? String(html).slice(heading.end) : String(html ?? "");
+  const p = findBlocks(rest, "p", 1)[0];
+  if (!p) return null;
+  const text = stripTags(p.inner);
   return text.length > 0 ? text : null;
 }
 
@@ -51,19 +69,27 @@ export function extractFirstParagraphAfterHeading(html) {
 // <div>, <strong>, etc. Se exige que la etiqueta sea el contenido ENTERO y corto
 // de un tag (no una subcadena dentro de una oración larga) para evitar falsos
 // positivos — "when to use" apareciendo de pasada en un párrafo no cuenta.
-const SECTION_LABEL_TAG_RE = /<(h[1-6]|span|div|dt|strong|b)[^>]*>\s*([^<]{1,80}?)\s*<\/\1>/gi;
+// "[^<>]*" y no "[^>]*": así cada "<" sin ">" cercano cuesta solo hasta el
+// siguiente "<" y la búsqueda sigue siendo lineal.
+const SECTION_LABEL_TAG_RE = /<(h[1-6]|span|div|dt|strong|b)[^<>]*>\s*([^<]{1,80}?)\s*<\/\1>/gi;
 
 export function extractSectionByLabel(html, labelPatterns) {
+  const source = String(html ?? "");
+  let paragraphs = null; // se calcula una sola vez y solo si hace falta
+  let next = 0;
   SECTION_LABEL_TAG_RE.lastIndex = 0;
   let m;
-  while ((m = SECTION_LABEL_TAG_RE.exec(html))) {
+  while ((m = SECTION_LABEL_TAG_RE.exec(source))) {
     const labelText = m[2].trim();
     if (labelPatterns.some((re) => re.test(labelText))) {
       const searchFrom = m.index + m[0].length;
-      const pMatch = /<p[^>]*>([\s\S]*?)<\/p>/i.exec(html.slice(searchFrom));
-      if (pMatch) {
-        const text = stripTags(pMatch[1]);
+      if (!paragraphs) paragraphs = findBlocks(source, "p");
+      // Las etiquetas se recorren de izquierda a derecha: el puntero solo avanza.
+      while (next < paragraphs.length && paragraphs[next].start < searchFrom) next++;
+      for (let k = next; k < paragraphs.length; k++) {
+        const text = stripTags(paragraphs[k].inner);
         if (text) return text;
+        break; // igual que antes: solo se mira el primer párrafo después de la etiqueta
       }
     }
   }
@@ -96,10 +122,8 @@ const RESTRICTION_SENTENCE_RE = new RegExp(`^(do not|don${APOSTROPHE}?t)\\s+\\S.
 
 export function extractRestrictions(html) {
   const restrictions = [];
-  const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let pMatch;
-  while ((pMatch = pRe.exec(html))) {
-    const text = stripTags(pMatch[1]);
+  for (const p of findBlocks(html, "p")) {
+    const text = stripTags(p.inner);
     if (!text) continue;
     // Naive sentence split on ". "/"! "/"? " boundaries — conservative, not a
     // real sentence tokenizer, but DS guidance sentences are short and rarely
@@ -144,10 +168,8 @@ function extractCompetitorPhrase(sentence) {
 
 export function extractDisambiguationSignals(html) {
   const results = [];
-  const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let pMatch;
-  while ((pMatch = pRe.exec(html))) {
-    const text = stripTags(pMatch[1]);
+  for (const p of findBlocks(html, "p")) {
+    const text = stripTags(p.inner);
     if (!text) continue;
     const sentences = text.split(/(?<=[.!?])\s+/);
     for (const raw of sentences) {

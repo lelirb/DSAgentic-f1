@@ -30,16 +30,19 @@ function fakeFetch(routes) {
   };
 }
 
+// Páginas de documentación reales tienen bastante más que una línea de texto; el relleno
+// (un <div>, no un <p>) les da la extensión mínima para contar como legibles.
+const FILLER = "<div>Esta guía describe cómo usar el componente dentro del sistema de diseño: su propósito, los casos en que conviene elegirlo, las alternativas disponibles y los criterios que el equipo ya decidió. El texto es de relleno, pero tiene la extensión de una página de documentación real.</div>";
 const ENTRY = "https://ds.test/components/button/usage/";
 const SITE = {
   [ENTRY]: {
     body: `<h1>Button</h1><p>Buttons trigger actions.</p>
       <a href="/components/modal/usage/">m</a><a href="/components/button/style/">s</a>
       <a href="https://github.com/org/repo">gh</a><a href="/components/missing/usage/">x</a>
-      <a href="/tokens/colors.json">t</a><a href="/components/slow/usage/">slow</a>`,
+      <a href="/tokens/colors.json">t</a><a href="/components/slow/usage/">slow</a>${FILLER}`,
   },
-  "https://ds.test/components/modal/usage/": { body: "<h1>Modal</h1><p>Dialogs.</p>" },
-  "https://ds.test/components/button/style/": { body: "<h1>Button</h1><p>Style.</p>" },
+  "https://ds.test/components/modal/usage/": { body: `<h1>Modal</h1><p>Dialogs.</p>${FILLER}` },
+  "https://ds.test/components/button/style/": { body: `<h1>Button</h1><p>Style.</p>${FILLER}` },
   "https://ds.test/tokens/colors.json": { type: "application/json", body: '{"color":{"primary":{"value":"#00f"}}}' },
   "https://ds.test/components/slow/usage/": { status: 503 },
   "https://ds.test/llms.txt": { type: "text/plain", body: "# DS\n- [Button](https://ds.test/components/button/usage/)" },
@@ -244,6 +247,16 @@ test("pantalla de inicio: aviso de lo que todavía no se puede leer, en ES y EN"
   const ctx = { window: {} };
   vm.createContext(ctx);
   vm.runInContext(read("public/i18n.js"), ctx);
-  assert.ok(ctx.window.AgenticDSDict.es["form.note.notEvaluable"].includes("quedan fuera de la nota"));
-  assert.ok(ctx.window.AgenticDSDict.en["form.note.notEvaluable"].includes("left out of the score"));
+  // El aviso debe seguir diciendo que lo no leído queda fuera de la nota, y debe
+  // mantenerse fiel a lo que el evaluador hace HOY: si promete de menos, el
+  // diseñador no se entera de que su Storybook sí se leyó.
+  const es = ctx.window.AgenticDSDict.es["form.note.notEvaluable"];
+  const en = ctx.window.AgenticDSDict.en["form.note.notEvaluable"];
+  assert.ok(es.includes("fuera de la nota"));
+  assert.ok(en.includes("left out of the score"));
+  assert.ok(/Storybook/.test(es) && /Storybook/.test(en), "el aviso debe mencionar el Storybook");
+  assert.ok(
+    !/no puede leer[^.]*Storybook/.test(es),
+    "el Storybook ya se lee: el aviso no puede seguir diciendo lo contrario"
+  );
 });

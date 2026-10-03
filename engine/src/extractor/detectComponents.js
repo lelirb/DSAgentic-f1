@@ -8,12 +8,11 @@ import {
   APOSTROPHE,
 } from "./parseHtml.js";
 import {
-  VOCAB, visibleTextLength, extractSections, sectionText, extractTables, propsFromTables,
+  VOCAB, visibleTextLength, MIN_READABLE_TEXT, extractSections, sectionText, extractTables, propsFromTables,
   variantsFrom, statesFrom, hasSection, liveDemoCount, restrictionsFrom, disambiguationFrom,
 } from "./readPage.js";
 
 // Menos texto visible que esto = página armada con JavaScript (no legible).
-const MIN_VISIBLE_TEXT = 40;
 
 function emptyComponent(name, source, evidenceIds, extra = {}) {
   return {
@@ -128,7 +127,7 @@ export function detectComponents(crawlResult, evidenceCollector) {
     const page = tabs[0];
     const headings = extractHeadings(page.body);
     const name = headings[0] || pathToName(page.url);
-    const readable = tabs.filter((t) => visibleTextLength(t.body) >= MIN_VISIBLE_TEXT || /<p\b[^>]*>\s*[^<\s]/i.test(t.body || ""));
+    const readable = tabs.filter((t) => visibleTextLength(t.body) >= MIN_READABLE_TEXT);
     const evidenceIds = [];
     const ev = (entry) => {
       const id = evidenceCollector.add({ component: name, retrieval_method: "html", confidence: 0.6, ...entry });

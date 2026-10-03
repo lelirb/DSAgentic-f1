@@ -31,7 +31,9 @@ function fakeFetch(routes, log = []) {
 }
 
 const O = "https://ds.test";
-const page = (title, inner) => `<html><body><nav><a href="/">Inicio</a></nav><main><h1>${title}</h1>${inner}</main></body></html>`;
+const FILLER = "<div class=\"nota\">Esta guía describe cómo usar el componente dentro del sistema de diseño: su propósito, los casos en que conviene elegirlo, las alternativas disponibles y los criterios que el equipo ya decidió. El texto es de relleno, pero tiene la extensión de una página de documentación real.</div>";
+// El relleno es un <div> (no un <p>) para no alterar las lecturas por párrafo.
+const page = (title, inner) => `<html><body><nav><a href="/">Inicio</a></nav><main><h1>${title}</h1>${inner}${FILLER}</main></body></html>`;
 const SITE = {
   [`${O}/robots.txt`]: { type: "text/plain", body: `User-agent: *\nSitemap: ${O}/sitemap.xml` },
   [`${O}/sitemap.xml`]: {

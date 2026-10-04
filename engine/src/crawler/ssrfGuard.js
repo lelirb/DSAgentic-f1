@@ -85,7 +85,9 @@ export async function assertPublicHost(urlString, { dnsLookup = dns.lookup } = {
  * salvo del "DNS rebinding". Lo usa el proxy de salida del navegador.
  */
 export async function resolvePublicAddress(hostnameRaw, { dnsLookup = dns.lookup } = {}) {
-  const hostname = String(hostnameRaw).replace(/^\[|\]$/g, ""); // strip IPv6 brackets, e.g. "[::1]" -> "::1"
+  // Sin corchetes de IPv6, en minúsculas y sin el punto final ("localhost." y
+  // "LOCALHOST" son el mismo nombre que "localhost").
+  const hostname = String(hostnameRaw).replace(/^\[|\]$/g, "").toLowerCase().replace(/\.$/, "");
 
   if (hostname === "localhost" || hostname.endsWith(".localhost")) {
     throw new Error("Blocked: localhost is not an allowed target");

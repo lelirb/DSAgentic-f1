@@ -93,8 +93,7 @@ como funciona el plan gratuito. Los usos siguientes son instantáneos.
 
 Algunos Design Systems entregan una página vacía y la completan con
 JavaScript (por ejemplo, Material 3). Para leerlos, la app abre esas páginas
-con un navegador (Chromium) instalado en el servidor, como lo haría una
-persona. Solo lo usa cuando una página llega vacía; el resto se lee igual
+con un navegador (Chromium) instalado en el servidor. Solo lo usa cuando una página llega vacía; el resto se lee igual
 que antes.
 
 Qué cambia para quien usa la app:
@@ -115,11 +114,11 @@ Qué cambia en Render:
 - Si el navegador no está disponible, la app sigue funcionando: esas páginas
   quedan como "no se pudo leer" y el informe lo dice.
 
-**Límite conocido:** un navegador usa bastante memoria (unos 300 MB medidos
-en desarrollo) y el plan gratuito de Render tiene 512 MB y poca CPU. Puede
-que lea menos páginas de las que quisiera, o que se reinicie con sitios muy
-pesados. Si pasa, las opciones son un plan de pago o un servicio externo que
-cargue las páginas.
+**Límite conocido:** el plan gratuito de Render tiene 512 MB y poca CPU. En
+la primera prueba real (Material 3, 2026-10-03) el navegador funcionó de forma
+estable, pero leyó 14 de las 32 páginas de la muestra en unos 2 minutos y
+medio; el resto quedó como "no se pudo leer" por tiempo. Con un plan de más
+potencia leería más páginas en el mismo tiempo.
 
 Para apagar el navegador sin tocar código: variable de entorno
 `BROWSER_RENDERING=0` en Render.
@@ -170,11 +169,25 @@ Cubierto y verificado con pruebas automatizadas (`npm test`):
 - Cuerpo de petición a la API limitado a 16KB.
 - HTML mal formado: las lecturas son de tiempo lineal; una página con miles
   de etiquetas sin cerrar ya no bloquea el servidor.
-- Navegador: todo su tráfico sale por un proxy propio que solo permite
-  direcciones públicas (puertos 80 y 443) y se conecta a la IP que validó.
-  Probado con páginas hostiles: no llegan a servicios internos (fetch,
-  iframe, WebSocket), no pueden colgar a la página siguiente, no devuelven
-  archivos locales ni respuestas gigantes, y no dejan ventanas abiertas.
+- Navegador (ver `tests/browser-security.test.js`, una prueba por caso):
+  - todo su tráfico sale por un proxy propio que solo permite direcciones
+    públicas (puertos 80 y 443) y se conecta a la IP que validó;
+  - bloqueados: localhost, 127.0.0.1, 0.0.0.0, rangos privados IPv4, IPv6 de
+    loopback, link-local y locales, el endpoint de metadata de nube, y sus
+    formas alternativas (decimal, hexadecimal, octal, IPv4 dentro de IPv6);
+  - una redirección (HTTP, JavaScript o meta) desde un sitio público hacia una
+    dirección interna no llega; tampoco fetch, iframe, imagen, WebSocket ni
+    WebRTC lanzados por el código de la página;
+  - no devuelve archivos locales (`file:`) ni contenido de otra dirección que
+    la pedida;
+  - límite de tiempo por página y por evaluación; una página que cuelga o
+    tumba el navegador no afecta a la siguiente ni congela el servidor;
+  - tope de tamaño del contenido devuelto (1,5 millones de caracteres) y de
+    descarga por navegador (80 MB);
+  - al cerrar no quedan procesos, carpetas temporales ni puertos abiertos, ni
+    siquiera si el servidor muere de golpe;
+  - el navegador corre sin privilegios de administrador, sin heredar las
+    variables de entorno del servidor y sin permisos (cámara, ubicación…).
 
 NO cubierto (limitaciones reales):
 - Sin autenticación.

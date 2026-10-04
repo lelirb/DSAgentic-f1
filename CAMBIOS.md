@@ -731,3 +731,86 @@ Corregido tras repasar el código con páginas hostiles reales:
   de Node;
 - que el `Dockerfile` construya en Render (no hay Docker en desarrollo);
 - el resultado contra Material 3, Fluent 2 u otro sitio real.
+
+# Revisión final de seguridad y estabilidad del navegador — 2026-10-03
+
+`npm test`: 155 pruebas (15 nuevas), todas pasando. Sin cambios en la rúbrica ni
+en la puntuación. Alcance: solo el navegador (pedido de la dueña del proyecto).
+Hecha por el mismo autor del código; no hubo revisor externo.
+
+**Resultado en producción (Render Free, Material 3):** el navegador arrancó
+(`chromium-headless-shell`, modo de un proceso), leyó 14 páginas en ~2,5 min,
+1 página agotó su tiempo y el resto de la muestra quedó sin leer por el límite
+global. Material pasó de 5/0 (páginas vacías) a 20 con contenido real.
+
+## Lo que se comprobó, punto por punto
+
+1. **SSRF.** Con una regla como la de producción y un "servicio interno" de
+   prueba escuchando en 127.0.0.1: redirección 302, 307, por JavaScript y por
+   `<meta refresh>` hacia una IP privada → 0 peticiones recibidas. Lo mismo con
+   `fetch`, `<img>`, `<iframe>`, WebSocket y WebRTC (STUN por UDP) lanzados por
+   la página. Como control, con una regla permisiva esas mismas páginas SÍ
+   llegan al servicio (así se sabe que el resultado vacío se debe al bloqueo).
+   Validador de direcciones: 21 formas de dirección interna rechazadas,
+   incluidas `2130706433`, `0x7f.0.0.1`, `0177.0.0.1`, `[::ffff:7f00:1]`,
+   `[64:ff9b::7f00:1]`, `localhost.` y `LOCALHOST`.
+   Archivos locales: `location = "file:///etc/passwd"`, `fetch("file://…")` e
+   `<iframe src="file://…">` no devuelven contenido.
+2. **Recursos.** Página que nunca responde, bucle infinito de JavaScript y DOM
+   que crece sin parar: todas vuelven dentro del plazo. Pausa máxima del proceso
+   principal durante esas esperas: 1 ms. Con el tiempo de la evaluación agotado
+   no se abre ninguna página más.
+3. **Aislamiento.** La dirección de la página nunca se pasa como argumento del
+   proceso (va por el canal de control), no se abre puerto de depuración, y el
+   contenido de la página nunca se ejecuta en Node.
+4. **Estados.** Leída + encontrada, leída + no encontrada (0) y no se pudo leer
+   (sin nota), probados en D2 y en componentes.
+5. **Fallback.** Una página que ya trae su contenido no arranca el navegador
+   (comprobado con navegador real: 0 arranques).
+
+## Lo que se corrigió durante la revisión
+
+28. **Entorno mínimo.** El navegador heredaba todas las variables de entorno del
+    servidor. Ahora recibe solo `PATH`, `TMPDIR`, `TZ`, las de bibliotecas y
+    fuentes, y un `HOME` propio (su carpeta temporal). Si con ese entorno
+    ningún Chromium arrancara, como último recurso se prueba con el entorno
+    completo y queda anotado en el diagnóstico (`crawl_summary.browser`).
+29. **Cierre del grupo de procesos.** El navegador corre en su propio grupo y al
+    cerrar se termina el grupo entero, no solo el proceso principal.
+30. **Procesos terminados sin retirar.** En el contenedor, Node es el primer
+    proceso y no retira los auxiliares de Chromium que ya murieron. Se agrega
+    `tini` como primer proceso (`Dockerfile`).
+31. **Apagado limpio.** Al recibir la señal de apagado (cada despliegue de
+    Render), el servidor cierra el navegador antes de salir.
+32. **Caída del navegador a mitad de una página.** Antes pasaba de inmediato al
+    modo de varios procesos, que usa más memoria; si la caída era por falta de
+    memoria, eso empeoraba las cosas. Ahora arranca uno limpio en el mismo modo
+    y reintenta la página; solo cambia de modo tras tres caídas seguidas.
+33. **Tope de descarga agotado.** Si una página consume el tope del proxy, el
+    navegador se reinicia para que la siguiente no herede el bloqueo.
+34. **Permisos.** `--deny-permission-prompts`: nada se concede ni se pregunta.
+35. **`localhost.` y `LOCALHOST`** se tratan como `localhost` de forma explícita.
+36. **Texto del cargador** al detectar JavaScript (decisión de la dueña): "Este
+    sitio solo muestra su contenido con JavaScript. Muchos agentes no lo
+    ejecutan, y eso contará en Acceso. Lo cargamos para evaluar el resto."
+
+Pruebas: `tests/browser-security.test.js` (las 10 de la lista más aislamiento) y
+4 pruebas de estados en `tests/render-fallback.test.js`.
+
+## Riesgos que siguen abiertos
+
+- **`--no-sandbox`.** El aislamiento propio de Chromium está apagado, como es
+  habitual en contenedores. Un fallo explotable del propio Chromium permitiría
+  ejecutar código dentro del contenedor y saltarse el proxy. No se probó si el
+  aislamiento puede activarse en Render.
+- **Control del navegador hecho a mano** (no Playwright), sin revisión externa.
+- **DNS rebinding** en las peticiones directas del rastreador (no en las del
+  navegador).
+- **Capacidad en Render Free:** lee menos de la mitad de la muestra en el tiempo
+  disponible.
+- **D1 con todo sin leer:** cuando ninguna página se puede leer, D1 marca
+  `component_index` y otros criterios como "no encontrado" (0). No se tocó: es
+  una decisión de puntuación fuera del alcance pedido.
+- **Posible desajuste de vocabulario:** en Material 3, con contenido ya leído,
+  D3 no encontró variantes ni estados y D4 no encontró "cuándo usar". Puede que
+  el sitio use otros títulos de sección. Sin verificar.

@@ -95,6 +95,8 @@ function chromiumArgs({ proxyPort, userDataDir, lowMemory }) {
     "--dns-prefetch-disable",
     // Una página no puede abrir ventanas nuevas (se quedarían abiertas consumiendo memoria).
     "--block-new-web-contents",
+    // Ningún permiso (cámara, micrófono, ubicación, notificaciones) se concede ni se pregunta.
+    "--deny-permission-prompts",
     "--disable-breakpad",
     "--js-flags=--max-old-space-size=256",
     "--window-size=1280,900",
@@ -201,10 +203,17 @@ export function createRenderer({
     if (lowMemory) attempts.push({ path: p, low: true });
     attempts.push({ path: p, low: false });
   }
+  // Último recurso: si con el entorno mínimo ningún Chromium arranca (algún
+  // servidor podría necesitar una variable que no se le pasa), se prueba con el
+  // entorno completo. Queda anotado en el diagnóstico para poder corregirlo.
+  if (paths.length) {
+    if (lowMemory) attempts.push({ path: paths[0], low: true, fullEnv: true });
+    attempts.push({ path: paths[0], low: false, fullEnv: true });
+  }
   const state = {
     browser: null, proxy: null, userDataDir: null, pagesOnBrowser: 0, attempt: 0,
     launches: 0, pages: 0, failures: 0, lastError: null, broken: null, idleTimer: null,
-    launchTimeouts: 0, lastUse: 0,
+    launchTimeouts: 0, lastUse: 0, deaths: 0,
   };
   // Si el proceso de Node termina, el navegador no debe quedar huérfano.
   process.once("exit", () => { if (state.browser) state.browser.kill(); });
@@ -230,14 +239,14 @@ export function createRenderer({
     await shutdownBrowser();
     const errors = [];
     while (current()) {
-      const { path: exe, low } = current();
+      const { path: exe, low, fullEnv } = current();
       const proxyOpts = {};
       if (resolveHost !== undefined) proxyOpts.resolveHost = resolveHost;
       if (allowedPorts !== undefined) proxyOpts.allowedPorts = allowedPorts;
       state.proxy = await startEgressProxy(proxyOpts);
       state.userDataDir = mkdtempSync(path.join(os.tmpdir(), "agentic-ds-browser-"));
       state.launches++;
-      const browser = launchChromium(exe, chromiumArgs({ proxyPort: state.proxy.port, userDataDir: state.userDataDir, lowMemory: low }));
+      const browser = launchChromium(exe, chromiumArgs({ proxyPort: state.proxy.port, userDataDir: state.userDataDir, lowMemory: low }), { home: state.userDataDir, inheritEnv: Boolean(fullEnv) });
       state.browser = browser;
       // El arranque nunca espera más allá del límite de la evaluación.
       const wait = Math.max(5000, Math.min(launchTimeoutMs, deadline - Date.now()));
@@ -348,21 +357,32 @@ export function createRenderer({
     try {
       const result = await renderOnce(url, { timeoutMs, minText, settleMs, deadline });
       state.pages++;
+      state.deaths = 0;
       // Si a pesar de todo quedaron ventanas abiertas, se reinicia el navegador.
       const targets = await state.browser.send("Target.getTargets", {}, undefined, 3000).catch(() => null);
-      if (targets && (targets.targetInfos || []).filter((t) => t.type === "page").length > 3) await shutdownBrowser();
+      const tooManyWindows = targets && (targets.targetInfos || []).filter((t) => t.type === "page").length > 3;
+      // Si esta página agotó el tope de descarga del proxy, la siguiente arranca con uno nuevo.
+      const budgetSpent = state.proxy && state.proxy.stats.budgetExceeded;
+      if (tooManyWindows || budgetSpent) await shutdownBrowser();
       return result;
     } catch (err) {
       const message = String(err.message || err);
       if (message === "TIME_LIMIT") return { ok: false, error: "TIME_LIMIT" };
-      // El navegador se cayó en modo de un solo proceso: se pasa al modo estable
-      // y se reintenta esta misma página una vez.
+      // El navegador murió a mitad de la página (se cayó, o el sistema lo mató
+      // por memoria). Se arranca uno limpio y se reintenta esta página una vez.
+      // Solo tras tres caídas seguidas se cambia al modo de varios procesos:
+      // ese modo es más estable pero usa más memoria, así que no conviene
+      // saltar a él por una sola caída.
       const died = /BROWSER_EXITED|BROWSER_CLOSED|BROWSER_WRITE_FAILED|MESSAGE_TOO_LARGE/.test(message);
-      if (died && !isRetry && current() && current().low && attempts[state.attempt + 1]) {
-        state.attempt++;
-        state.lastError = `cambio a modo estable: ${message.slice(0, 200)}`;
+      if (died) {
+        state.deaths++;
         await shutdownBrowser();
-        return doRender(url, { timeoutMs, minText, settleMs, deadline }, true);
+        if (state.deaths >= 3 && current() && current().low && attempts[state.attempt + 1]) {
+          state.attempt++;
+          state.deaths = 0;
+          state.lastError = `cambio a modo estable tras caídas repetidas: ${message.slice(0, 160)}`;
+        }
+        if (!isRetry) return doRender(url, { timeoutMs, minText, settleMs, deadline }, true);
       }
       state.failures++;
       state.lastError = message.slice(0, 600);
@@ -401,9 +421,10 @@ export function createRenderer({
     close: () => { const p = chain.then(() => shutdownBrowser()); chain = p.catch(() => {}); return p; },
     info: () => ({
       available: attempts.length > 0 && !state.broken,
-      executable: current() ? `${path.basename(current().path)}${current().low ? " (1 proceso)" : ""}` : null,
+      executable: current() ? `${path.basename(current().path)}${current().low ? " (1 proceso)" : ""}${current().fullEnv ? " (entorno completo)" : ""}` : null,
       launches: state.launches, pages: state.pages, failures: state.failures,
       last_error: state.lastError,
+      pid: state.browser && !state.browser.closed ? state.browser.pid : null,
       proxy: state.proxy ? { ...state.proxy.stats } : null,
     }),
   };

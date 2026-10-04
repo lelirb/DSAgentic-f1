@@ -361,6 +361,18 @@ if (isMain) {
   server.listen(PORT, () => {
     console.log(`Agentic DS corriendo en http://localhost:${PORT}`);
   });
+  // Al apagar el servidor (Render lo hace en cada despliegue) se cierra el
+  // navegador antes de salir, para no dejar procesos ni carpetas temporales.
+  let stopping = false;
+  for (const signal of ["SIGTERM", "SIGINT"]) {
+    process.on(signal, () => {
+      if (stopping) return;
+      stopping = true;
+      const done = () => process.exit(0);
+      setTimeout(done, 4000).unref();
+      Promise.resolve(renderer ? renderer.close() : null).then(done, done);
+    });
+  }
 }
 
 // Basic production hardening: log and keep running instead of crashing silently

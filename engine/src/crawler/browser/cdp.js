@@ -13,12 +13,31 @@ const NUL = 0;
 // cierra el navegador en vez de acumularlo en memoria.
 const MAX_MESSAGE_BYTES = 16 * 1024 * 1024;
 
-export function launchChromium(executable, args, { commandTimeoutMs = 30000 } = {}) {
+// Variables de entorno que el navegador sí necesita. No hereda el resto del
+// entorno del servidor: el código de una página ajena corre dentro de ese
+// proceso y no tiene por qué poder ver la configuración de la app.
+const PASSED_ENV = ["PATH", "TMPDIR", "TZ", "LD_LIBRARY_PATH", "FONTCONFIG_PATH", "FONTCONFIG_FILE"];
+
+export function browserEnv(home, source = process.env) {
+  const env = { LANG: "en_US.UTF-8" };
+  for (const key of PASSED_ENV) if (source[key]) env[key] = source[key];
+  if (home) env.HOME = home; // su carpeta temporal, no la del usuario del servidor
+  return env;
+}
+
+export function launchChromium(executable, args, { commandTimeoutMs = 30000, home = null, inheritEnv = false } = {}) {
   const child = spawn(executable, [...args, "--remote-debugging-pipe"], {
     // 0 stdin, 1 stdout, 2 stderr, 3 órdenes hacia el navegador, 4 respuestas.
     stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"],
-    env: { ...process.env, LANG: "en_US.UTF-8" },
+    env: inheritEnv ? { ...process.env, LANG: "en_US.UTF-8" } : browserEnv(home),
+    // Grupo de procesos propio: al cerrar se termina el grupo entero, para que
+    // no queden procesos auxiliares de Chromium (renderizadores, utilidades).
+    detached: true,
   });
+  const killGroup = () => {
+    try { process.kill(-child.pid, "SIGKILL"); } catch { /* el grupo ya no existe */ }
+    try { child.kill("SIGKILL"); } catch { /* ya terminó */ }
+  };
   const toBrowser = child.stdio[3];
   const fromBrowser = child.stdio[4];
 
@@ -49,6 +68,7 @@ export function launchChromium(executable, args, { commandTimeoutMs = 30000 } = 
   });
   child.on("exit", (code, signal) => {
     closed = true;
+    try { process.kill(-child.pid, "SIGKILL"); } catch { /* sin auxiliares vivos */ }
     exitInfo = { code, signal };
     failAll(`BROWSER_EXITED (code ${code}, signal ${signal})`);
     for (const l of listeners) {
@@ -99,7 +119,7 @@ export function launchChromium(executable, args, { commandTimeoutMs = 30000 } = 
         chunks = [];
         chunkBytes = 0;
         failAll("MESSAGE_TOO_LARGE");
-        try { child.kill("SIGKILL"); } catch { /* ya terminó */ }
+        killGroup();
       }
     }
   });
@@ -136,15 +156,15 @@ export function launchChromium(executable, args, { commandTimeoutMs = 30000 } = 
       await send("Browser.close", {}, undefined, 2000);
     } catch { /* si no responde, se mata abajo */ }
     await new Promise((r) => setTimeout(r, 200));
-    if (!closed) {
-      try { child.kill("SIGKILL"); } catch { /* ya terminó */ }
-    }
+    // Siempre se termina el grupo: aunque el proceso principal ya haya salido,
+    // puede quedar algún auxiliar.
+    killGroup();
     closed = true;
   }
 
   return {
     send, on, close,
-    kill: () => { try { child.kill("SIGKILL"); } catch { /* ya terminó */ } closed = true; },
+    kill: () => { killGroup(); closed = true; },
     get closed() { return closed; },
     get exitInfo() { return exitInfo; },
     get stderrTail() { return stderrTail; },

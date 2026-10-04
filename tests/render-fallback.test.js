@@ -257,3 +257,65 @@ test("servidor: /api/progress valida el identificador y guarda el resultado como
     assert.equal(bad.status, 200);
   });
 });
+
+// ---------- los tres estados del evaluador ----------
+// leída + encontrada = evidencia · leída + no encontrada = ausencia (0) ·
+// no se pudo leer = no evaluable (fuera de la nota, nunca 0).
+
+const TOKENS_URL = `${O}/foundations/tokens`;
+const TOKENS_WITHOUT_TABLE = `<html><body><main><h1>Tokens</h1><p>${LONG}</p><p>${LONG}</p></main></body></html>`;
+
+async function evaluateWith(resultFor) {
+  const renderer = fakeRenderer({ result: (url) => resultFor(url) });
+  return evaluateUrl(`${O}/`, { weights, rules, fetchImpl, ssrfCheck: null, crawlOptions: { renderer } });
+}
+const rendered = (url, body = RENDERED[url]) => ({ ok: true, body, finalUrl: url });
+
+test("D2 — leída y encontrada: los tokens cuentan como evidencia", async () => {
+  const { report } = await evaluateWith((url) => rendered(url));
+  assert.equal(report.dimensions.D2.status === "NOT_EVALUABLE", false);
+  assert.ok(report.dimensions.D2.score > 0, `D2 = ${report.dimensions.D2.score}`);
+  assert.ok(report.overview.coverage.tokens_detected >= 2);
+});
+
+test("D2 — leída y no encontrada: es una ausencia real y vale 0", async () => {
+  const { report } = await evaluateWith((url) => rendered(url, url === TOKENS_URL ? TOKENS_WITHOUT_TABLE : RENDERED[url]));
+  assert.equal(report.dimensions.D2.status, "EVALUATED");
+  assert.equal(report.dimensions.D2.score, 0);
+});
+
+test("D2 — no se pudo leer: queda no evaluable, no en 0", async () => {
+  for (const problem of ["RENDER_TIMEOUT", "RENDER_FAILED", "TIME_LIMIT"]) {
+    const { report, crawlResult } = await evaluateWith((url) => (url === TOKENS_URL ? { ok: false, error: problem } : rendered(url)));
+    assert.equal(report.dimensions.D2.status, "NOT_EVALUABLE", problem);
+    assert.equal(report.dimensions.D2.score, null, problem);
+    // La página queda registrada con el motivo, no como si no existiera.
+    assert.equal(crawlResult.pages.find((p) => p.url === TOKENS_URL).render_problem, problem);
+    // Y las dimensiones que sí se leyeron no se ven afectadas.
+    assert.ok(report.dimensions.D4.score > 0);
+  }
+});
+
+test("componentes — una página que no se pudo leer se excluye; una leída sin el dato cuenta como ausencia", async () => {
+  const MODAL = `${O}/components/modal/usage`;
+  const BUTTON_PLAIN = `<html><body><main><h1>Button</h1><p>Buttons trigger an action. ${LONG}</p></main></body></html>`;
+
+  // Modal no se pudo leer: se evalúa solo Button y Modal no baja la nota.
+  const unread = await evaluateWith((url) => (url === MODAL ? { ok: false, error: "RENDER_TIMEOUT" } : rendered(url)));
+  assert.equal(unread.report.dimensions.D3.coverage.components_detected, 2);
+  assert.equal(unread.report.dimensions.D3.coverage.components_scored, 1);
+  assert.equal(unread.report.dimensions.D4.sub_criteria.component_selection.status, "FOUND");
+
+  // Button se leyó y no dice cuándo usarlo: eso sí es "no encontrado".
+  const absent = await evaluateWith((url) => (url === MODAL ? { ok: false, error: "RENDER_TIMEOUT" } : rendered(url, url === `${O}/components/button/usage` ? BUTTON_PLAIN : RENDERED[url])));
+  assert.equal(absent.report.dimensions.D4.sub_criteria.component_selection.status, "NOT_FOUND");
+  assert.equal(absent.report.dimensions.D4.sub_criteria.component_selection.points, 0);
+
+  // Ninguna página se pudo leer: las dimensiones de contenido quedan sin nota.
+  const none = await evaluateWith(() => ({ ok: false, error: "RENDER_FAILED" }));
+  for (const d of ["D2", "D3", "D4", "D5", "D6"]) {
+    assert.equal(none.report.dimensions[d].status, "NOT_EVALUABLE", d);
+    assert.equal(none.report.dimensions[d].score, null, d);
+  }
+  assert.equal(none.report.overview.readiness_level, null, "con tan poca evidencia no se asigna nivel");
+});

@@ -1,5 +1,4 @@
 import { classifyUrl } from "../crawler/siteMap.js";
-import { visibleTextLength, MIN_READABLE_TEXT } from "./readPage.js";
 
 export function normalize(entryUrl, crawlResult, access, components, tokens, extras = {}) {
   const { manifests = [], schemas = [], evidence = [], versioningPresent = false, patterns = [] } = extras;
@@ -11,15 +10,7 @@ export function normalize(entryUrl, crawlResult, access, components, tokens, ext
   // Etapa 2: "no encontrado" solo si se buscó donde suelen estar los tokens
   // (páginas de fundamentos/tokens o un archivo de tokens). Si nunca se miró
   // ahí, no se puede afirmar nada: queda fuera de la nota.
-  // "Leída" quiere decir que traía contenido: una página de tokens que llegó
-  // vacía (se arma con JavaScript y no se pudo abrir) no es base para afirmar que
-  // el sistema no tiene tokens. Material 3 daba D2 = 0 "evaluado" con sus cuatro
-  // páginas de tokens vacías.
-  const isTokenPlace = (u) => classifyUrl(u) === "tokens" || /token/i.test(u);
-  const hasContent = (p) => !/html/.test(p.contentType || "") || visibleTextLength(p.body) >= MIN_READABLE_TEXT;
-  const tokenPages = crawlResult.pages.filter((p) => isTokenPlace(p.url));
-  const tokenPlacesRead = tokenPages.some(hasContent);
-  const tokenPlacesUnreadable = tokenPages.some((p) => !hasContent(p));
+  const tokenPlacesRead = crawlResult.pages.some((p) => classifyUrl(p.url) === "tokens" || /token/i.test(p.url));
   // Si alguna página de fundamentos/tokens NO se pudo abrir, no hay base para
   // afirmar que el sistema no tiene tokens. Carbon daba D2 = 0 con sus tres
   // páginas de fundamentos en 404: la única que sí se leyó era una paleta de
@@ -29,7 +20,7 @@ export function normalize(entryUrl, crawlResult, access, components, tokens, ext
   );
   let tokensStatus = "NOT_EVALUABLE";
   if (tokens.length > 0) tokensStatus = "FOUND";
-  else if (tokenPlacesRead && !tokenPlacesFailed && !tokenPlacesUnreadable) tokensStatus = "NOT_FOUND";
+  else if (tokenPlacesRead && !tokenPlacesFailed) tokensStatus = "NOT_FOUND";
 
   return {
     schema_version: "0.1",

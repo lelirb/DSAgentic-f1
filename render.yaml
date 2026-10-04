@@ -1,10 +1,10 @@
 services:
   - type: web
     name: agentic-ds
-    # Docker (no "node"): la imagen incluye Chromium, que hace falta para leer
-    # sitios que arman su contenido con JavaScript. Ver Dockerfile.
-    runtime: docker
+    runtime: node
     plan: free
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
-    healthCheckPath: /
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

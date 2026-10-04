@@ -7,7 +7,6 @@ import {
   buildSample, officialSourceKind, officialSourceKey, classifyUrl,
 } from "./siteMap.js";
 import { isLikelyComponentPage, componentIdentity } from "../extractor/detectComponents.js";
-import { visibleTextLength, MIN_READABLE_TEXT } from "../extractor/readPage.js";
 
 const DEFAULTS = {
   max_pages: 40,
@@ -28,16 +27,6 @@ const DEFAULTS = {
   // can eat the page budget (seen on Polaris). At most this many variants per
   // path, except Storybook-style URLs where the query IS the page (?path=, ?id=).
   max_query_variants_per_path: 3,
-  // Lector con navegador para páginas que arman su contenido con JavaScript
-  // (ver renderer.js). null = no se usa. Se inyecta para poder probarlo sin
-  // navegador real: basta un objeto con `available` y `render(url, opts)`.
-  renderer: null,
-  render_timeout: 20000,
-  // Abrir páginas con un navegador es mucho más lento que pedirlas. Cuando hace
-  // falta, el límite de tiempo del rastreo se amplía una vez en esta cantidad.
-  render_extra_ms: 0,
-  // Avisos de avance para la interfaz: on_progress({ step, ...datos }).
-  on_progress: null,
 };
 
 const MAX_REPLACEMENTS = 12;
@@ -59,22 +48,8 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
     limited: false, timeLimited: false,
     deadline: opts.max_duration_ms ? Date.now() + opts.max_duration_ms : Infinity,
     // Scope is anchored to where the entry URL actually LANDS (apex -> www, etc.).
-    ctx: {
-      scopeUrl: entryUrl, sources: createSourceLog(),
-      render: { used: false, rendered: 0, failed: 0, empty: 0, skipped: 0, unavailable: false, detail: null },
-    },
+    ctx: { scopeUrl: entryUrl, sources: createSourceLog() },
   };
-  const emit = (event) => {
-    if (typeof opts.on_progress !== "function") return;
-    try { opts.on_progress(event); } catch { /* un aviso de avance nunca debe romper el rastreo */ }
-  };
-  st.emit = emit;
-  st.ctx.emit = emit;
-  st.ctx.deadline = () => st.deadline;
-  st.ctx.onRenderStart = () => {
-    if (Number.isFinite(st.deadline) && opts.render_extra_ms > 0) st.deadline += opts.render_extra_ms;
-  };
-  emit({ step: "open" });
   st.ctx.sources.add({ url: entryUrl, role: "entry", depth: 0, status: "PENDING" });
 
   const discovery = {
@@ -92,7 +67,6 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
     discovery.root_url = root;
     let listing = { method: null, urls: [], url: null };
     if (opts.discovery !== false && root) {
-      emit({ step: "listing" });
       listing = await discoverListing(st, root, discovery);
       if (!listing.urls.length) {
         // Menú de navegación: de la raíz (si no es la entrada) y de la entrada.
@@ -131,14 +105,9 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
       discovery.method = listing.method;
       discovery.listing_url = listing.url;
       Object.assign(discovery, planned.counts);
-      emit({
-        step: "plan", method: listing.method, components_found: planned.counts.components_found,
-        components_sampled: planned.counts.components_sampled, pages: planned.sample.length,
-      });
       await readSample(st, planned.sample, listing.urls, planned.reserves);
     } else {
       // Plan B: recorrido de enlaces desde la entrada (comportamiento anterior).
-      emit({ step: "plan", method: "links", components_found: null, components_sampled: null, pages: null });
       queue = enqueueLinks(st, [entry]);
       queue = await bfs(st, queue);
       const names = new Set(st.pages.filter((p) => /html/.test(p.contentType || "") && isLikelyComponentPage(p.url)).map((p) => componentIdentity(p.url)));
@@ -148,7 +117,6 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
     // Lo que el sistema declara como suyo se lee; lo que no se pueda leer queda
     // marcado como declarado-no-leído, nunca como ausente.
     if (opts.official_sources !== false) {
-      if (discovery.official_sources.some((x) => x.kind === "storybook")) emit({ step: "official" });
       discovery.official_sources_read = await readOfficialSources(
         discovery.official_sources, opts, fetchImpl, st.ctx, st.pages, st.pageRecords
       );
@@ -171,20 +139,11 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
   const probeOpts = st.timeLimited ? { ...opts, request_timeout: Math.min(opts.request_timeout, 3000) } : opts;
   await probeAgentManifests(probeOpts, st.visited, st.pageRecords, st.pages, fetchImpl, st.ctx, discovery);
 
-  // Páginas que necesitaban navegador y no se llegaron a abrir por tiempo.
-  if (st.ctx.render.skipped > 0) {
-    st.limited = true;
-    st.timeLimited = true;
-  }
-
-  discovery.render = { ...st.ctx.render };
-
   return {
     pages: st.pages,
     pageRecords: st.pageRecords,
     sources: st.ctx.sources.list(),
     discovery,
-    render: { ...st.ctx.render },
     stats: {
       pages_found: st.pageRecords.length,
       pages_retrieved: st.pages.length,
@@ -265,7 +224,6 @@ async function bfs(st, queue) {
     const batchSize = Math.min(st.opts.concurrency, st.opts.max_pages - st.pages.length);
     const batch = queue.splice(0, batchSize);
     const results = await fetchBatch(st, batch);
-    st.emit({ step: "read", done: st.pages.length, total: null });
     queue.push(...enqueueLinks(st, results));
   }
   return queue;
@@ -329,7 +287,6 @@ async function readSample(st, sample, listedUrls, reserves) {
     if (outOfBudget(st)) break;
     const batch = queue.splice(0, Math.min(st.opts.concurrency, st.opts.max_pages - st.pages.length));
     const results = await fetchBatch(st, batch);
-    st.emit({ step: "read", done: st.pages.length, total: st.pages.length + queue.length });
     for (const r of results) {
       if (!r || !/html/.test(r.contentType || "") || !isLikelyComponentPage(r.url)) continue;
       const id = componentIdentity(r.url);
@@ -573,87 +530,14 @@ async function processOne({ url, depth, soft = false }, opts, visited, pageRecor
     if (recovered) { body = recovered.body; contentType = "text/html"; }
   }
 
-  // Última puerta: si la página sigue vacía, se abre con un navegador, que es
-  // como la vería una persona. Es lento, por eso solo se usa cuando hace falta.
-  let rendered = null;
-  let renderProblem = null;
-  if (opts.renderer && needsBrowser(contentType, body)) {
-    const out = await renderWithBrowser(finalUrl, opts, ctx);
-    if (out.body) {
-      rendered = out;
-      body = out.body;
-      contentType = "text/html";
-    } else {
-      renderProblem = out.problem;
-    }
-  }
-
   log && log.update(url, {
     status: "READ", reason: null, http_status: res.status, content_type: res.contentType || null,
     final_url: finalUrl !== url ? finalUrl : null,
     recovered_from: recovered ? recovered.url : null,
-    via: rendered ? "browser" : null,
-    render_problem: renderProblem,
     bytes: typeof body === "string" ? Buffer.byteLength(body, "utf-8") : 0,
   });
-  pages.push({
-    url: finalUrl, depth, contentType, body,
-    recovered_from: recovered ? recovered.url : null,
-    // `rendered`: el contenido solo existe después de ejecutar JavaScript.
-    rendered: Boolean(rendered),
-    render_problem: renderProblem,
-  });
+  pages.push({ url: finalUrl, depth, contentType, body, recovered_from: recovered ? recovered.url : null });
   return { url: finalUrl, depth, body, contentType };
-}
-
-// ¿La página llegó sin contenido legible? Mismo umbral que usa el extractor.
-export function needsBrowser(contentType, body) {
-  if (!/html/.test(contentType || "")) return false;
-  return isScriptShell(contentType, body) || visibleTextLength(body) < MIN_READABLE_TEXT;
-}
-
-// Devuelve { body } si el navegador obtuvo contenido legible, o { problem }.
-async function renderWithBrowser(url, opts, ctx) {
-  const r = ctx.render;
-  if (!opts.renderer.available) {
-    if (!r.unavailable) ctx.emit && ctx.emit({ step: "browser_unavailable" });
-    r.unavailable = true;
-    return { problem: "BROWSER_UNAVAILABLE" };
-  }
-  if (!r.used) {
-    r.used = true;
-    ctx.onRenderStart && ctx.onRenderStart();
-    ctx.emit && ctx.emit({ step: "js_detected" });
-  }
-  const out = await opts.renderer.render(url, {
-    timeoutMs: opts.render_timeout,
-    minText: MIN_READABLE_TEXT,
-    deadline: ctx.deadline ? ctx.deadline() : Infinity,
-  });
-  if (!out.ok) {
-    if (out.error === "TIME_LIMIT") r.skipped++;
-    else if (out.error === "BROWSER_UNAVAILABLE") {
-      if (!r.unavailable) ctx.emit && ctx.emit({ step: "browser_unavailable" });
-      r.unavailable = true;
-      r.detail = out.detail || null;
-    } else {
-      r.failed++;
-      r.detail = out.detail || out.error;
-    }
-    return { problem: out.error };
-  }
-  // Una página que al cargar se va a otro sitio no es la que se pidió.
-  if (out.finalUrl && !sameHost(out.finalUrl, url)) {
-    r.failed++;
-    return { problem: "REDIRECTED_OUTSIDE" };
-  }
-  if (visibleTextLength(out.body) < MIN_READABLE_TEXT) {
-    r.empty++;
-    return { problem: "STILL_EMPTY" };
-  }
-  r.rendered++;
-  ctx.emit && ctx.emit({ step: "render", done: r.rendered });
-  return { body: out.body };
 }
 
 // Pide las direcciones paralelas que declara el adaptador y devuelve la primera

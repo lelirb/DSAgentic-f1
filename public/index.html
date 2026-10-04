@@ -161,41 +161,6 @@
   .demo-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12.5px;color:var(--gray-300);margin-bottom:20px;}
   .demo-link{background:none;border:none;color:var(--indigo-700);font-size:12.5px;font-weight:600;padding:2px 0;text-decoration:underline;}
   .result-state{font-size:13.5px;color:var(--gray-500);padding:8px 0;}
-
-  /* ---------- Cargador de la evaluación (pantalla completa) ---------- */
-  body.is-evaluating{overflow:hidden;}
-  .eval-overlay{position:fixed;inset:0;z-index:1000;background:#F7F7FB;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .eval-overlay[hidden]{display:none;}
-  .eval-box{width:100%;max-width:560px;text-align:center;}
-  .eval-graph{width:240px;height:130px;display:block;margin:0 auto 44px;overflow:visible;}
-  .eval-graph .orbit{fill:none;stroke:#DFE3FA;stroke-width:1.2;}
-  .eval-graph .spoke{stroke:var(--indigo-600);stroke-width:2.4;stroke-linecap:round;}
-  .eval-graph .node{fill:var(--indigo-600);transform-box:fill-box;transform-origin:center;animation:eval-pulse 1.8s ease-in-out infinite;}
-  .eval-graph .core{fill:var(--ink-800);}
-  .eval-graph .spokes{transform-origin:120px 65px;animation:eval-turn 26s linear infinite;}
-  .eval-graph .dot{fill:var(--indigo-600);display:none;}
-  @supports (offset-path:path("M0,0")){
-    .eval-graph .dot{display:block;offset-rotate:0deg;animation:eval-orbit 11s linear infinite;}
-    .eval-graph .dot.outer{offset-path:path("M232,65 A112,52 0 1,1 8,65 A112,52 0 1,1 232,65");}
-    .eval-graph .dot.inner{offset-path:path("M202,65 A82,38 0 1,0 38,65 A82,38 0 1,0 202,65");animation-duration:8s;}
-  }
-  .eval-title{font-size:26px;font-weight:500;letter-spacing:-0.01em;color:var(--ink-900);margin:0 0 18px;}
-  .eval-step{font-size:17px;line-height:1.5;color:var(--ink-800);margin:0 auto;max-width:44ch;min-height:52px;text-align:center;text-wrap:balance;}
-  .eval-chev{color:var(--indigo-600);font-weight:600;margin-right:10px;}
-  .eval-spin{display:inline-block;vertical-align:-2px;margin-left:10px;width:15px;height:15px;border-radius:50%;border:2px solid var(--indigo-100);border-top-color:var(--indigo-600);animation:eval-turn .9s linear infinite;}
-  .eval-sub{font-size:13.5px;color:var(--gray-500);margin:14px auto 0;max-width:46ch;text-wrap:balance;}
-  @keyframes eval-turn{to{transform:rotate(360deg);}}
-  @keyframes eval-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.22);}}
-  @keyframes eval-orbit{to{offset-distance:100%;}}
-  @media (prefers-reduced-motion:reduce){
-    .eval-graph .node,.eval-graph .spokes,.eval-graph .dot{animation:none;}
-    .eval-spin{animation-duration:2.4s;}
-  }
-  @media (max-width:520px){
-    .eval-title{font-size:21px;}
-    .eval-step{font-size:15.5px;}
-    .eval-graph{margin-bottom:30px;}
-  }
   .result-error{font-size:13.5px;color:#B91C1C;background:#FEF2F2;border-radius:8px;padding:10px 12px;margin-bottom:12px;}
   .result-note{font-size:13.5px;color:var(--indigo-700);background:var(--indigo-050);border-radius:8px;padding:10px 12px;margin-bottom:14px;}
 
@@ -460,37 +425,6 @@
   </section>
 </main>
 
-<div id="eval-overlay" class="eval-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="eval-title">
-  <div class="eval-box">
-    <svg class="eval-graph" viewBox="0 0 240 130" aria-hidden="true" focusable="false">
-      <ellipse class="orbit" cx="120" cy="65" rx="112" ry="52"/>
-      <ellipse class="orbit" cx="120" cy="65" rx="82" ry="38"/>
-      <circle class="dot outer" r="4.2" style="animation-delay:-1s"/>
-      <circle class="dot outer" r="3" style="animation-delay:-6.5s"/>
-      <circle class="dot inner" r="3.4" style="animation-delay:-2s"/>
-      <circle class="dot inner" r="2.4" style="animation-delay:-5s"/>
-      <g class="spokes">
-        <line class="spoke" x1="120" y1="65" x2="162" y2="65"/>
-        <line class="spoke" x1="120" y1="65" x2="78" y2="65"/>
-        <line class="spoke" x1="120" y1="65" x2="139" y2="33"/>
-        <line class="spoke" x1="120" y1="65" x2="101" y2="33"/>
-        <line class="spoke" x1="120" y1="65" x2="142" y2="103"/>
-        <line class="spoke" x1="120" y1="65" x2="98" y2="103"/>
-        <circle class="node" cx="162" cy="65" r="7.5"/>
-        <circle class="node" cx="78" cy="65" r="7.5" style="animation-delay:-.3s"/>
-        <circle class="node" cx="139" cy="33" r="7.5" style="animation-delay:-.6s"/>
-        <circle class="node" cx="101" cy="33" r="7.5" style="animation-delay:-.9s"/>
-        <circle class="node" cx="142" cy="103" r="7.5" style="animation-delay:-1.2s"/>
-        <circle class="node" cx="98" cy="103" r="7.5" style="animation-delay:-1.5s"/>
-      </g>
-      <circle class="core" cx="120" cy="65" r="16"/>
-    </svg>
-    <h2 class="eval-title" id="eval-title" data-i18n="load.title">Evaluando Design System</h2>
-    <p class="eval-step" role="status" aria-live="polite"><span class="eval-chev" aria-hidden="true">›</span><span id="eval-step-text"></span><span class="eval-spin" aria-hidden="true"></span></p>
-    <p class="eval-sub" id="eval-sub"></p>
-  </div>
-</div>
-
 <script src="i18n.js"></script>
 <script>
   const dict = window.AgenticDSDict;
@@ -513,7 +447,6 @@
     document.getElementById('btn-es').setAttribute('aria-pressed', lang==='es');
     document.getElementById('btn-en').setAttribute('aria-pressed', lang==='en');
     try { localStorage.setItem('agentic-ds-lang', lang); } catch {}
-    if (typeof paintLoader === 'function') paintLoader();
   }
 
   document.getElementById('btn-es').addEventListener('click', ()=>setLang('es'));
@@ -542,170 +475,29 @@
     resultArea.innerHTML = `<p class="result-error">${escapeHtml(msg)}</p>`;
   }
 
-  // ---------- Cargador con avance ----------
-  // El pedido puede tardar un par de minutos cuando hay que abrir páginas con un
-  // navegador. Mientras tanto se consulta /api/progress y se muestra, en una
-  // línea, en qué paso va la evaluación.
-  const overlay = document.getElementById('eval-overlay');
-  const stepEl = document.getElementById('eval-step-text');
-  const subEl = document.getElementById('eval-sub');
-  const MIN_SHOW_MS = { js_detected: 3600, browser_unavailable: 3600, plan: 2400 };
-  const loader = { queue: [], current: null, shownAt: 0, slow: false, startedAt: 0, timer: null };
-
-  function fill(key, vars){
-    return t(key).replace(/\{(\w+)\}/g, (_, k) => (vars && vars[k] != null ? vars[k] : ''));
-  }
-  function eventText(ev){
-    switch (ev && ev.step){
-      case 'listing': return t('load.listing');
-      case 'plan': return ev.components_found != null
-        ? fill('load.plan', { n: ev.components_found, m: ev.components_sampled })
-        : t('load.plan.links');
-      case 'read': return ev.total
-        ? fill('load.read.total', { done: ev.done, total: ev.total })
-        : fill('load.read', { done: ev.done });
-      case 'js_detected': return t('load.js');
-      case 'render': return fill('load.render', { done: ev.done });
-      case 'browser_unavailable': return t('load.nobrowser');
-      case 'official': return t('load.official');
-      case 'extract': return t('load.extract');
-      case 'score': return t('load.score');
-      case 'done': return t('load.done');
-      default: return t('load.open');
-    }
-  }
-  function paintLoader(){
-    if (overlay.hidden) return;
-    stepEl.textContent = eventText(loader.current);
-    const secs = Math.max(0, Math.round((Date.now() - loader.startedAt) / 1000));
-    subEl.textContent = t(loader.slow ? 'load.sub.slow' : 'load.sub.normal') + (secs >= 5 ? ' · ' + fill('load.elapsed', { s: secs }) : '');
-  }
-  function showEvent(ev){
-    loader.current = ev;
-    loader.shownAt = Date.now();
-    if (ev.step === 'js_detected') loader.slow = true;
-    paintLoader();
-  }
-  function tickLoader(){
-    const minShow = MIN_SHOW_MS[loader.current && loader.current.step] || 900;
-    if (loader.queue.length && Date.now() - loader.shownAt >= minShow){
-      let next = loader.queue.shift();
-      // Varios "leyendo página N" seguidos: basta con mostrar el último.
-      while (loader.queue.length && (next.step === 'read' || next.step === 'render') && loader.queue[0].step === next.step){
-        next = loader.queue.shift();
-      }
-      showEvent(next);
-    } else {
-      paintLoader(); // actualiza el contador de segundos
-    }
-  }
-  function openLoader(){
-    loader.queue = []; loader.slow = false; loader.startedAt = Date.now();
-    overlay.hidden = false;
-    document.body.classList.add('is-evaluating');
-    showEvent({ step: 'open' });
-    loader.timer = setInterval(tickLoader, 300);
-  }
-  function closeLoader(){
-    clearInterval(loader.timer);
-    overlay.hidden = true;
-    document.body.classList.remove('is-evaluating');
-  }
-  function newProgressId(){
-    const a = new Uint8Array(16);
-    (window.crypto || window.msCrypto).getRandomValues(a);
-    return Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
-  }
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-  function startPolling(pid){
-    const state = { since: 0, stop: false };
-    (async () => {
-      while (!state.stop){
-        await sleep(1000);
-        if (state.stop) break;
-        try {
-          const r = await fetch('/api/progress?id=' + pid + '&since=' + state.since, { cache: 'no-store' });
-          if (!r.ok) continue;
-          const j = await r.json();
-          for (const ev of j.events || []) loader.queue.push(ev);
-          state.since = j.next || state.since;
-        } catch { /* se reintenta en la próxima vuelta */ }
-      }
-    })();
-    return state;
-  }
-  // Respaldo: si la conexión del pedido se cortó durante una evaluación larga,
-  // el servidor igual termina y guarda el resultado unos minutos.
-  async function recoverResult(pid, since){
-    const limit = Date.now() + 240000;
-    let cursor = since;
-    while (Date.now() < limit){
-      await sleep(1500);
-      try {
-        const r = await fetch('/api/progress?id=' + pid + '&result=1&since=' + cursor, { cache: 'no-store' });
-        if (r.status === 404) return null;
-        if (!r.ok) continue;
-        const j = await r.json();
-        for (const ev of j.events || []) loader.queue.push(ev);
-        cursor = j.next || cursor;
-        if (j.response) return j.response;
-      } catch { /* sigue intentando */ }
-    }
-    return null;
-  }
-
   async function runEvaluation(payload){
     setBusy(true);
-    const live = Boolean(payload.url);
-    const pid = live ? newProgressId() : null;
-    let polling = null;
-    if (live){
-      resultArea.innerHTML = '';
-      openLoader();
-      polling = startPolling(pid);
-    } else {
-      renderLoading();
-    }
+    renderLoading();
     try {
-      let ok = false, data = null, lost = false;
-      try {
-        const res = await fetch('/api/evaluate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(live ? { url: payload.url, progress_id: pid } : payload)
-        });
-        try { data = await res.json(); } catch { data = null; }
-        ok = res.ok;
-        // Una respuesta de error sin nuestro `code` viene del intermediario
-        // (tiempo de espera agotado), no del evaluador.
-        if (!res.ok && !(data && data.code)) lost = true;
-      } catch {
-        lost = true;
-      }
-      if (lost && pid){
-        if (polling) polling.stop = true;
-        const recovered = await recoverResult(pid, polling ? polling.since : 0);
-        if (recovered){ ok = recovered.http_status === 200; data = recovered.body; }
-      }
-      if (polling) polling.stop = true;
-      data = data || {};
-      if (!ok){
-        closeLoader();
+      const res = await fetch('/api/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      let data = {};
+      try { data = await res.json(); } catch { data = {}; }
+      if (!res.ok){
         // Server sends a stable `code`; show the translated, plain-language text.
         const key = data.code ? 'form.error.' + data.code : null;
         const known = key && dict[currentLang] && dict[currentLang][key] !== undefined;
         renderError(known ? t(key) : t('form.error.generic'));
         return;
       }
-      if (live){ loader.queue = []; showEvent({ step: 'done' }); }
       sessionStorage.setItem('agentic-ds-last-result', JSON.stringify({ report: data.report, mode: data.mode, sources: data.sources || null, discovery: data.discovery || null, crawl_summary: data.crawl_summary || null, evaluated_at: new Date().toISOString() }));
       window.location.href = 'results.html';
     } catch (err) {
-      closeLoader();
       renderError(t('form.error.generic'));
     } finally {
-      if (polling) polling.stop = true;
       setBusy(false);
     }
   }

@@ -76,18 +76,9 @@ function isPrivateIPv6(ip) {
  */
 export async function assertPublicHost(urlString, { dnsLookup = dns.lookup } = {}) {
   const url = new URL(urlString);
-  await resolvePublicAddress(url.hostname, { dnsLookup });
-}
+  const hostname = url.hostname.replace(/^\[|\]$/g, ""); // strip IPv6 brackets, e.g. "[::1]" -> "::1"
 
-/**
- * Igual que assertPublicHost pero devuelve la dirección IP ya validada.
- * Quien se conecte a ESA dirección (y no vuelva a resolver el nombre) queda a
- * salvo del "DNS rebinding". Lo usa el proxy de salida del navegador.
- */
-export async function resolvePublicAddress(hostnameRaw, { dnsLookup = dns.lookup } = {}) {
-  const hostname = String(hostnameRaw).replace(/^\[|\]$/g, ""); // strip IPv6 brackets, e.g. "[::1]" -> "::1"
-
-  if (hostname === "localhost" || hostname.endsWith(".localhost")) {
+  if (hostname === "localhost") {
     throw new Error("Blocked: localhost is not an allowed target");
   }
 
@@ -96,7 +87,7 @@ export async function resolvePublicAddress(hostnameRaw, { dnsLookup = dns.lookup
     if ((ipFamily === 4 && isPrivateIPv4(hostname)) || (ipFamily === 6 && isPrivateIPv6(hostname))) {
       throw new Error(`Blocked: ${hostname} is a private/internal address`);
     }
-    return { address: hostname, family: ipFamily };
+    return;
   }
 
   let addresses;
@@ -116,6 +107,4 @@ export async function resolvePublicAddress(hostnameRaw, { dnsLookup = dns.lookup
       throw new Error(`Blocked: ${hostname} resolves to a private address (${address})`);
     }
   }
-  // Se prefiere IPv4: es lo que casi todos los hosts de despliegue enrutan.
-  return addresses.find((a) => a.family === 4) || addresses[0];
 }

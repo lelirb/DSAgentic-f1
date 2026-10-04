@@ -44,11 +44,7 @@ export function detectAccess(crawlResult, { tokens = [], components = [] } = {})
     (r) => (r.status === "CRAWLED" || r.status === "FAILED") && !isUtilityFile(r.url)
   );
   const readable = crawlResult.pages.filter(
-    // Una página que hubo que abrir con un navegador (`rendered`) NO cuenta: el
-    // criterio mide si el contenido llega sin ejecutar JavaScript, que es como
-    // lo pide la mayoría de los agentes. Ese contenido sí se usa para evaluar
-    // las demás dimensiones; aquí solo se registra la barrera de acceso.
-    (p) => !p.rendered && !isUtilityFile(p.url) && /html/.test(p.contentType || "") && visibleTextLength(p.body) >= MIN_READABLE_TEXT
+    (p) => !isUtilityFile(p.url) && /html/.test(p.contentType || "") && visibleTextLength(p.body) >= MIN_READABLE_TEXT
   );
   // Sin ninguna página de documentación intentada no se puede afirmar nada:
   // queda NOT_EVALUABLE (bandPoints devuelve null ante un valor desconocido).

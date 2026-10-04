@@ -647,3 +647,87 @@ puntos ni la rúbrica. Las demos producen las mismas cifras.
   original sigue diciendo 26/51/76.
 - Tabla "Design System → cómo entrega su contenido" (HTML completo, parcial,
   JavaScript) para el README, con pruebas reales, empezando por Material 3.
+
+# Leer sitios que dependen de JavaScript, con cargador de avance — 2026-10-03
+
+`npm test`: 140 pruebas (17 nuevas). Pesos, tablas de puntos y rúbrica sin cambios.
+Las pruebas con navegador real se saltan si la máquina no tiene Chromium.
+
+19. **Lector con navegador.** Cuando una página llega sin contenido legible
+    (menos de 200 caracteres en el `<body>`), y los adaptadores no la recuperan,
+    se abre con Chromium, se espera a que el contenido deje de cambiar y se lee
+    el DOM ya compuesto, incluido el shadow DOM abierto. Las páginas que ya
+    traen su contenido no pasan por el navegador. Una página a la vez; el
+    navegador se reinicia cada 15 páginas y se cierra tras 15 s sin uso.
+    Chromium se controla con un cliente propio del protocolo de depuración
+    (sin dependencias de npm), por `--remote-debugging-pipe`.
+    Si no hay Chromium o no arranca, el evaluador sigue como antes y el informe
+    lo dice. Si el modo de un solo proceso (menos memoria) no arranca o se cae,
+    pasa solo al modo de varios procesos.
+    Archivos: `crawler/renderer.js`, `crawler/browser/cdp.js`, `crawler/crawl.js`.
+
+20. **Proxy de salida.** Todo el tráfico del navegador pasa por un proxy local
+    que solo permite direcciones públicas, puertos 80 y 443, y se conecta a la
+    IP que validó. Tiene tope de bytes y de conexiones.
+    Archivos: `crawler/browser/egressProxy.js`, `crawler/ssrfGuard.js`
+    (`resolvePublicAddress`).
+
+21. **Tiempo.** Abrir páginas con navegador es lento. Cuando hace falta, el
+    límite del rastreo (45 s) se amplía una sola vez en `RENDER_EXTRA_MS`
+    (100 s por defecto). Lo que no alcanza a abrirse queda "no se pudo leer" y
+    el resultado se marca como limitado por tiempo.
+
+22. **D1 conserva la barrera de JavaScript.** `documentation_recoverability`
+    no cuenta las páginas que hubo que abrir con navegador: el criterio mide si
+    el contenido llega sin ejecutar JavaScript. Las demás dimensiones se evalúan
+    con el contenido cargado. Es una decisión de método (se puede revertir en
+    `detectAccess.js`).
+
+23. **D2 ya no marca "evaluado: 0" con páginas de tokens vacías.** Si alguna
+    página de tokens llegó sin contenido, D2 queda `NOT_EVALUABLE`. Visto en
+    Material 3: D2 = 0 con sus cuatro páginas de tokens vacías.
+    Archivo: `extractor/normalize.js`.
+
+24. **Cargador con avance.** Pantalla completa con el paso actual en una línea
+    ("Conectando…", "Encontramos 40 componentes…", "Este sitio arma su contenido
+    con JavaScript…", "Evaluando las 6 dimensiones…"). La página manda un
+    identificador aleatorio y consulta `GET /api/progress`. Si la conexión del
+    pedido principal se corta en una evaluación larga, la página recupera el
+    resultado por esa misma vía. Los avances viven en memoria, 4 minutos, con
+    tope de 20.
+    Archivos: `server.js`, `public/index.html`, `public/i18n.js`, `pipeline.js`.
+
+25. **Despliegue con Docker.** `render.yaml` pasa de `runtime: node` a
+    `runtime: docker` y se agrega `Dockerfile` (Node 22 + Chromium de Debian).
+    El entorno Node estándar de Render no trae navegador ni permite instalar
+    paquetes del sistema.
+
+26. **Informe.** Dice cuántas páginas se abrieron con navegador y, si alguna no
+    se pudo abrir, lo lista entre las razones de evaluación incompleta. El JSON
+    descargado incluye `crawl_summary.render` y `crawl_summary.browser`
+    (disponible o no, y el último error), para poder diagnosticar sin acceso al
+    servidor.
+
+27. **Español neutro**: restos de voseo en el informe, mensajes de error y README.
+
+**Revisión de seguridad (hecha por el mismo autor, sin revisor externo).**
+Corregido tras repasar el código con páginas hostiles reales:
+- una página que cuelga el navegador (`for(;;){}`) lo dejaba inservible para la
+  siguiente: ahora se cierra y se arranca uno limpio;
+- título, atributos o nodos de texto gigantes podían saltarse el tope del HTML
+  devuelto: ahora todo se recorta (1,5 millones de caracteres en total);
+- un mensaje enorme del navegador (por ejemplo `alert()` con un texto de 100 MB)
+  se acumulaba en memoria: tope de 16 MB y se cierra el navegador;
+- el arranque del navegador podía pasarse del límite de la evaluación;
+- ventanas emergentes, descargas, QUIC y resolución anticipada de nombres:
+  desactivados; direcciones finales que no sean http(s) (file:, chrome:, blob:)
+  se descartan;
+- el identificador de avance no se puede reutilizar, y al llenarse el registro
+  se descarta primero una evaluación terminada, no una en curso.
+
+**No verificado (no se puede desde el entorno de desarrollo):**
+- que el plan gratuito de Render (512 MB, 0,1 CPU) aguante el navegador. Medido
+  aquí: ~300 MB de pico en modo de un proceso, ~400 MB con varios, más ~80 MB
+  de Node;
+- que el `Dockerfile` construya en Render (no hay Docker en desarrollo);
+- el resultado contra Material 3, Fluent 2 u otro sitio real.

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { evaluate } from "./engine/src/evaluator/index.js";
 import { evaluateUrl } from "./engine/src/pipeline.js";
+import { createRenderer } from "./engine/src/crawler/renderer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -31,6 +32,77 @@ const rateLimitLog = new Map();
 // hold up to max_pages x 5MB in memory — enough to exhaust Render's free 512MB.
 const MAX_CONCURRENT_EVALUATIONS = Number(process.env.MAX_CONCURRENT_EVALUATIONS) || 2;
 let activeEvaluations = 0;
+
+// Lector con navegador para sitios que arman su contenido con JavaScript. Uno
+// solo para todo el proceso: abre una página a la vez. Si en el servidor no hay
+// un Chromium instalado, `available` es false y todo sigue como antes.
+// BROWSER_RENDERING=0 lo apaga sin tocar código.
+const renderer = process.env.BROWSER_RENDERING === "0" ? null : createRenderer();
+const RENDER_EXTRA_MS = Number(process.env.RENDER_EXTRA_MS) || 100_000;
+
+// ---------- avance de la evaluación ----------
+// Una evaluación con navegador puede tardar un par de minutos. La página manda un
+// identificador aleatorio con el pedido y consulta /api/progress para mostrar en
+// qué paso va. Se guarda en memoria, poco tiempo y con tope de cantidad.
+const PROGRESS_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
+const JOB_TTL_MS = 4 * 60_000;
+const MAX_JOBS = 20;
+const MAX_JOB_EVENTS = 200;
+const jobs = new Map();
+
+// Devuelve false si el identificador ya está en uso: no se reutiliza ni se pisa
+// el avance de otra evaluación.
+function jobStart(id) {
+  if (jobs.has(id)) return false;
+  if (jobs.size >= MAX_JOBS) {
+    // Se descarta primero una evaluación ya terminada (la más vieja). Solo si
+    // todas están en curso se descarta la más vieja a secas.
+    let victim = null;
+    for (const [key, job] of jobs) {
+      if (job.status !== "running") { victim = key; break; }
+    }
+    jobs.delete(victim ?? jobs.keys().next().value);
+  }
+  jobs.set(id, { createdAt: Date.now(), updatedAt: Date.now(), status: "running", events: [], response: null });
+  return true;
+}
+function jobEvent(id, event) {
+  const job = jobs.get(id);
+  if (!job || job.events.length >= MAX_JOB_EVENTS) return;
+  job.events.push({ ...event, t: Date.now() - job.createdAt });
+  job.updatedAt = Date.now();
+}
+function jobFinish(id, httpStatus, body) {
+  const job = jobs.get(id);
+  if (!job) return;
+  job.status = httpStatus === 200 ? "done" : "error";
+  job.response = { http_status: httpStatus, body };
+  job.updatedAt = Date.now();
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, job] of jobs) if (now - job.updatedAt > JOB_TTL_MS) jobs.delete(id);
+}, 30_000).unref();
+
+function handleProgress(req, res) {
+  let q;
+  try {
+    q = new URL(req.url, "http://localhost").searchParams;
+  } catch {
+    return sendJson(res, 400, { error: "Bad request", code: "BAD_REQUEST" });
+  }
+  const id = q.get("id") || "";
+  if (!PROGRESS_ID_RE.test(id)) return sendJson(res, 400, { error: "Bad id", code: "BAD_REQUEST" });
+  const job = jobs.get(id);
+  if (!job) return sendJson(res, 404, { status: "unknown", events: [], next: 0 });
+  const since = Math.max(0, Math.min(Number(q.get("since")) || 0, job.events.length));
+  const out = { status: job.status, events: job.events.slice(since), next: job.events.length };
+  // El resultado solo viaja por aquí si la página lo pide: es el respaldo por si
+  // la conexión del pedido principal se cortó durante una evaluación larga.
+  if (q.get("result") === "1" && job.response) out.response = job.response;
+  res.setHeader("Cache-Control", "no-store");
+  return sendJson(res, 200, out);
+}
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -99,6 +171,10 @@ function safeStaticPath(reqUrl) {
 const server = http.createServer(async (req, res) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
 
+  if (req.method === "GET" && typeof req.url === "string" && req.url.startsWith("/api/progress")) {
+    return handleProgress(req, res);
+  }
+
   if (req.method === "POST" && req.url === "/api/evaluate") {
     // The API only ever receives {"url": "..."} or {"demo": "..."}. Without a cap,
     // any client could stream an arbitrarily large body into memory.
@@ -116,7 +192,8 @@ const server = http.createServer(async (req, res) => {
     req.on("end", async () => {
       if (tooLarge) return;
       try {
-        const { url, demo } = JSON.parse(body || "{}");
+        const { url, demo, progress_id: progressIdRaw } = JSON.parse(body || "{}");
+        let progressId = typeof progressIdRaw === "string" && PROGRESS_ID_RE.test(progressIdRaw) ? progressIdRaw : null;
 
         if (demo) {
           if (!DEMO_FIXTURES.has(demo)) {
@@ -153,6 +230,11 @@ const server = http.createServer(async (req, res) => {
           }
 
           activeEvaluations++;
+          if (progressId && !jobStart(progressId)) progressId = null;
+          const finish = (status, payload) => {
+            if (progressId) jobFinish(progressId, status, payload);
+            return sendJson(res, status, payload);
+          };
           try {
             // evaluateUrl runs the SSRF guard (real DNS resolution) internally
             // before ever fetching anything from this URL.
@@ -162,9 +244,12 @@ const server = http.createServer(async (req, res) => {
               crawlOptions: {
                 max_pages: 45, max_depth: 2, request_timeout: 8000, concurrency: 4,
                 max_duration_ms: 45000,
+                renderer, render_timeout: 25000, render_extra_ms: RENDER_EXTRA_MS,
+                on_progress: progressId ? (event) => jobEvent(progressId, event) : null,
               },
             });
-            return sendJson(res, 200, {
+            const browser = renderer ? renderer.info() : null;
+            return finish(200, {
               report,
               mode: "live",
               crawl_summary: {
@@ -173,6 +258,10 @@ const server = http.createServer(async (req, res) => {
                 pages_failed: crawlResult.stats.pages_failed,
                 crawl_limited: crawlResult.stats.crawl_limited,
                 time_limited: crawlResult.stats.time_limited,
+                // Diagnóstico del lector con navegador (sirve para saber, desde el
+                // archivo descargado, si el navegador estaba instalado y qué falló).
+                render: crawlResult.render || null,
+                browser: browser ? { available: browser.available, executable: browser.executable, last_error: browser.last_error } : { available: false, executable: null, last_error: "disabled" },
               },
               sources: summarizeSources(url, sources),
               discovery: publicDiscovery(crawlResult.discovery),
@@ -181,7 +270,7 @@ const server = http.createServer(async (req, res) => {
             const message = err.message || "";
             const { status, code } = classifyError(message);
             if (status === 500) console.error("[evaluate error]", err);
-            return sendJson(res, status, { error: status === 500 ? "Evaluation failed" : message, code });
+            return finish(status, { error: status === 500 ? "Evaluation failed" : message, code });
           } finally {
             activeEvaluations--;
           }
@@ -228,8 +317,9 @@ export function summarizeSources(entryUrl, sources = []) {
   const truncated = {};
   for (const [status, list] of Object.entries(byStatus)) {
     const cap = status === "READ" || status === "FAILED" || status === "NOT_PRESENT" ? Infinity : SOURCES_PER_STATUS_CAP;
-    items.push(...list.slice(0, cap).map(({ url, role, status: st, reason, http_status, final_url, used_as }) => ({
+    items.push(...list.slice(0, cap).map(({ url, role, status: st, reason, http_status, final_url, used_as, via, render_problem }) => ({
       url, role, status: st, reason, http_status, final_url, used_as: used_as || [],
+      via: via || null, render_problem: render_problem || null,
     })));
     if (list.length > cap) truncated[status] = list.length - cap;
   }
@@ -245,6 +335,11 @@ export function publicDiscovery(d) {
     patterns_found: d.patterns_found, token_pages_found: d.token_pages_found,
     official_sources: (d.official_sources || []).map(({ url, kind }) => ({ url, kind })),
     probed: d.probed,
+    // Cuántas páginas hubo que abrir con un navegador y cuántas no se pudo.
+    render: d.render ? {
+      used: Boolean(d.render.used), rendered: d.render.rendered || 0, failed: d.render.failed || 0,
+      empty: d.render.empty || 0, skipped: d.render.skipped || 0, unavailable: Boolean(d.render.unavailable),
+    } : null,
   };
 }
 

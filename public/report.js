@@ -116,6 +116,11 @@
     const u = T().ui, out = [];
     if (ctx.limited) out.push(u.rLimited);
     if (ctx.failed) out.push(fmt(u.rFailed, { n: ctx.failed }));
+    // Páginas que dependen de JavaScript y no se pudieron abrir con el navegador.
+    const rn = ctx.discovery && ctx.discovery.render;
+    if (rn && rn.unavailable && u.rJsUnavailable) out.push(u.rJsUnavailable);
+    const jsMissed = rn ? (rn.failed || 0) + (rn.skipped || 0) + (rn.empty || 0) : 0;
+    if (rn && !rn.unavailable && jsMissed > 0 && u.rJsPartial) out.push(fmt(u.rJsPartial, { n: jsMissed }));
     // Solo si el tope bajó el número. Los informes guardados antes de este campo
     // no lo traen: para ellos se mantiene el criterio anterior (`applied`).
     const g = report.gate;
@@ -230,7 +235,8 @@
     txt = txt.charAt(0).toUpperCase() + txt.slice(1);
     const off = (d.official_sources || []).map((o) => u.officialKind[o.kind] || o.kind);
     const offTxt = off.length ? " " + fmt(u.discOfficial, { list: [...new Set(off)].join(", ") }) : "";
-    return `<p class="discovery measure">${esc(txt)}${how ? ` ${esc(how)}` : ""}${esc(offTxt)}</p>`;
+    const rn = d.render && d.render.rendered > 0 && u.discRendered ? " " + fmt(u.discRendered, { n: d.render.rendered }) : "";
+    return `<p class="discovery measure">${esc(txt)}${how ? ` ${esc(how)}` : ""}${esc(offTxt)}${esc(rn)}</p>`;
   }
 
   // ---------- cadena de capacidades ----------

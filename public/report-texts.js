@@ -130,7 +130,7 @@
       downloadPdf: "Descargar PDF",
       downloadJson: "Descargar datos (JSON)",
       downloadNote:
-        "No guardamos tu resultado: si cerrás esta pestaña, se pierde. Para conservarlo, descargalo; el archivo se genera en tu navegador. Para el PDF, elegí «Guardar como PDF» en la ventana que se abre.",
+        "No guardamos tu resultado: si cierras esta pestaña, se pierde. Para conservarlo, descárgalo; el archivo se genera en tu navegador. Para el PDF, elige «Guardar como PDF» en la ventana que se abre.",
       printHead: "Informe de preparación de un Design System para agentes de IA",
       evaluatedAt: "Evaluado el {date}",
       printFooter:
@@ -142,7 +142,7 @@
       usedTabUnused: "otra pestaña de «{name}»",
       usedPattern: "leída como patrón «{name}»",
       sourcesDemo: "Es un resultado de demostración: no se leyó ningún sitio real.",
-      sourcesUnavailable: "Este resultado no incluye la lista de lo revisado. Volvé a evaluar la dirección para verla.",
+      sourcesUnavailable: "Este resultado no incluye la lista de lo revisado. Vuelve a evaluar la dirección para verla.",
       sourcesMore: "Y {n} más que no se muestran.",
       sourcesNotYet:
         "El evaluador busca llms.txt y sitemap.xml, usa el menú si no los encuentra y lee una muestra ordenada del sistema. Todavía no lee Storybook, el repositorio de código ni los paquetes publicados: solo los anota si la documentación los enlaza.",
@@ -210,6 +210,9 @@
         links: "No encontramos una lista de páginas, así que seguimos los enlaces desde la dirección pegada.",
       },
       discOfficial: "La documentación enlaza estas fuentes oficiales (todavía no se leen): {list}.",
+      discRendered: "Este sitio arma su contenido con JavaScript: para leerlo abrimos {n} página(s) con un navegador, como lo haría una persona.",
+      rJsUnavailable: "este sitio arma su contenido con JavaScript y el navegador del evaluador no estuvo disponible, así que esas páginas no se pudieron leer",
+      rJsPartial: "{n} página(s) que arman su contenido con JavaScript no se pudieron abrir (por tiempo o porque fallaron al cargar)",
       officialKind: { storybook: "Storybook", repository: "repositorio de código", package: "paquete publicado" },
       provisionalLead:
         "Solo se pudo revisar el {pct} % de lo que compone la nota. Con menos de la mitad no asignamos nivel: el número refleja lo revisado, pero no alcanza para una conclusión.",
@@ -438,8 +441,8 @@
 
       purpose_identification: { name: "Propósito del componente", found: "una frase al inicio de cada componente que explique para qué sirve", gap: "No todos los componentes declaran para qué sirven.", infer: "para qué sirven algunos componentes", fix: "Empezar cada página de componente con una frase que diga para qué sirve." },
       component_selection: { name: "Cuándo usarlo", found: "una sección que diga en qué situaciones concretas corresponde usar el componente", gap: "No todos los componentes indican explícitamente cuándo usarlos.", infer: "cuándo usar cada componente", fix: "Agregar a cada componente una sección «Cuándo usarlo» con casos concretos." },
-      disambiguation: { name: "Desambiguación", found: "una regla explícita que compare dos componentes parecidos y diga cuándo usar cada uno (por ejemplo, «usá Modal cuando..., usá Drawer cuando...»)", gap: "Hay componentes parecidos sin un criterio documentado para elegir entre ellos.", infer: "cómo elegir entre componentes parecidos", fix: "Explicar cuándo elegir cada uno de los componentes que se parecen (por ejemplo, modal o notificación).", na: "No se detectaron componentes parecidos entre sí, así que no hubo nada que desambiguar." },
-      restrictions: { name: "Restricciones de uso", found: "frases explícitas del tipo «no hagas X» o «evitá Y» junto a cada componente", gap: "No todos los componentes documentan restricciones de uso (qué no hacer).", infer: "algunas restricciones de uso", fix: "Agregar reglas concretas de lo que no se debe hacer con cada componente." },
+      disambiguation: { name: "Desambiguación", found: "una regla explícita que compare dos componentes parecidos y diga cuándo usar cada uno (por ejemplo, «usa Modal cuando..., usa Drawer cuando...»)", gap: "Hay componentes parecidos sin un criterio documentado para elegir entre ellos.", infer: "cómo elegir entre componentes parecidos", fix: "Explicar cuándo elegir cada uno de los componentes que se parecen (por ejemplo, modal o notificación).", na: "No se detectaron componentes parecidos entre sí, así que no hubo nada que desambiguar." },
+      restrictions: { name: "Restricciones de uso", found: "frases explícitas del tipo «no hagas X» o «evita Y» junto a cada componente", gap: "No todos los componentes documentan restricciones de uso (qué no hacer).", infer: "algunas restricciones de uso", fix: "Agregar reglas concretas de lo que no se debe hacer con cada componente." },
       justification: { name: "Cuándo no usarlo", found: "una sección que diga en qué situaciones NO corresponde usar el componente, idealmente sugiriendo qué usar en su lugar", gap: "No todos los componentes indican cuándo no usarlos.", infer: "cuándo no usar un componente", fix: "Agregar a cada componente una sección «Cuándo no usarlo», idealmente indicando qué usar en su lugar." },
 
       reuse_of_existing_components: { name: "Reutilización en patrones", found: "ejemplos de pantallas o flujos armados combinando los componentes ya documentados, no componentes nuevos inventados solo para el ejemplo", gap: "No se encontraron patrones que muestren cómo reutilizar los componentes existentes.", infer: "cómo reutilizar componentes en estructuras más grandes", fix: "Documentar patrones indicando qué componentes del sistema usan." },
@@ -653,6 +656,9 @@
         links: "We didn't find a page list, so we followed links from the address you entered.",
       },
       discOfficial: "The documentation links to these official sources (not read yet): {list}.",
+      discRendered: "This site builds its content with JavaScript: to read it we opened {n} page(s) in a browser, the way a person would.",
+      rJsUnavailable: "this site builds its content with JavaScript and the evaluator's browser was not available, so those pages couldn't be read",
+      rJsPartial: "{n} page(s) that build their content with JavaScript couldn't be opened (ran out of time or failed to load)",
       officialKind: { storybook: "Storybook", repository: "code repository", package: "published package" },
       provisionalLead:
         "Only {pct}% of what makes up the score could be reviewed. With less than half we don't assign a level: the number reflects what was reviewed, but it isn't enough for a conclusion.",

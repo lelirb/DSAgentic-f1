@@ -52,6 +52,11 @@ export async function evaluateUrl(
       : "FAILED";
     throw new Error(`UNREACHABLE:${kind} (${r})`);
   }
+  const progress = (event) => {
+    if (typeof crawlOptions.on_progress !== "function") return;
+    try { crawlOptions.on_progress(event); } catch { /* un aviso de avance nunca rompe la evaluación */ }
+  };
+  progress({ step: "extract" });
   const evidenceCollector = createEvidenceCollector();
 
   const components = detectComponents(crawlResult, evidenceCollector);
@@ -72,6 +77,7 @@ export async function evaluateUrl(
     versioningPresent,
     patterns,
   });
+  progress({ step: "score" });
   const report = evaluate(normalized, { weights, rules });
   const sources = annotateSourceUsage(crawlResult.sources || [], {
     components, tokens, manifests, schemas, patterns, evidence: evidenceCollector.items,

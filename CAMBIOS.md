@@ -961,3 +961,24 @@ Sin resolver, pendiente de decisión de la dueña:
 Es una prueba. Sin verificar en producción: que la conexión aguante 4 minutos
 abierta en Render Free y cuántas páginas alcanza a leer. Para volver atrás:
 variable `RENDER_EXTRA_MS=100000` en Render, sin tocar el código.
+
+## Cargador: tres etapas, barra y contador — 2026-10-05
+
+Pedido de la dueña: "¿debería haber una barra de porcentaje? Ahorita tenemos
+mensajitos a mil". Se hizo sobre su versión con Niko animado; la imagen, su
+animación y su versión quieta no se tocaron.
+
+51. **Tres etapas fijas** en lugar de una frase por aviso: "Buscando el
+    sistema", "Leyendo páginas", "Evaluando". Es lo único que se anuncia a
+    lectores de pantalla.
+52. **Barra de avance** con dos datos reales: páginas leídas sobre las planeadas
+    y tiempo usado sobre el máximo (se toma el mayor, porque la lectura termina
+    con lo que pase primero). Nunca retrocede. El servidor envía el tiempo
+    disponible en el aviso `open` (`budget_ms`, `extra_ms`).
+53. **Contador y reloj** bajo la barra ("12 de 36 páginas", "1:24 / 4:00").
+54. **Aviso de JavaScript fijo** en un recuadro, con el texto ya aprobado.
+55. **Altura reservada** para que Niko no cambie de lugar al aparecer el aviso.
+
+Sin verificar: solo se probó con avisos simulados. Falta verla con una
+evaluación real (ritmo y orden de los avisos del servidor). La dueña decidió
+probarlo directamente en producción.

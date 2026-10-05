@@ -92,7 +92,8 @@ export async function crawl(entryUrl, options = {}, fetchImpl = fetch) {
   st.ctx.onRenderStart = () => {
     if (Number.isFinite(st.deadline) && opts.render_extra_ms > 0) st.deadline += opts.render_extra_ms;
   };
-  emit({ step: "open" });
+  // El cargador usa estos dos tiempos para su barra de avance.
+  emit({ step: "open", budget_ms: opts.max_duration_ms || null, extra_ms: opts.render_extra_ms || 0 });
   st.ctx.sources.add({ url: entryUrl, role: "entry", depth: 0, status: "PENDING" });
 
   const discovery = {

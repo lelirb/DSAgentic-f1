@@ -223,7 +223,6 @@
   /* ---------- resultado primero: bloques plegables ---------- */
   .verdict .source{margin-bottom:18px;}
   .verdict>:last-child{margin-bottom:0;}
-  .verdict{margin-top:24px;}
   .verdict-more{margin-top:16px;}
   .verdict-more .cap-lists{border-top:none;margin-top:0;padding-top:0;}
   details.incomplete-box>summary{cursor:pointer;font-weight:600;}
@@ -236,7 +235,14 @@
   details.about{padding-top:12px;padding-bottom:12px;}
   details.about>summary.group{cursor:pointer;margin:0;}
   details.about[open]>summary.group{margin-bottom:10px;}
-  .report-actions{margin:20px 0 0;}
+  /* Descarga: arriba, en una fila compacta, para no empujar el resultado. */
+  .report-actions{margin:16px 0 12px;gap:6px 16px;}
+  .ra-btn{white-space:nowrap;}
+  .ra-note{font-size:12.5px;line-height:1.4;}
+  @media (max-width:480px){
+    .ra-btn{padding:8px 12px;font-size:13px;}
+    .ra-note{flex-basis:100%;}
+  }
   .discovery{margin:6px 0 14px;font-size:15px;color:var(--ink-600);background:var(--indigo-050);border-radius:8px;padding:10px 14px;}
 </style>
 </head>

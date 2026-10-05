@@ -822,9 +822,11 @@ Pedido de la dueña: "mucho texto", "tremendo párrafo antes de ver el resultado
 Solo cambia la presentación (`public/report.js`, `public/report-texts.js`,
 `public/results.html`). No se tocó puntuación, reglas ni datos del informe.
 
-37. **Orden nuevo de la página:** puntaje, nivel y frase resumen; las
-    dimensiones con su número; botones de descarga; listas de capacidades y
-    conclusión; después el detalle de cada dimensión.
+37. **Orden nuevo de la página:** botones de descarga en una fila compacta;
+    puntaje, nivel y frase resumen; las dimensiones con su número; listas de
+    capacidades y conclusión; después el detalle de cada dimensión. (Los
+    botones se probaron debajo de las dimensiones y la dueña pidió devolverlos
+    arriba: "no puede ir abajo".)
 38. **Plegado (se abre con un toque; el PDF lo incluye todo):** el párrafo
     "Empezamos por…" junto con las dos notas sobre el puntaje ("Cómo se hizo
     esta evaluación"), los motivos de evaluación incompleta ("Por qué es

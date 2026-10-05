@@ -202,9 +202,11 @@ test("el resultado va primero: número y nivel antes que los textos de contexto"
   const html = renderReport(withCriteria("poor", MOSTLY_UNREADABLE), "live");
   const score = html.indexOf('class="score-line"');
   assert.ok(score > -1);
-  for (const later of ['class="chain"', 'class="report-actions"', 'class="cap-lists"', 'class="fold"', 'id="dim-D1"'])
+  for (const later of ['class="chain"', 'class="cap-lists"', 'class="fold"', 'id="dim-D1"'])
     assert.ok(html.indexOf(later) > score, later + " debe ir después del puntaje");
   assert.ok(html.indexOf('class="chain"') < html.indexOf('class="cap-lists"'), "las dimensiones se ven antes que las listas");
+  // Los botones de descarga van arriba de todo (decisión de la dueña), en una fila.
+  assert.ok(html.indexOf('class="report-actions"') < score, "la descarga va antes del puntaje");
   // Los motivos de evaluación incompleta y el texto general de cada dimensión van plegados.
   assert.ok(html.includes('<details class="incomplete-box measure"><summary>Por qué es incompleta ('));
   assert.ok(html.includes('<details class="about">'));

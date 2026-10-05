@@ -679,9 +679,9 @@
     const verdict = renderVerdict(report, ctx, analysis, reasons);
     root.innerHTML =
       renderPrintHead(stored) +
+      renderActions() +
       verdict.top +
       renderChain(report, analysis, ctx.mode === "live") +
-      renderActions() +
       verdict.more +
       `<h2 class="section">${esc(T().ui.dimsTitle)}</h2>` +
       ALL.map((k) => renderDim(k, report, analysis, ctx, findings)).join("") +

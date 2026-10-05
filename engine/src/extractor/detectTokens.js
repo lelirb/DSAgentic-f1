@@ -26,8 +26,13 @@ export function detectTokens(crawlResult, evidenceCollector) {
   // Etapa 4: tablas de tokens en páginas de fundamentos (nombre + valor).
   const htmlPages = crawlResult.pages.filter((p) => /html/.test(p.contentType || "") && classifyUrl(p.url) === "tokens");
   const seen = new Set(tokens.map((t) => t.name));
+  const fromHtml = new Map();
   for (const page of htmlPages) {
     for (const row of tokensFromTables(extractTables(page.body))) {
+      // El mismo token puede aparecer en dos páginas (resumen y tabla completa):
+      // si la segunda trae para qué sirve y la primera no, se completa.
+      const known = fromHtml.get(row.name);
+      if (known && !known.intent && row.description) known.intent = row.description;
       if (seen.has(row.name)) continue;
       seen.add(row.name);
       const id = evidenceCollector.add({
@@ -35,11 +40,13 @@ export function detectTokens(crawlResult, evidenceCollector) {
         type: "token", component: null, section: row.name, retrieval_method: "html", confidence: 0.6,
       });
       const alias = /^(\$|--|\{|var\()/.test(row.value) ? row.value.replace(/^var\(|\)$|[{}]/g, "") : null;
-      tokens.push({
+      const token = {
         name: row.name, type: guessType(`${row.name} ${page.url}`), value: row.value,
         category: alias ? "semantic" : null, alias_of: alias, mode: null, intent: row.description || null,
         evidence_ids: [id], origin: "html_table",
-      });
+      };
+      fromHtml.set(row.name, token);
+      tokens.push(token);
     }
   }
   return tokens;

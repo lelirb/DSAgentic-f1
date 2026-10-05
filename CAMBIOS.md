@@ -849,3 +849,39 @@ Fluent leyó todas sus páginas sin navegador y sacó 20, así que su nota no
 depende del servidor; en Carbon, D2 quedó en 0 porque la muestra de páginas de
 tokens no incluyó las de color, espaciado ni tipografía. Pendiente: revisar qué
 reconoce el evaluador en lo que ya lee.
+
+## Tokens: elegir bien las páginas y reconocer más tablas — 2026-10-05
+
+Carbon y Fluent 2 daban D2 = 0 en producción teniendo sus tokens publicados en
+tablas. Se abrieron sus páginas para ver el formato real. No cambia la rúbrica
+ni los pesos: cambia qué páginas se leen y qué tablas se reconocen.
+
+40. **Qué páginas de tokens se leen** (`siteMap.js`). Antes: las que tenían
+    "token" en la dirección y después orden alfabético. En Carbon eso elegía
+    "carbon-mcp/token-conservation" (tokens de IA), "color-palettes" de
+    data-viz, "2x-grid" y "accessibility". Ahora: primero las que dicen
+    "tokens", después color / espaciado / temas / tipografía, después
+    elevación, movimiento y similares, y al final el resto de fundamentos.
+41. **"Token" que no es de diseño.** Una dirección con "token" junto a `mcp`,
+    `llm`, `ai`, `auth`, `oauth`, `access`, `bearer`, `jwt`, `csrf`, `session` o
+    `prompt` no cuenta como página de tokens (`isDesignTokenUrl`).
+42. **Pestaña "Tokens".** Si una página de fundamentos enlaza su propia
+    pestaña "tokens" (Carbon: `/foundations/color/tokens`), se lee. Máximo 2.
+43. **Tablas reconocidas** (`readPage.js`):
+    - nombres de una sola palabra con prefijo (`$background`) y camelCase
+      (`colorNeutralBackground1`), además de los de guiones o puntos;
+    - columnas de valor "Hex value", "rem", "px", "Light", "Dark" y parecidas;
+    - "Role" / "Usage" como descripción del token (cuenta en intención);
+    - tablas agrupadas: una fila con el nombre y la siguiente con los valores;
+    - el texto de los botones dentro de una celda ya no se lee como contenido.
+44. **Token repetido en dos páginas:** si la segunda trae la descripción y la
+    primera no, se completa.
+
+Pruebas: `tests/token-reading.test.js` (11). Total: 167.
+
+Sin verificar:
+- **Fluent 2.** La forma de su tabla se reconstruyó a partir de una versión en
+  texto de la página; no se pudo descargar el HTML original desde el entorno de
+  trabajo. Puede necesitar un ajuste después de probar en producción.
+- **Material 3.** Sin cambios: se queda sin tiempo antes de llegar a los tokens.
+- Los puntajes resultantes en producción.

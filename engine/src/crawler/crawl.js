@@ -4,7 +4,7 @@ import { readOfficialSources } from "./officialSources.js";
 import { extractLinks, isInScope, normalizeUrl } from "./discovery.js";
 import {
   findDsRoot, parseLlmsTxt, parseSitemap, parseRobotsSitemaps, extractNavLinks,
-  buildSample, officialSourceKind, officialSourceKey, classifyUrl,
+  buildSample, officialSourceKind, officialSourceKey, classifyUrl, isDesignTokenUrl,
 } from "./siteMap.js";
 import { isLikelyComponentPage, componentIdentity } from "../extractor/detectComponents.js";
 import { visibleTextLength, MIN_READABLE_TEXT } from "../extractor/readPage.js";
@@ -41,6 +41,23 @@ const DEFAULTS = {
 };
 
 const MAX_REPLACEMENTS = 12;
+// Pestañas "Tokens" que se siguen desde páginas de fundamentos ya leídas.
+const MAX_TOKEN_TABS = 2;
+
+// ¿`link` es la pestaña "Tokens" de la página `pageUrl`? Misma carpeta (o hija
+// directa) y último tramo "tokens". Carbon: /foundations/color/overview →
+// /foundations/color/tokens, que es donde está la tabla completa.
+function isTokenTabOf(link, pageUrl) {
+  try {
+    const l = new URL(link).pathname.replace(/\/+$/, "").toLowerCase();
+    const p = new URL(pageUrl).pathname.replace(/\/+$/, "").toLowerCase();
+    if (!/\/(design-)?tokens?$/.test(l) || l === p) return false;
+    const dir = (x) => x.slice(0, x.lastIndexOf("/"));
+    return dir(l) === p || dir(l) === dir(p);
+  } catch {
+    return false;
+  }
+}
 
 const QUERY_IS_PAGE = /(^|&)(path|id|story|selectedKind)=/i;
 
@@ -320,6 +337,7 @@ async function readSample(st, sample, listedUrls, reserves) {
   for (const u of sample) {
     if (isLikelyComponentPage(u)) tabsPerId.set(componentIdentity(u), (tabsPerId.get(componentIdentity(u)) || 0) + 1);
   }
+  let tokenTabs = 0;
   let queue = sample.filter((u) => !st.visited.has(u)).map((url) => ({ url, depth: 1 }));
   for (const item of queue) {
     st.queued.add(item.url);
@@ -331,7 +349,21 @@ async function readSample(st, sample, listedUrls, reserves) {
     const results = await fetchBatch(st, batch);
     st.emit({ step: "read", done: st.pages.length, total: st.pages.length + queue.length });
     for (const r of results) {
-      if (!r || !/html/.test(r.contentType || "") || !isLikelyComponentPage(r.url)) continue;
+      if (!r || !/html/.test(r.contentType || "")) continue;
+      if (!isLikelyComponentPage(r.url)) {
+        // Página de fundamentos: si enlaza su propia pestaña "Tokens", se lee.
+        if (tokenTabs >= MAX_TOKEN_TABS || classifyUrl(r.url) !== "tokens") continue;
+        for (const link of extractLinks(r.body, r.url)) {
+          if (tokenTabs >= MAX_TOKEN_TABS) break;
+          if (st.queued.has(link) || st.visited.has(link) || !sameHost(link, st.ctx.scopeUrl)) continue;
+          if (!isDesignTokenUrl(link) || !isTokenTabOf(link, r.url)) continue;
+          tokenTabs += 1;
+          st.queued.add(link);
+          queue.push({ url: link, depth: 2 });
+          sources.add({ url: link, role: "link", depth: 2, status: "PENDING", found_on: r.url });
+        }
+        continue;
+      }
       const id = componentIdentity(r.url);
       if (!chosenIds.has(id)) continue;
       for (const link of extractLinks(r.body, r.url)) {

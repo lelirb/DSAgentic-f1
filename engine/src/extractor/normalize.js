@@ -1,4 +1,4 @@
-import { classifyUrl } from "../crawler/siteMap.js";
+import { classifyUrl, isDesignTokenUrl } from "../crawler/siteMap.js";
 import { visibleTextLength, MIN_READABLE_TEXT } from "./readPage.js";
 
 export function normalize(entryUrl, crawlResult, access, components, tokens, extras = {}) {
@@ -15,7 +15,7 @@ export function normalize(entryUrl, crawlResult, access, components, tokens, ext
   // vacía (se arma con JavaScript y no se pudo abrir) no es base para afirmar que
   // el sistema no tiene tokens. Material 3 daba D2 = 0 "evaluado" con sus cuatro
   // páginas de tokens vacías.
-  const isTokenPlace = (u) => classifyUrl(u) === "tokens" || /token/i.test(u);
+  const isTokenPlace = (u) => classifyUrl(u) === "tokens" || isDesignTokenUrl(u);
   const hasContent = (p) => !/html/.test(p.contentType || "") || visibleTextLength(p.body) >= MIN_READABLE_TEXT;
   const tokenPages = crawlResult.pages.filter((p) => isTokenPlace(p.url));
   const tokenPlacesRead = tokenPages.some(hasContent);
@@ -25,7 +25,7 @@ export function normalize(entryUrl, crawlResult, access, components, tokens, ext
   // páginas de fundamentos en 404: la única que sí se leyó era una paleta de
   // data-viz que el clasificador cuenta como "tokens" por contener "color".
   const tokenPlacesFailed = crawlResult.pageRecords.some(
-    (r) => r.status === "FAILED" && (classifyUrl(r.url) === "tokens" || /token/i.test(r.url))
+    (r) => r.status === "FAILED" && isTokenPlace(r.url)
   );
   let tokensStatus = "NOT_EVALUABLE";
   if (tokens.length > 0) tokensStatus = "FOUND";

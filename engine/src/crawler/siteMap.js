@@ -146,13 +146,48 @@ export function officialSourceKey(url, kind) {
 
 // ---------- clasificación y muestra ----------
 
-export function classifyUrl(url) {
-  let p;
+// "token" también nombra cosas que NO son tokens de diseño: los tokens que
+// consume un modelo de IA o los de acceso a una API. Visto en producción con
+// Carbon: "/getting-started/carbon-mcp/token-conservation" (tokens de IA) entró
+// en la muestra como página de tokens y dejó fuera la de color.
+const NOT_DESIGN_TOKEN_RE = /(^|[\/_-])(mcp|llms?|ai|auth|oauth|access|bearer|jwt|csrf|session|prompts?)([\/_-]|$)/;
+const TOKEN_WORD_RE = /tokens?/;
+const FOUNDATION_WORD_RE = /foundations?|fundamentos|colou?rs?|spacing|espaciado|typography|tipograf|elevation|elevaci|motion|movimiento|themes?|temas?|radius|shadows?|sombras?/;
+
+function pathOf(url) {
   try {
-    p = new URL(url).pathname.toLowerCase();
+    return new URL(url).pathname.toLowerCase();
   } catch {
-    return "other";
+    return null;
   }
+}
+
+// ¿La dirección habla de tokens DE DISEÑO?
+export function isDesignTokenUrl(url) {
+  const p = pathOf(url);
+  return p !== null && TOKEN_WORD_RE.test(p) && !NOT_DESIGN_TOKEN_RE.test(p);
+}
+
+// Orden de preferencia entre páginas de tokens/fundamentos (menor = primero).
+// Antes se tomaban por orden alfabético y la muestra de Carbon quedaba en
+// "2x-grid" y "accessibility" en vez de color, espaciado y tipografía.
+const CORE_SEGMENT_RE = /^(colou?rs?|colores|spacing|espaciado|typography|tipograf[ií]a|type|themes?|temas?)$/;
+const CORE_WORD_RE = /colou?rs?|colores|spacing|espaciado|typography|tipograf|themes?|temas?/;
+const STYLE_WORD_RE = /elevation|elevaci|motion|movimiento|radius|radio|shadows?|sombras?|shape|forma|layout|grid|breakpoints?|sizing|size/;
+export function tokenPageRank(url) {
+  const p = pathOf(url);
+  if (p === null) return 9;
+  const segs = p.split("/").filter(Boolean);
+  if (isDesignTokenUrl(url)) return 0; // la dirección dice "tokens": suelen ser las tablas
+  if (segs.some((s) => CORE_SEGMENT_RE.test(s))) return 1; // /color, /spacing, /typography, /themes
+  if (CORE_WORD_RE.test(p)) return 2; // /color-palettes, /colores-de-marca…
+  if (STYLE_WORD_RE.test(p)) return 3; // elevación, movimiento, radios, sombras
+  return 4; // otras páginas de fundamentos (accesibilidad, contenido, íconos…)
+}
+
+export function classifyUrl(url) {
+  const p = pathOf(url);
+  if (p === null) return "other";
   if (/\.(png|jpe?g|gif|svg|webp|ico|pdf|zip|mp4|woff2?|ttf|css|js)$/.test(p)) return "asset";
   if (/changelog|release-notes|\/releases?(\/|$)|whats-new|novedades|historial-de-cambios/.test(p)) return "changelog";
   if (isLikelyComponentPage(url)) return "component";
@@ -160,7 +195,8 @@ export function classifyUrl(url) {
     const slug = p.split("/").filter(Boolean).pop();
     return /^(patterns?|patrones?|templates?|plantillas?|recipes?|overview|index)$/.test(slug) ? "pattern_index" : "pattern";
   }
-  if (/tokens?|foundations?|fundamentos|colou?rs?|spacing|espaciado|typography|tipograf|elevation|elevaci|motion|movimiento|themes?|temas?|radius|shadows?|sombras?/.test(p)) return "tokens";
+  if (FOUNDATION_WORD_RE.test(p)) return "tokens";
+  if (TOKEN_WORD_RE.test(p) && !NOT_DESIGN_TOKEN_RE.test(p)) return "tokens";
   return "other";
 }
 
@@ -210,8 +246,12 @@ export function buildSample(urls, { rootUrl, limits = SAMPLE_DEFAULTS, maxPages 
     const tabs = byKind.component.get(id).sort((a, b) => a.length - b.length || (a < b ? -1 : 1));
     componentUrls.push(...tabs.slice(0, limits.tabs_per_component));
   }
-  // Los tokens con "token" en la dirección van primero: suelen ser las tablas.
-  const tokenUrls = [...byKind.tokens].sort((a, b) => Number(/token/i.test(b)) - Number(/token/i.test(a)) || (a < b ? -1 : 1));
+  // Primero las que dicen "tokens", después color/espaciado/tipografía/temas y
+  // al final el resto de fundamentos. Dentro de cada grupo, la dirección más
+  // corta (la página principal del tema) y, a igualdad, orden alfabético.
+  const tokenUrls = [...byKind.tokens].sort(
+    (a, b) => tokenPageRank(a) - tokenPageRank(b) || a.split("/").length - b.split("/").length || (a < b ? -1 : 1)
+  );
   const ordered = [
     rootUrl,
     ...componentUrls,

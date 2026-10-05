@@ -90,7 +90,8 @@ export function extractTables(html) {
   for (const table of findBlocks(html, "table", 40)) {
     const rows = [];
     for (const r of findBlocks(table.inner, "tr", 300)) {
-      const cells = findBlocks(r.inner, "t[hd]").map((c) => ({ th: c.tag === "th", text: stripTags(c.inner) }));
+      // El texto de los botones ("Copiar", "Copy alias name") no es contenido de la celda.
+      const cells = findBlocks(r.inner, "t[hd]").map((c) => ({ th: c.tag === "th", text: stripTags(removeBlocks(c.inner, "button")) }));
       if (cells.length) rows.push(cells);
     }
     if (rows.length < 2) continue;
@@ -105,8 +106,43 @@ const H_NAME = /^(name|prop|props|property|propiedad|nombre|parameter|par[aá]me
 const H_TYPE = /^(type|tipo|types|tipos)$/i;
 const H_DEFAULT = /^(default|default value|defaults?|predeterminado|valor (por defecto|predeterminado)|por defecto)$/i;
 const H_DESC = /^(description|descripci[oó]n|details|detalles|purpose|prop[oó]sito)$/i;
-const H_TOKEN = /^(token|tokens|token name|nombre del token|name|nombre|variable|css variable|scss|sass)$/i;
-const H_VALUE = /^(value|valor|values|valores|hex|rem|px|resolved value|valor resuelto)$/i;
+const H_TOKEN = /^(token|tokens|token name|nombre del token|name|nombre|variable|css variable|scss|sass|(alias|design|global|semantic|sem[aá]ntico|color|css|scss|sass) tokens?|tokens? (alias|global|sem[aá]ntico))$/i;
+// "Hex value" (Carbon), "rem" / "px" (escalas), "Light" / "Dark" (un valor por tema).
+const H_VALUE = /^(values?|valor(es)?|hex|rgba?|hsl|rem|px|pt|dp|sp|em|ms|resolved value|valor resuelto|(hex|rgba?|hsl|color|css|scss|raw|computed|resolved|light|dark|claro|oscuro)[ -](values?|valor(es)?|code|c[oó]digo)|(valor(es)?|c[oó]digo) (hex|rgba?|css|claro|oscuro)|light|dark|claro|oscuro)$/i;
+
+// Para qué sirve el token: "Description", o "Role" / "Usage" (Carbon: Token | Role | Value).
+const H_TOKEN_DESC = /^(description|descripci[oó]n|details|detalles|purpose|prop[oó]sito|role|rol|usage|use|uso|applied to|se aplica a)$/i;
+
+// Un token tiene un nombre de máquina. Tres formas vistas en sistemas reales:
+//   $background, --color-bg, @spacing        (con prefijo; puede ser una sola palabra)
+//   color-blue-10, color.text.primary        (con guiones o puntos)
+//   colorNeutralBackground1                  (camelCase: Fluent 2)
+export function isTokenName(name) {
+  const n = String(name || "");
+  if (n.length < 2 || n.length > 80) return false;
+  return (
+    /^(\$|--|@)[A-Za-z][\w-]*([.-][\w-]+)*$/.test(n) ||
+    /^[A-Za-z][\w-]*([.-][\w-]+)+$/.test(n) ||
+    /^[a-z][a-z0-9]*([A-Z][a-z0-9]*)+$/.test(n)
+  );
+}
+
+// Tablas "agrupadas": una fila con solo el nombre del token y, debajo, otra fila
+// con sus valores (Fluent 2: nombre, y debajo Rest / Hover / Pressed con el valor
+// claro y oscuro). No hay una columna "valor" que buscar por encabezado.
+function groupedTokenRows(t) {
+  if (!/token/i.test(t.headers.join(" "))) return [];
+  const filled = (row) => (row || []).map((c) => String(c || "").replace(/\s+/g, " ").trim()).filter(Boolean);
+  const out = [];
+  for (let i = 0; i < t.rows.length; i++) {
+    const cells = filled(t.rows[i]);
+    if (cells.length !== 1 || !isTokenName(cells[0])) continue;
+    const next = filled(t.rows[i + 1]);
+    if (!next.length || (next.length === 1 && isTokenName(next[0]))) continue; // sin valor a la vista: no se inventa
+    out.push({ name: cells[0], value: next.join(" ").slice(0, 200), description: null });
+  }
+  return out;
+}
 
 export function propsFromTables(tables) {
   const props = [];
@@ -150,15 +186,18 @@ export function allowedValues(type) {
 export function tokensFromTables(tables) {
   const tokens = [];
   for (const t of tables) {
+    if (col(t.headers, H_TYPE) >= 0 && col(t.headers, H_DEFAULT) >= 0) continue; // tabla de propiedades
     const iTok = col(t.headers, H_TOKEN);
-    const iVal = col(t.headers, H_VALUE);
-    if (iTok < 0 || iVal < 0 || col(t.headers, H_TYPE) >= 0 && col(t.headers, H_DEFAULT) >= 0) continue;
+    const iVal = t.headers.findIndex((h, i) => i !== iTok && H_VALUE.test(h));
+    if (iTok < 0 || iVal < 0) {
+      tokens.push(...groupedTokenRows(t));
+      continue;
+    }
     for (const row of t.rows) {
       const name = (row[iTok] || "").trim().split(/\s+/)[0];
-      const value = (row[iVal] || "").trim();
-      // Un token tiene un nombre de máquina: $token, --token, token.name o token-name.
-      if (!/^(\$|--|@)?[a-z][\w-]*([.-][\w-]+)+$/i.test(name) || !value) continue;
-      const iDesc = col(t.headers, H_DESC);
+      const value = (row[iVal] || "").replace(/\s+/g, " ").trim();
+      if (!isTokenName(name) || !value) continue;
+      const iDesc = t.headers.findIndex((h, i) => i !== iTok && i !== iVal && H_TOKEN_DESC.test(h));
       tokens.push({ name, value, description: iDesc >= 0 ? row[iDesc] || null : null });
     }
   }

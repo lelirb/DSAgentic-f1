@@ -8,6 +8,7 @@ import { createEvidenceCollector } from "./extractor/evidence.js";
 import { normalize } from "./extractor/normalize.js";
 import { detectPatterns } from "./extractor/detectPatterns.js";
 import { evaluate } from "./evaluator/index.js";
+import { extractSections, visibleTextLength } from "./extractor/readPage.js";
 
 // Section 6/56 STEP 11: the full URL -> Report path, built entirely on top of the
 // already-tested Evaluator. fetchImpl is injectable so this is testable without
@@ -79,11 +80,40 @@ export async function evaluateUrl(
   });
   progress({ step: "score" });
   const report = evaluate(normalized, { weights, rules });
-  const sources = annotateSourceUsage(crawlResult.sources || [], {
+  const sources = withPageOutline(annotateSourceUsage(crawlResult.sources || [], {
     components, tokens, manifests, schemas, patterns, evidence: evidenceCollector.items,
-  });
+  }), crawlResult.pages || []);
 
   return { report, normalized, crawlResult, sources };
+}
+
+// Diagnóstico (no puntúa): para cada página HTML leída, los títulos que el
+// evaluador vio y cuánto texto traía. Sirve para comprobar con datos, y no con
+// suposiciones, si un "no encontrado" se debe a que la sección no existe o a que
+// el sitio la llama de otra manera. Imprescindible en sitios que solo se pueden
+// leer con navegador, donde no hay otra forma de ver lo que se leyó.
+const MAX_OUTLINE_HEADINGS = 40;
+export function withPageOutline(sources, pages) {
+  const byUrl = new Map();
+  for (const p of pages) {
+    if (!p || typeof p.body !== "string" || !/html/.test(p.contentType || "")) continue;
+    const seen = new Set();
+    const headings = [];
+    // Los mismos títulos (h1–h4) que usa el evaluador para reconocer secciones.
+    for (const sec of extractSections(p.body)) {
+      const t = String(sec.title || "").replace(/\s+/g, " ").trim().slice(0, 80);
+      if (!t || seen.has(t.toLowerCase())) continue;
+      seen.add(t.toLowerCase());
+      headings.push(t);
+      if (headings.length >= MAX_OUTLINE_HEADINGS) break;
+    }
+    byUrl.set(p.url, { headings, text_chars: visibleTextLength(p.body) });
+  }
+  return sources.map((s) => {
+    if (s.status !== "READ") return s;
+    const o = byUrl.get(s.final_url) || byUrl.get(s.url);
+    return o ? { ...s, headings: o.headings, text_chars: o.text_chars } : s;
+  });
 }
 
 // Etapa 1 (transparencia): for each source that was read, say what the

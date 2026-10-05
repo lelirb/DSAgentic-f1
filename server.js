@@ -317,9 +317,11 @@ export function summarizeSources(entryUrl, sources = []) {
   const truncated = {};
   for (const [status, list] of Object.entries(byStatus)) {
     const cap = status === "READ" || status === "FAILED" || status === "NOT_PRESENT" ? Infinity : SOURCES_PER_STATUS_CAP;
-    items.push(...list.slice(0, cap).map(({ url, role, status: st, reason, http_status, final_url, used_as, via, render_problem }) => ({
+    items.push(...list.slice(0, cap).map(({ url, role, status: st, reason, http_status, final_url, used_as, via, render_problem, headings, text_chars }) => ({
       url, role, status: st, reason, http_status, final_url, used_as: used_as || [],
       via: via || null, render_problem: render_problem || null,
+      // Diagnóstico: títulos vistos y cantidad de texto de la página (solo páginas leídas).
+      ...(Array.isArray(headings) ? { headings: headings.slice(0, 40).map((h) => String(h).slice(0, 80)), text_chars: Number(text_chars) || 0 } : {}),
     })));
     if (list.length > cap) truncated[status] = list.length - cap;
   }

@@ -88,11 +88,16 @@ const NON_COMPONENT_SLUGS = new Set([
 // sufijos conocidos es un allowlist finito construido incrementalmente contra
 // evidencia real, no una detección general — sigue siendo posible que otro DS use
 // un sufijo que no está aquí todavía (ver limitación documentada abajo).
-const TAB_SUFFIXES = new Set(["usage", "style", "code", "accessibility", "examples", "api", "props", "design", "guidelines", "overview", "uso", "estilo", "codigo", "código", "accesibilidad", "ejemplos", "diseno", "diseño"]);
+// "specs": Material 3 publica cada componente en Overview / Specs / Guidelines /
+// Accessibility. Sin "specs" en esta lista, /components/lists/specs y
+// /components/tabs/specs se agrupaban como un componente falso llamado "specs":
+// ocupaba un lugar de la muestra y la pestaña donde Material documenta medidas,
+// estados y configuraciones nunca se leía como parte de su componente.
+const TAB_SUFFIXES = new Set(["usage", "style", "code", "accessibility", "examples", "api", "props", "design", "guidelines", "overview", "specs", "spec", "specifications", "uso", "estilo", "codigo", "código", "accesibilidad", "ejemplos", "diseno", "diseño", "especificaciones"]);
 // Cuando hay varias páginas para el mismo componente, se prefiere la que tenga
 // más probabilidad de contener descripción/propósito en prosa; "examples" y
 // "code" suelen ser solo snippets sin texto explicativo.
-const TAB_PREFERENCE = ["usage", "uso", "overview", "guidelines", "design", "diseno", "diseño", "style", "estilo", "examples", "ejemplos", "code", "codigo", "código", "api", "props", "accessibility", "accesibilidad"];
+const TAB_PREFERENCE = ["usage", "uso", "overview", "guidelines", "design", "diseno", "diseño", "style", "estilo", "specs", "spec", "specifications", "especificaciones", "examples", "ejemplos", "code", "codigo", "código", "api", "props", "accessibility", "accesibilidad"];
 
 // Hallazgo 4 (REAL_WORLD_VALIDATION.md): the real Carbon page fetched during
 // validation had this exact labeled structure verbatim. English-only for now —

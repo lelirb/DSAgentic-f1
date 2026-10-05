@@ -911,3 +911,38 @@ encontrado" a "fuera de la nota". Se comprobó que el índice existe
 (`react.fluentui.dev/index.json` redirige a `storybooks.fluentui.dev/react/index.json`).
 
 Pruebas: `tests/official-links.test.js` (3). Total: 170.
+
+## Segunda ronda en producción y la pestaña "specs" — 2026-10-05
+
+Resultados después de los puntos 40–46:
+
+| Design System | Antes | Ahora | Qué cambió |
+|---|---|---|---|
+| Carbon | 70 | 80 (Operable) | D2 0 → 66 (307 tokens), D1 79 → 90 |
+| Fluent 2 | 20 | 35 (Legible) | D2 0 → 47 (249 tokens), D1 15 → 61 (dos Storybook leídos) |
+| Material 3 | 20 | 20 (Opaco) | sin cambios; navegador: 15 páginas, 0 fallos, 2 sin tiempo |
+
+La dueña cuestionó el 20 de Material ("algo le pasa a tu evaluador"). Al revisar:
+
+47. **"specs" no era una pestaña reconocida.** `/components/lists/specs`,
+    `/components/tabs/specs`, etc. se agrupaban como un componente falso llamado
+    "specs", que ocupaba un lugar de la muestra, y la pestaña Specs de cada
+    componente nunca se leía como parte de él. Se agregan `specs`, `spec`,
+    `specifications` y `especificaciones` a las pestañas de componente.
+48. **Diagnóstico en el JSON.** Cada página HTML leída lleva ahora `headings`
+    (los títulos h1–h4 que usa el evaluador para reconocer secciones, máximo 40)
+    y `text_chars`. No puntúa ni se muestra en el informe. Motivo: en un sitio
+    que solo se lee con navegador no había forma de saber qué vio el evaluador,
+    y los "no encontrado" de Material no se podían comprobar.
+
+Pruebas: `tests/component-tabs.test.js` (4). Total: 174.
+
+Sin resolver, pendiente de decisión de la dueña:
+- **Vocabulario.** Se sospecha que Material titula "Usage" lo que el evaluador
+  busca como "When to use", y "Configurations" lo que busca como "Variants".
+  Sin verificar; el punto 48 permite comprobarlo con el próximo JSON.
+- **Tope por acceso.** Con D1 < 25 el resultado no pasa de 40. Un sitio que solo
+  funciona con JavaScript queda por debajo de 40 aunque su contenido sea
+  completo. Es una regla de la rúbrica; no se tocó.
+- **Tiempo.** Con la pestaña Specs incluida, Material necesita leer más páginas
+  por componente y en Render Free alcanzará a cubrir menos componentes.

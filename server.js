@@ -13,7 +13,7 @@ const weights = JSON.parse(readFileSync(path.join(__dirname, "engine/config/weig
 const rules = JSON.parse(readFileSync(path.join(__dirname, "engine/config/rules.json"), "utf-8"));
 
 const PORT = process.env.PORT || 8787;
-const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "application/javascript; charset=utf-8", ".json": "application/json" };
+const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "application/javascript; charset=utf-8", ".json": "application/json", ".webp": "image/webp", ".png": "image/png" };
 
 const MAX_API_BODY_BYTES = 16 * 1024;
 

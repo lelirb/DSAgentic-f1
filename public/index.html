@@ -167,17 +167,25 @@
   .eval-overlay{position:fixed;inset:0;z-index:1000;background:#F7F7FB;display:flex;align-items:center;justify-content:center;padding:24px;}
   .eval-overlay[hidden]{display:none;}
   .eval-box{width:100%;max-width:560px;text-align:center;}
-  .eval-graph{width:240px;height:130px;display:block;margin:0 auto 44px;overflow:visible;}
-  .eval-graph .orbit{fill:none;stroke:#DFE3FA;stroke-width:1.2;}
-  .eval-graph .spoke{stroke:var(--indigo-600);stroke-width:2.4;stroke-linecap:round;}
-  .eval-graph .node{fill:var(--indigo-600);transform-box:fill-box;transform-origin:center;animation:eval-pulse 1.8s ease-in-out infinite;}
-  .eval-graph .core{fill:var(--ink-800);}
-  .eval-graph .spokes{transform-origin:120px 65px;animation:eval-turn 26s linear infinite;}
-  .eval-graph .dot{fill:var(--indigo-600);display:none;}
-  @supports (offset-path:path("M0,0")){
-    .eval-graph .dot{display:block;offset-rotate:0deg;animation:eval-orbit 11s linear infinite;}
-    .eval-graph .dot.outer{offset-path:path("M232,65 A112,52 0 1,1 8,65 A112,52 0 1,1 232,65");}
-    .eval-graph .dot.inner{offset-path:path("M202,65 A82,38 0 1,0 38,65 A82,38 0 1,0 202,65");animation-duration:8s;}
+  /* Niko buscando con su lupa. Dos poses (mira a la izquierda / a la derecha) que se alternan. */
+  .niko-load{position:relative;width:260px;max-width:70vw;margin:0 auto 26px;animation:niko-bob 2.4s ease-in-out infinite alternate;}
+  .niko-load img{display:block;width:100%;height:auto;transform-origin:50% 92%;}
+  .niko-load .niko-a{animation:niko-a 4.8s ease-in-out infinite;}
+  .niko-load .niko-b{position:absolute;inset:0;opacity:0;transform:scaleX(-1);animation:niko-b 4.8s ease-in-out infinite;}
+  .niko-shadow{position:absolute;left:16%;bottom:-3px;width:68%;height:18px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(18,23,43,.20) 0%,rgba(18,23,43,0) 70%);animation:niko-shadow 2.4s ease-in-out infinite alternate;}
+  @keyframes niko-bob{from{transform:translateY(0);}to{transform:translateY(-5px);}}
+  @keyframes niko-shadow{from{transform:scaleX(1);opacity:1;}to{transform:scaleX(.9);opacity:.7;}}
+  @keyframes niko-a{
+    0%{opacity:1;transform:translateX(5px) rotate(1.2deg);}
+    43%{opacity:1;transform:translateX(-7px) rotate(-1.2deg);}
+    49%,95%{opacity:0;transform:translateX(-7px) rotate(-1.2deg);}
+    100%{opacity:1;transform:translateX(5px) rotate(1.2deg);}
+  }
+  @keyframes niko-b{
+    0%,43%{opacity:0;transform:scaleX(-1) translateX(5px) rotate(1.2deg);}
+    49%{opacity:1;transform:scaleX(-1) translateX(5px) rotate(1.2deg);}
+    93%{opacity:1;transform:scaleX(-1) translateX(-7px) rotate(-1.2deg);}
+    99%,100%{opacity:0;transform:scaleX(-1) translateX(-7px) rotate(-1.2deg);}
   }
   .eval-title{font-size:26px;font-weight:500;letter-spacing:-0.01em;color:var(--ink-900);margin:0 0 18px;}
   .eval-step{font-size:17px;line-height:1.5;color:var(--ink-800);margin:0 auto;max-width:44ch;min-height:52px;text-align:center;text-wrap:balance;}
@@ -185,16 +193,18 @@
   .eval-spin{display:inline-block;vertical-align:-2px;margin-left:10px;width:15px;height:15px;border-radius:50%;border:2px solid var(--indigo-100);border-top-color:var(--indigo-600);animation:eval-turn .9s linear infinite;}
   .eval-sub{font-size:13.5px;color:var(--gray-500);margin:14px auto 0;max-width:46ch;text-wrap:balance;}
   @keyframes eval-turn{to{transform:rotate(360deg);}}
-  @keyframes eval-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.22);}}
-  @keyframes eval-orbit{to{offset-distance:100%;}}
   @media (prefers-reduced-motion:reduce){
-    .eval-graph .node,.eval-graph .spokes,.eval-graph .dot{animation:none;}
+    /* Con "reducir movimiento": Niko queda quieto, mirando a un lado. */
+    .niko-load,.niko-load .niko-a,.niko-load .niko-b,.niko-shadow{animation:none;}
     .eval-spin{animation-duration:2.4s;}
   }
   @media (max-width:520px){
     .eval-title{font-size:21px;}
     .eval-step{font-size:15.5px;}
-    .eval-graph{margin-bottom:30px;}
+    .niko-load{width:210px;margin-bottom:20px;}
+  }
+  @media (max-height:620px){
+    .niko-load{width:150px;margin-bottom:16px;}
   }
   .result-error{font-size:13.5px;color:#B91C1C;background:#FEF2F2;border-radius:8px;padding:10px 12px;margin-bottom:12px;}
   .result-note{font-size:13.5px;color:var(--indigo-700);background:var(--indigo-050);border-radius:8px;padding:10px 12px;margin-bottom:14px;}
@@ -462,29 +472,11 @@
 
 <div id="eval-overlay" class="eval-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="eval-title">
   <div class="eval-box">
-    <svg class="eval-graph" viewBox="0 0 240 130" aria-hidden="true" focusable="false">
-      <ellipse class="orbit" cx="120" cy="65" rx="112" ry="52"/>
-      <ellipse class="orbit" cx="120" cy="65" rx="82" ry="38"/>
-      <circle class="dot outer" r="4.2" style="animation-delay:-1s"/>
-      <circle class="dot outer" r="3" style="animation-delay:-6.5s"/>
-      <circle class="dot inner" r="3.4" style="animation-delay:-2s"/>
-      <circle class="dot inner" r="2.4" style="animation-delay:-5s"/>
-      <g class="spokes">
-        <line class="spoke" x1="120" y1="65" x2="162" y2="65"/>
-        <line class="spoke" x1="120" y1="65" x2="78" y2="65"/>
-        <line class="spoke" x1="120" y1="65" x2="139" y2="33"/>
-        <line class="spoke" x1="120" y1="65" x2="101" y2="33"/>
-        <line class="spoke" x1="120" y1="65" x2="142" y2="103"/>
-        <line class="spoke" x1="120" y1="65" x2="98" y2="103"/>
-        <circle class="node" cx="162" cy="65" r="7.5"/>
-        <circle class="node" cx="78" cy="65" r="7.5" style="animation-delay:-.3s"/>
-        <circle class="node" cx="139" cy="33" r="7.5" style="animation-delay:-.6s"/>
-        <circle class="node" cx="101" cy="33" r="7.5" style="animation-delay:-.9s"/>
-        <circle class="node" cx="142" cy="103" r="7.5" style="animation-delay:-1.2s"/>
-        <circle class="node" cx="98" cy="103" r="7.5" style="animation-delay:-1.5s"/>
-      </g>
-      <circle class="core" cx="120" cy="65" r="16"/>
-    </svg>
+    <div class="niko-load" aria-hidden="true">
+      <span class="niko-shadow"></span>
+      <img class="niko-a" src="niko/niko-evaluando.webp" width="505" height="515" alt="" decoding="async">
+      <img class="niko-b" src="niko/niko-evaluando.webp" width="505" height="515" alt="" decoding="async">
+    </div>
     <h2 class="eval-title" id="eval-title" data-i18n="load.title">Evaluando Design System</h2>
     <p class="eval-step" role="status" aria-live="polite"><span class="eval-chev" aria-hidden="true">›</span><span id="eval-step-text"></span><span class="eval-spin" aria-hidden="true"></span></p>
     <p class="eval-sub" id="eval-sub"></p>

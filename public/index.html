@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="prefetch" href="niko/niko-buscando.webp" as="image" type="image/webp">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agentic DS — Is your Design System ready for AI agents?</title>
@@ -167,26 +168,10 @@
   .eval-overlay{position:fixed;inset:0;z-index:1000;background:#F7F7FB;display:flex;align-items:center;justify-content:center;padding:24px;}
   .eval-overlay[hidden]{display:none;}
   .eval-box{width:100%;max-width:560px;text-align:center;}
-  /* Niko buscando con su lupa. Dos poses (mira a la izquierda / a la derecha) que se alternan. */
-  .niko-load{position:relative;width:260px;max-width:70vw;margin:0 auto 26px;animation:niko-bob 2.4s ease-in-out infinite alternate;}
-  .niko-load img{display:block;width:100%;height:auto;transform-origin:50% 92%;}
-  .niko-load .niko-a{animation:niko-a 4.8s ease-in-out infinite;}
-  .niko-load .niko-b{position:absolute;inset:0;opacity:0;transform:scaleX(-1);animation:niko-b 4.8s ease-in-out infinite;}
-  .niko-shadow{position:absolute;left:16%;bottom:-3px;width:68%;height:18px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(18,23,43,.20) 0%,rgba(18,23,43,0) 70%);animation:niko-shadow 2.4s ease-in-out infinite alternate;}
-  @keyframes niko-bob{from{transform:translateY(0);}to{transform:translateY(-5px);}}
-  @keyframes niko-shadow{from{transform:scaleX(1);opacity:1;}to{transform:scaleX(.9);opacity:.7;}}
-  @keyframes niko-a{
-    0%{opacity:1;transform:translateX(5px) rotate(1.2deg);}
-    43%{opacity:1;transform:translateX(-7px) rotate(-1.2deg);}
-    49%,95%{opacity:0;transform:translateX(-7px) rotate(-1.2deg);}
-    100%{opacity:1;transform:translateX(5px) rotate(1.2deg);}
-  }
-  @keyframes niko-b{
-    0%,43%{opacity:0;transform:scaleX(-1) translateX(5px) rotate(1.2deg);}
-    49%{opacity:1;transform:scaleX(-1) translateX(5px) rotate(1.2deg);}
-    93%{opacity:1;transform:scaleX(-1) translateX(-7px) rotate(-1.2deg);}
-    99%,100%{opacity:0;transform:scaleX(-1) translateX(-7px) rotate(-1.2deg);}
-  }
+  /* Niko buscando con su lupa: WebP animado con transparencia, en bucle. */
+  .niko-load{position:relative;width:260px;max-width:70vw;margin:0 auto 26px;}
+  .niko-load img{display:block;width:100%;height:auto;}
+  .niko-shadow{position:absolute;left:14%;bottom:1%;width:72%;height:16px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(18,23,43,.18) 0%,rgba(18,23,43,0) 70%);}
   .eval-title{font-size:26px;font-weight:500;letter-spacing:-0.01em;color:var(--ink-900);margin:0 0 18px;}
   .eval-step{font-size:17px;line-height:1.5;color:var(--ink-800);margin:0 auto;max-width:44ch;min-height:52px;text-align:center;text-wrap:balance;}
   .eval-chev{color:var(--indigo-600);font-weight:600;margin-right:10px;}
@@ -194,8 +179,6 @@
   .eval-sub{font-size:13.5px;color:var(--gray-500);margin:14px auto 0;max-width:46ch;text-wrap:balance;}
   @keyframes eval-turn{to{transform:rotate(360deg);}}
   @media (prefers-reduced-motion:reduce){
-    /* Con "reducir movimiento": Niko queda quieto, mirando a un lado. */
-    .niko-load,.niko-load .niko-a,.niko-load .niko-b,.niko-shadow{animation:none;}
     .eval-spin{animation-duration:2.4s;}
   }
   @media (max-width:520px){
@@ -474,8 +457,10 @@
   <div class="eval-box">
     <div class="niko-load" aria-hidden="true">
       <span class="niko-shadow"></span>
-      <img class="niko-a" src="niko/niko-evaluando.webp" width="505" height="515" alt="" decoding="async">
-      <img class="niko-b" src="niko/niko-evaluando.webp" width="505" height="515" alt="" decoding="async">
+      <picture>
+        <source media="(prefers-reduced-motion: reduce)" srcset="niko/niko-buscando-quieto.webp">
+        <img src="niko/niko-buscando.webp" width="487" height="493" alt="" decoding="async">
+      </picture>
     </div>
     <h2 class="eval-title" id="eval-title" data-i18n="load.title">Evaluando Design System</h2>
     <p class="eval-step" role="status" aria-live="polite"><span class="eval-chev" aria-hidden="true">›</span><span id="eval-step-text"></span><span class="eval-spin" aria-hidden="true"></span></p>

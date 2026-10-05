@@ -69,7 +69,7 @@ test("un rastreo limitado se comunica como evaluación incompleta y puntaje 'dem
   r.overview.evaluation_status = "LIMITED";
   const html = renderReport(r, "live");
   assert.ok(html.includes("Evaluación incompleta"));
-  assert.ok(html.includes("el rastreo alcanzó su límite"));
+  assert.ok(html.includes("El rastreo alcanzó su límite"));
   assert.ok(html.includes("/100 demostrado"));
 });
 
@@ -172,8 +172,9 @@ test("una dimensión en la que no se pudo leer nada muestra 'No se pudo leer', n
   const html = renderReport(r, "live");
   const chain = html.slice(html.indexOf('class="chain"'), html.indexOf('id="dim-D1"'));
   assert.ok(chain.slice(chain.indexOf("dim-D5")).includes("No se pudo leer"));
-  const verdict = html.slice(0, html.indexOf('class="chain"'));
-  const notEvalList = verdict.slice(verdict.indexOf('class="cap-na"'));
+  // Las listas de capacidades van después de la cadena (primero se muestra el resultado).
+  const more = html.slice(html.indexOf('class="chain"'), html.indexOf('id="dim-D1"'));
+  const notEvalList = more.slice(more.indexOf('class="cap-na"'));
   assert.ok(notEvalList.includes('<span class="dref">D5</span>'), "D5 debe figurar como 'No se pudo evaluar'");
 });
 
@@ -195,4 +196,16 @@ test("D4: sin componentes que compitan, la desambiguación no aplica y no suma p
   const html = renderReport(r, "demo");
   const d4 = html.slice(html.indexOf('id="dim-D4"'), html.indexOf('id="dim-D5"'));
   assert.ok(d4.includes("No aplica"));
+});
+
+test("el resultado va primero: número y nivel antes que los textos de contexto", () => {
+  const html = renderReport(withCriteria("poor", MOSTLY_UNREADABLE), "live");
+  const score = html.indexOf('class="score-line"');
+  assert.ok(score > -1);
+  for (const later of ['class="chain"', 'class="report-actions"', 'class="cap-lists"', 'class="fold"', 'id="dim-D1"'])
+    assert.ok(html.indexOf(later) > score, later + " debe ir después del puntaje");
+  assert.ok(html.indexOf('class="chain"') < html.indexOf('class="cap-lists"'), "las dimensiones se ven antes que las listas");
+  // Los motivos de evaluación incompleta y el texto general de cada dimensión van plegados.
+  assert.ok(html.includes('<details class="incomplete-box measure"><summary>Por qué es incompleta ('));
+  assert.ok(html.includes('<details class="about">'));
 });

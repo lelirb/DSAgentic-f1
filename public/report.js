@@ -197,17 +197,20 @@
       : "";
 
     const incompleteBox = incomplete
-      ? `<div class="incomplete-box measure"><p><strong>${esc(u.incompleteBadge)}.</strong> ${esc(u.incompleteLead)}</p><ul>${reasons.map((r) => `<li>${esc(r)}</li>`).join("")}</ul><p>${esc(u.incompleteReading)}</p></div>`
+      ? `<details class="incomplete-box measure"><summary>${esc(fmt(u.incompleteWhy, { n: reasons.length }))}</summary><ul>${reasons.map((r) => `<li>${esc(cap(r))}</li>`).join("")}</ul><p>${esc(u.incompleteReading)}</p></details>`
       : "";
 
-    return `
+    // Primero el resultado (número, nivel y qué significa). Lo demás va después.
+    const top = `
       <section class="verdict" aria-labelledby="q">
         <h1 id="q">${esc(u.question)}</h1>
-        <p class="source"><span>${esc(report.system && report.system.url)}</span><span class="pill">${esc(ctx.mode === "demo" ? u.modeDemo : u.modeLive)}</span>${sourcesLink}</p>
-        ${discoveryLine(ctx)}
+        <p class="source"><span>${esc(report.system && report.system.url)}</span><span class="pill">${esc(ctx.mode === "demo" ? u.modeDemo : u.modeLive)}</span></p>
         ${scoreBlock}
-        ${incompleteBox}
         <p class="summary measure">${esc(summary)}</p>
+        ${incompleteBox}
+      </section>`;
+    const more = `
+      <section class="verdict verdict-more">
         <div class="cap-lists">
           ${list(u.canDo, "cap-good", canDo)}
           ${list(u.mayInfer, "cap-infer", inferTop)}
@@ -216,9 +219,15 @@
           ${list(u.notEvaluated, "cap-na", notEval)}
         </div>
         ${conclusion}
-        <p class="score-note measure">${esc(u.scoreNote)}</p>
-        <p class="score-note measure">${esc(u.certHelp)}</p>
+        <details class="fold">
+          <summary>${esc(u.howTitle)}</summary>
+          ${discoveryLine(ctx)}
+          ${sourcesLink ? `<p class="fold-link">${sourcesLink}</p>` : ""}
+          <p class="score-note measure">${esc(u.scoreNote)}</p>
+          <p class="score-note measure">${esc(u.certHelp)}</p>
+        </details>
       </section>`;
+    return { top, more };
   }
 
   // "Empezamos por X, reconocimos el Design System en Y, encontramos N componentes y evaluamos M."
@@ -284,12 +293,12 @@
     const cls = analysis[k];
 
     const about = `
-      <div class="about">
-        <p class="group">${esc(u.aboutDim)}</p>
+      <details class="about">
+        <summary class="group">${esc(u.aboutDim)}</summary>
         ${qa(u.qWhat, "", "", `<p class="measure">${esc(td.what)}</p>`)}
         ${qa(u.qPurpose, "", "", `<p class="measure">${esc(td.purpose)}</p>`)}
         ${qa(u.qWhy, "", "", `<p class="measure">${esc(td.why)}</p>`)}
-      </div>`;
+      </details>`;
 
     const certBadge = cls
       ? cls.incomplete ? `<span class="cert-badge cb-incomplete">${esc(u.dimIncomplete)}</span>` : `<span class="cert-badge cb-complete">${esc(u.dimComplete)}</span>`
@@ -437,13 +446,6 @@
   function renderLimitations(report, ctx, analysis) {
     const u = T().ui;
     const items = [ctx.mode === "demo" ? u.limDemo : u.limLive, u.limDocsOnly];
-    if (ctx.failed) items.push(fmt(u.limFailed, { n: ctx.failed }));
-    if (ctx.limited) items.push(u.limLimited);
-    const ne = DIMS.filter((k) => !isNum(report.dimensions[k].score));
-    if (ne.length) items.push(fmt(u.limNotEval, { list: ne.map((k) => `${k} (${T().dims[k].name})`).join(", ") }));
-    const has = (r) => Object.values(analysis).some((c) => c.items.some((i) => i.reason === r));
-    if (has("rsExternal")) items.push(u.limExternal);
-    if (has("rsNotLooked") || has("rsNotRead")) items.push(u.limNotLooked);
     items.push(u.limD7);
     if (ctx.mode === "live") items.push(u.limNotEvaluableNow);
     return `<h2 class="section">${esc(u.limitationsTitle)}</h2><div class="limitations"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`;
@@ -580,9 +582,8 @@
     };
   }
 
-  function renderActions(stored) {
+  function renderActions() {
     const u = T().ui;
-    const when = formatDate(stored.evaluated_at);
     return `
       <div class="report-actions" role="group" aria-label="${esc(u.downloadGroup)}">
         <div class="ra-buttons">
@@ -590,7 +591,13 @@
           <button type="button" class="ra-btn" data-action="json">${esc(u.downloadJson)}</button>
         </div>
         <p class="ra-note">${esc(u.downloadNote)}</p>
-      </div>
+      </div>`;
+  }
+
+  function renderPrintHead(stored) {
+    const u = T().ui;
+    const when = formatDate(stored.evaluated_at);
+    return `
       <div class="print-only print-head">
         <p><strong>Agentic DS</strong> · ${esc(u.printHead)}</p>
         ${when ? `<p>${esc(fmt(u.evaluatedAt, { date: when }))}</p>` : ""}
@@ -669,10 +676,13 @@
     const reasons = incompleteReasons(report, ctx, analysis);
     document.title = "Agentic DS — " + dict[lang]["results.title"];
     currentStored = stored;
+    const verdict = renderVerdict(report, ctx, analysis, reasons);
     root.innerHTML =
-      renderActions(stored) +
-      renderVerdict(report, ctx, analysis, reasons) +
+      renderPrintHead(stored) +
+      verdict.top +
       renderChain(report, analysis, ctx.mode === "live") +
+      renderActions() +
+      verdict.more +
       `<h2 class="section">${esc(T().ui.dimsTitle)}</h2>` +
       ALL.map((k) => renderDim(k, report, analysis, ctx, findings)).join("") +
       renderSources(stored, ctx) +

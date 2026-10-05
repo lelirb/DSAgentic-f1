@@ -112,6 +112,8 @@
       incompleteBadge: "Evaluación incompleta",
       completeBadge: "Evidencia completa",
       incompleteLead: "El resultado está limitado por:",
+      incompleteWhy: "Por qué es incompleta ({n})",
+      howTitle: "Cómo se hizo esta evaluación",
       incompleteReading:
         "Por eso, el puntaje debe leerse como el nivel de preparación demostrado con la evidencia recuperada, no como una medición definitiva de todo el Design System.",
       rLimited: "el rastreo alcanzó su límite de páginas, profundidad o tiempo antes de completarse",
@@ -130,7 +132,7 @@
       downloadPdf: "Descargar PDF",
       downloadJson: "Descargar datos (JSON)",
       downloadNote:
-        "No guardamos tu resultado: si cierras esta pestaña, se pierde. Para conservarlo, descárgalo; el archivo se genera en tu navegador. Para el PDF, elige «Guardar como PDF» en la ventana que se abre.",
+        "No guardamos tu resultado: descárgalo para conservarlo. Para el PDF, elige «Guardar como PDF».",
       printHead: "Informe de preparación de un Design System para agentes de IA",
       evaluatedAt: "Evaluado el {date}",
       printFooter:
@@ -558,6 +560,8 @@
       incompleteBadge: "Incomplete evaluation",
       completeBadge: "Complete evidence",
       incompleteLead: "The result is limited by:",
+      incompleteWhy: "Why it's incomplete ({n})",
+      howTitle: "How this evaluation was done",
       incompleteReading:
         "So the score should be read as the readiness level demonstrated with the retrieved evidence, not as a definitive measurement of the whole Design System.",
       rLimited: "the crawl hit its page, depth or time limit before finishing",
@@ -576,7 +580,7 @@
       downloadPdf: "Download PDF",
       downloadJson: "Download data (JSON)",
       downloadNote:
-        "We don't store your result: if you close this tab, it's gone. To keep it, download it; the file is generated in your browser. For the PDF, choose “Save as PDF” in the window that opens.",
+        "We don't store your result: download it to keep it. For the PDF, choose “Save as PDF”.",
       printHead: "AI agent readiness report for a Design System",
       evaluatedAt: "Evaluated on {date}",
       printFooter:

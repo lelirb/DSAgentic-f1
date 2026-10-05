@@ -814,3 +814,38 @@ Pruebas: `tests/browser-security.test.js` (las 10 de la lista más aislamiento) 
 - **Posible desajuste de vocabulario:** en Material 3, con contenido ya leído,
   D3 no encontró variantes ni estados y D4 no encontró "cuándo usar". Puede que
   el sitio use otros títulos de sección. Sin verificar.
+
+## Informe: el resultado primero — 2026-10-05
+
+Pedido de la dueña: "mucho texto", "tremendo párrafo antes de ver el resultado",
+"el resultado debe verse primero y luego los textos", "algunos redundan".
+Solo cambia la presentación (`public/report.js`, `public/report-texts.js`,
+`public/results.html`). No se tocó puntuación, reglas ni datos del informe.
+
+37. **Orden nuevo de la página:** puntaje, nivel y frase resumen; las
+    dimensiones con su número; botones de descarga; listas de capacidades y
+    conclusión; después el detalle de cada dimensión.
+38. **Plegado (se abre con un toque; el PDF lo incluye todo):** el párrafo
+    "Empezamos por…" junto con las dos notas sobre el puntaje ("Cómo se hizo
+    esta evaluación"), los motivos de evaluación incompleta ("Por qué es
+    incompleta (n)") y "Sobre esta dimensión" en cada dimensión.
+39. **Repeticiones quitadas:** en "Limitaciones" ya no se repiten los motivos
+    de evaluación incompleta que se explican arriba; la nota de descarga pasó
+    de cuatro líneas a una.
+
+Pruebas: una nueva en `tests/report-certainty.test.js` (el puntaje va antes que
+los textos; los bloques plegados existen). Total: 156.
+
+## Resultados en producción — 2026-10-05
+
+| Design System | Antes | Ahora | Navegador |
+|---|---|---|---|
+| Carbon | 60 | 70 | no hizo falta |
+| Fluent 2 | 20 | 20 | no hizo falta |
+| Material 3 | 5 | 20 | 15 páginas leídas, 1 falló, 1 sin tiempo |
+
+Chromium funcionó estable en Render Free (un proceso). Lectura de los datos:
+Fluent leyó todas sus páginas sin navegador y sacó 20, así que su nota no
+depende del servidor; en Carbon, D2 quedó en 0 porque la muestra de páginas de
+tokens no incluyó las de color, espaciado ni tipografía. Pendiente: revisar qué
+reconoce el evaluador en lo que ya lee.

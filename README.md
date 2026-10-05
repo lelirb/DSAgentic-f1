@@ -97,7 +97,7 @@ con un navegador (Chromium) instalado en el servidor. Solo lo usa cuando una pá
 que antes.
 
 Qué cambia para quien usa la app:
-- Esas evaluaciones tardan más: hasta unos 3 minutos. Mientras tanto se
+- Esas evaluaciones tardan más: unos 4 minutos. Mientras tanto se
   muestra un cargador que dice en qué paso va.
 - El informe avisa cuántas páginas se abrieron con navegador.
 - D1 sigue marcando que el contenido no está disponible sin JavaScript,

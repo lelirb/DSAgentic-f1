@@ -946,3 +946,18 @@ Sin resolver, pendiente de decisión de la dueña:
   completo. Es una regla de la rúbrica; no se tocó.
 - **Tiempo.** Con la pestaña Specs incluida, Material necesita leer más páginas
   por componente y en Render Free alcanzará a cubrir menos componentes.
+
+## Prueba: 4 minutos para sitios que necesitan navegador — 2026-10-05
+
+49. **Más tiempo, mismo servidor.** `RENDER_EXTRA_MS` pasa de 100 s a 195 s:
+    con los 45 s del rastreo son 4 minutos en total. Solo aplica cuando el sitio
+    necesita navegador; los demás tardan lo mismo. Motivo: con 2,5 minutos
+    Material 3 leía unas 15 páginas y no llegaba a los tokens ni a todos los
+    componentes de la muestra.
+50. **Recuperar el resultado.** El servidor guarda la evaluación 10 minutos
+    (antes 4) y el cargador la sigue buscando hasta 7 minutos si se corta la
+    conexión. Los textos pasan de "hasta 3 minutos" a "unos 4 minutos".
+
+Es una prueba. Sin verificar en producción: que la conexión aguante 4 minutos
+abierta en Render Free y cuántas páginas alcanza a leer. Para volver atrás:
+variable `RENDER_EXTRA_MS=100000` en Render, sin tocar el código.

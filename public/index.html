@@ -630,7 +630,7 @@
   // Respaldo: si la conexión del pedido se cortó durante una evaluación larga,
   // el servidor igual termina y guarda el resultado unos minutos.
   async function recoverResult(pid, since){
-    const limit = Date.now() + 240000;
+    const limit = Date.now() + 420000; // 7 min: la evaluación más larga dura unos 4
     let cursor = since;
     while (Date.now() < limit){
       await sleep(1500);

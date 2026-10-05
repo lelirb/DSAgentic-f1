@@ -38,14 +38,17 @@ let activeEvaluations = 0;
 // un Chromium instalado, `available` es false y todo sigue como antes.
 // BROWSER_RENDERING=0 lo apaga sin tocar código.
 const renderer = process.env.BROWSER_RENDERING === "0" ? null : createRenderer();
-const RENDER_EXTRA_MS = Number(process.env.RENDER_EXTRA_MS) || 100_000;
+// 45 s de rastreo + 195 s = 4 minutos para los sitios que necesitan navegador.
+// Con 100 s (2,5 min en total) Material 3 leía unas 15 páginas de las ~36 de su
+// muestra y no llegaba a los tokens. Es una prueba: se ajusta con RENDER_EXTRA_MS.
+const RENDER_EXTRA_MS = Number(process.env.RENDER_EXTRA_MS) || 195_000;
 
 // ---------- avance de la evaluación ----------
 // Una evaluación con navegador puede tardar un par de minutos. La página manda un
 // identificador aleatorio con el pedido y consulta /api/progress para mostrar en
 // qué paso va. Se guarda en memoria, poco tiempo y con tope de cantidad.
 const PROGRESS_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
-const JOB_TTL_MS = 4 * 60_000;
+const JOB_TTL_MS = 10 * 60_000; // más que la evaluación más larga (4 min), para poder recuperar el resultado
 const MAX_JOBS = 20;
 const MAX_JOB_EVENTS = 200;
 const jobs = new Map();

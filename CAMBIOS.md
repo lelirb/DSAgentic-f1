@@ -885,3 +885,27 @@ Sin verificar:
   trabajo. Puede necesitar un ajuste después de probar en producción.
 - **Material 3.** Sin cambios: se queda sin tiempo antes de llegar a los tokens.
 - Los puntajes resultantes en producción.
+
+## Fuentes oficiales: el Storybook de Fluent 2 no se detectaba — 2026-10-05
+
+Cada componente de Fluent 2 enlaza a su Storybook
+(`react.fluentui.dev/?path=/docs/components-checkbox--docs`) y en producción
+`official_sources` salía vacío.
+
+45. **Causa reproducida.** Las direcciones se normalizan antes de clasificarlas
+    y el parámetro queda como `path=%2Fdocs%2F…`; la regla buscaba `path=/docs/`
+    en el texto sin decodificar. Ahora se lee el parámetro decodificado
+    (`officialSourceKind`). Solo afectaba a Storybooks cuya dirección no lleva
+    "storybook" en el nombre.
+46. **Enlaces con ícono.** `labelledLinks` descartaba el enlace entero si su
+    contenido pasaba de 200 caracteres (un `<svg>` dentro del enlace). Ahora se
+    leen con `findBlocks`, sin ese tope, y se usa `aria-label` / `title` si no
+    hay texto. No se pudo comprobar que este fuera el caso en Fluent.
+
+Efecto esperado en Fluent 2, con las reglas que ya existían (las mismas que se
+aplican a Carbon): se lee el índice del Storybook (D1 `component_index`
+encontrado) y lo que vive en el Storybook, como las propiedades, pasa de "no
+encontrado" a "fuera de la nota". Se comprobó que el índice existe
+(`react.fluentui.dev/index.json` redirige a `storybooks.fluentui.dev/react/index.json`).
+
+Pruebas: `tests/official-links.test.js` (3). Total: 170.

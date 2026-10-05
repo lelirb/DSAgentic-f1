@@ -117,7 +117,12 @@ export function officialSourceKind(url) {
     return null;
   }
   const host = u.hostname.toLowerCase();
-  if (/(^|\.)storybook\b|storybook\./.test(host) || /\/storybook(\/|$)/i.test(u.pathname) || /(^|&)path=\/(story|docs)\//i.test(u.search.slice(1))) {
+  // Dirección típica de Storybook: ?path=/docs/components-button--docs. Se lee el
+  // parámetro ya decodificado: las direcciones llegan normalizadas y la barra
+  // viene como %2F (por eso el Storybook de Fluent 2, react.fluentui.dev, que no
+  // lleva "storybook" en el nombre, no se reconocía).
+  const storyPath = u.searchParams.get("path") || "";
+  if (/(^|\.)storybook\b|storybook\./.test(host) || /\/storybook(\/|$)/i.test(u.pathname) || /^\/(story|docs)\//i.test(storyPath)) {
     return "storybook";
   }
   if (host === "github.com") {

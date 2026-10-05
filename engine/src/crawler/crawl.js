@@ -8,6 +8,7 @@ import {
 } from "./siteMap.js";
 import { isLikelyComponentPage, componentIdentity } from "../extractor/detectComponents.js";
 import { visibleTextLength, MIN_READABLE_TEXT } from "../extractor/readPage.js";
+import { findBlocks, removeBlocks } from "../extractor/blocks.js";
 
 const DEFAULTS = {
   max_pages: 40,
@@ -501,12 +502,17 @@ function labelledLinks(body, contentType, baseUrl) {
   const out = [];
   if (typeof body !== "string") return out;
   if (/html/.test(contentType || "")) {
-    const re = /<a\s[^<>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))[^<>]*>([\s\S]{0,200}?)<\/a>/gi;
-    let m;
-    while ((m = re.exec(body))) {
-      const raw = m[1] ?? m[2] ?? m[3] ?? "";
-      const link = normalizeUrl(raw, baseUrl);
-      if (link) out.push({ url: link, label: (m[4] || "").replace(/<[^>]*>/g, " ").trim() });
+    // Antes el texto del enlace no podía pasar de 200 caracteres: un enlace con
+    // un ícono dentro (un <svg> largo) se perdía entero, con dirección y todo.
+    const hrefRe = /\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i;
+    for (const a of findBlocks(body, "a", 5000)) {
+      const m = hrefRe.exec(a.attrs || "");
+      if (!m) continue;
+      const link = normalizeUrl(m[1] ?? m[2] ?? m[3] ?? "", baseUrl);
+      if (!link) continue;
+      const text = removeBlocks(a.inner.slice(0, 20000), "svg|style|script").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      const aria = /\b(?:aria-label|title)\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(a.attrs || "");
+      out.push({ url: link, label: (text || (aria ? aria[1] ?? aria[2] : "") || "").slice(0, 200) });
     }
     return out;
   }

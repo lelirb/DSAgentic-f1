@@ -982,3 +982,16 @@ animación y su versión quieta no se tocaron.
 Sin verificar: solo se probó con avisos simulados. Falta verla con una
 evaluación real (ritmo y orden de los avisos del servidor). La dueña decidió
 probarlo directamente en producción.
+
+## Criterios de la dueña sobre componentes — 2026-10-08
+
+56. **Un componente por plataforma es uno solo.** Si el sistema publica un
+    componente en versiones por plataforma (iOS, Android, web…), es un componente
+    con sus adaptaciones. El evaluador ya lo hacía así cuando el nombre se repite
+    en la dirección (Fluent: Avatar group se leyó una vez, con sus tres
+    versiones como pestañas); queda escrito como criterio y con prueba.
+57. **El nombre es aquello de lo que habla la página.** "Checkbox Preview" pasa a
+    "Checkbox": se queda la parte del título que coincide con la dirección. Si
+    el título no empieza con lo que dice la dirección, se respeta tal cual.
+
+Pruebas: `tests/component-criteria.test.js` (2). Total: 176.

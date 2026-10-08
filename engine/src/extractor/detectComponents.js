@@ -115,6 +115,11 @@ export function detectComponents(crawlResult, evidenceCollector) {
   // Todas las pestañas (uso/estilo/código/accesibilidad…) de un mismo componente
   // se leen juntas. La página principal (para nombre y descripción) sigue siendo
   // la de "usage" si existe; una URL que ES el componente (sin sufijo) gana.
+  // Criterio (definido por la dueña): un componente es una pieza de diseño con
+  // un comportamiento definido. Si el sistema lo publica por plataforma (iOS,
+  // Android, web…), es UN componente con sus adaptaciones: sus páginas se juntan
+  // como pestañas del mismo componente (Fluent: /components/ios/core/avatargroup,
+  // /components/android/core/avatargroup, /components/web/react/core/avatargroup).
   const byIdentity = new Map();
   for (const page of allComponentPages) {
     const identity = componentIdentity(page.url);
@@ -131,7 +136,7 @@ export function detectComponents(crawlResult, evidenceCollector) {
   const found = [...byIdentity.values()].map((tabs) => {
     const page = tabs[0];
     const headings = extractHeadings(page.body);
-    const name = headings[0] || pathToName(page.url);
+    const name = componentName(headings[0], componentIdentity(page.url)) || pathToName(page.url);
     const readable = tabs.filter((t) => visibleTextLength(t.body) >= MIN_READABLE_TEXT);
     const evidenceIds = [];
     const ev = (entry) => {
@@ -273,6 +278,27 @@ export function detectComponents(crawlResult, evidenceCollector) {
   }
 
   return [...found, ...notEvaluable];
+}
+
+// Criterio (definido por la dueña): el nombre es aquello de lo que habla la
+// página. Si el título trae palabras de más ("Checkbox Preview" en Fluent, una
+// etiqueta de estado), se queda la parte que coincide con la dirección
+// (/checkbox/). Si el título no empieza con lo que dice la dirección, se respeta
+// el título tal cual.
+export function componentName(title, identity) {
+  const t = String(title || "").replace(/\s+/g, " ").trim();
+  if (!t) return null;
+  const norm = (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  const target = norm(String(identity || ""));
+  if (!target) return t;
+  const words = t.split(" ");
+  let acc = "";
+  for (let i = 0; i < words.length; i++) {
+    acc += norm(words[i]);
+    if (acc === target) return words.slice(0, i + 1).join(" ");
+    if (!target.startsWith(acc)) break;
+  }
+  return t;
 }
 
 export function componentIdentity(url) {

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <link rel="prefetch" href="niko/niko-buscando.webp" as="image" type="image/webp">
+  <link rel="preload" href="niko/niko-barra.webp" as="image" type="image/webp" imagesrcset="niko/niko-barra-chico.webp 378w, niko/niko-barra.webp 756w" imagesizes="(max-width: 640px) 70vw, 470px">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agentic DS — Is your Design System ready for AI agents?</title>
@@ -163,6 +164,73 @@
   .demo-link{background:none;border:none;color:var(--indigo-700);font-size:12.5px;font-weight:600;padding:2px 0;text-decoration:underline;}
   .result-state{font-size:13.5px;color:var(--gray-500);padding:8px 0;}
 
+
+  /* ---------- Bloque superior (diseño con Niko y buscador grande) ---------- */
+  .hero-v2{position:relative;overflow:hidden;padding:56px 0 56px;
+    background:
+      radial-gradient(680px 380px at 80% 28%, rgba(61,90,254,.13), rgba(61,90,254,0) 70%),
+      radial-gradient(900px 500px at 10% 100%, rgba(120,138,255,.10), rgba(120,138,255,0) 70%),
+      linear-gradient(180deg,#F5F6FE 0%,#F8F9FF 60%,#FFFFFF 100%);}
+  .hero-top{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:end;}
+  .hero-copy{padding-bottom:36px;}
+  .eyebrow-pill{display:inline-block;background:var(--indigo-100);color:var(--indigo-700);border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:500;letter-spacing:0;margin-bottom:20px;}
+  .hero-v2 h1{font-size:52px;line-height:1.1;color:#10164A;letter-spacing:-.02em;margin-bottom:18px;}
+  .hero-v2 p.lead{font-size:18px;color:#4A5372;margin-bottom:0;}
+  .hero-art{position:relative;height:330px;}
+  /* Niko apoyado sobre la barra: la imagen termina un poco por debajo del borde
+     superior de la barra (5,6 % de su alto), así los tentáculos quedan encima. */
+  .search-wrap{position:relative;}
+  .niko-hero{position:absolute;right:8%;bottom:100%;transform:translateY(5.6%);width:min(42%,470px);height:auto;z-index:3;pointer-events:none;filter:drop-shadow(0 16px 24px rgba(40,60,200,.18));}
+  .float-card{position:absolute;background:rgba(255,255,255,.92);border:1px solid #E3E7FB;border-radius:14px;box-shadow:0 14px 34px rgba(40,60,200,.10);z-index:1;}
+  .float-card b{display:block;height:6px;border-radius:4px;background:#DCE2FB;margin:7px 0;}
+  .float-card b.short{width:55%;}
+  .fc-ui{right:-5%;top:6px;width:190px;padding:10px 12px;transform:rotate(4deg);}
+  .fc-dots{display:flex;gap:4px;margin-bottom:6px;}
+  .fc-dots i{width:6px;height:6px;border-radius:50%;background:#C9D0F5;}
+  .fc-row{display:flex;gap:10px;}
+  .fc-side{width:30px;height:auto!important;min-height:58px;background:#EEF1FD!important;margin:0!important;}
+  .fc-lines{flex:1;}
+  .fc-block{height:28px!important;width:42px;background:#7B8CFF!important;}
+  .fc-code{right:-6%;top:150px;width:150px;padding:12px 14px;transform:rotate(5deg);z-index:2;}
+  .fc-tag{font:600 14px/1 'IBM Plex Mono',monospace;color:var(--indigo-600);}
+  .fc-code b{background:#C9D0FB;}
+
+  .search-card{position:relative;z-index:2;background:rgba(255,255,255,.95);border:1px solid #D9DFFB;border-radius:30px;padding:28px 22px 22px 30px;
+    box-shadow:0 0 0 8px rgba(61,90,254,.05),0 26px 70px rgba(61,90,254,.20),0 2px 6px rgba(16,22,74,.05);}
+  .search-card:focus-within{border-color:var(--indigo-600);box-shadow:0 0 0 4px rgba(61,90,254,.18),0 26px 70px rgba(61,90,254,.22);}
+  .search-card .evaluate-form{display:flex;align-items:center;gap:18px;margin:0;}
+  .search-card .sc-icon{flex-shrink:0;color:#2A3170;}
+  .search-card .sc-field{flex:1;min-width:0;}
+  .search-card .evaluate-form input{width:100%;border:none;border-radius:0;padding:6px 0;font-size:21px;color:#10164A;background:transparent;outline:none;}
+  .search-card .evaluate-form input::placeholder{color:#6B7396;}
+  .search-card .form-hint{margin:6px 0 0;font-size:13.5px;color:#6B7396;}
+  .btn-eval{display:inline-flex;align-items:center;gap:10px;border-radius:999px!important;padding:17px 30px!important;font-size:17px!important;font-weight:600;box-shadow:0 10px 24px rgba(61,90,254,.30);}
+  .search-below{max-width:760px;margin:22px auto 0;padding:0 8px;}
+  .search-below .demo-row{margin-bottom:10px;}
+  .search-below .hero-meta{margin-top:14px;}
+  .example-dims-grid.dims-only{grid-template-columns:1fr;}
+
+  @media (max-width:900px){
+    .hero-top{grid-template-columns:1fr;gap:0;}
+    .hero-copy{padding-bottom:8px;}
+    .hero-art{height:250px;}
+    .niko-hero{width:min(60%,420px);}
+    .float-card{display:none;}
+  }
+  @media (max-width:640px){
+    .hero-v2{padding-top:36px;}
+    .hero-v2 h1{font-size:34px;}
+    .hero-v2 p.lead{font-size:16px;}
+    .search-card{padding:22px 18px 18px;border-radius:24px;}
+    .niko-hero{width:72%;right:2%;}
+    .hero-art{height:165px;}
+    .search-card .evaluate-form{flex-wrap:wrap;gap:12px;}
+    .search-card .sc-icon{width:22px;height:22px;}
+    .search-card .sc-field{flex-basis:calc(100% - 40px);}
+    .search-card .evaluate-form input{font-size:17px;}
+    .btn-eval{width:100%;justify-content:center;}
+  }
+
   /* ---------- Cargador de la evaluación (pantalla completa) ---------- */
   body.is-evaluating{overflow:hidden;}
   .eval-overlay{position:fixed;inset:0;z-index:1000;background:#F7F7FB;display:flex;align-items:center;justify-content:center;padding:24px;}
@@ -283,66 +351,53 @@
         <button type="button" id="btn-es" aria-pressed="true">ES</button>
         <button type="button" id="btn-en" aria-pressed="false">EN</button>
       </div>
-      <a href="#evaluate" class="btn btn-primary" data-i18n="nav.cta">Evaluate my DS →</a>
+      <a href="#evaluate-box" class="btn btn-primary js-go-eval" data-i18n="nav.cta">Evaluate my DS →</a>
     </div>
   </nav>
 </header>
 
 <main>
   <!-- HERO -->
-  <section class="hero" id="how">
-    <div class="wrap hero-grid">
-      <div>
-        <p class="eyebrow" data-i18n="hero.eyebrow">DESIGN SYSTEMS + AI AGENTS</p>
-        <h1 data-i18n="hero.title">Is your Design System ready for AI agents?</h1>
-        <p class="lead" data-i18n="hero.lead">Evaluate whether your Design System can be understood, interpreted and used reliably by AI agents — before you ask an agent to build with it.</p>
-        <a href="#evaluate" class="btn btn-primary" data-i18n="hero.cta">Evaluate a Design System →</a>
+  <section class="hero hero-v2" id="how">
+    <div class="wrap">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <p class="eyebrow eyebrow-pill" data-i18n="hero.eyebrow">DESIGN SYSTEMS + AI AGENTS</p>
+          <h1 data-i18n="hero.title">Is your Design System ready for AI agents?</h1>
+          <p class="lead" data-i18n="hero.lead">Evaluate whether your Design System can be understood, interpreted and used reliably by AI agents — before you ask an agent to build with it.</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="float-card fc-ui"><span class="fc-dots"><i></i><i></i><i></i></span><span class="fc-row"><b class="fc-side"></b><span class="fc-lines"><b class="fc-block"></b><b></b><b class="short"></b></span></span></div>
+          <div class="float-card fc-code"><span class="fc-tag">&lt;/&gt;</span><b></b><b class="short"></b><b></b></div>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+      <img class="niko-hero" src="niko/niko-barra.webp" srcset="niko/niko-barra-chico.webp 378w, niko/niko-barra.webp 756w" sizes="(max-width: 640px) 70vw, 470px" width="756" height="504" alt="" aria-hidden="true" decoding="async">
+      <div class="search-card" id="evaluate-box">
+        <form id="evaluate-form" class="evaluate-form">
+          <svg class="sc-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div class="sc-field">
+            <label for="ds-url" class="sr-only" data-i18n="form.hint">Paste the main address or any component's address.</label>
+            <input type="url" id="ds-url" data-i18n-placeholder="form.placeholder" placeholder="https://yourdesignsystem.com/docs" required>
+            <p class="form-hint" aria-hidden="true" data-i18n="form.hint">Paste the main address or any component's address.</p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-eval" id="evaluate-submit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z" fill="currentColor"/></svg><span data-i18n="form.submit">Evaluate →</span></button>
+        </form>
+      </div>
+      </div>
+      <div class="search-below">
+        <div class="demo-row">
+            <span data-i18n="form.or">or try a demo:</span>
+            <button type="button" class="demo-link" data-demo="good" data-i18n="form.demo.good">Well-documented DS</button>
+            <button type="button" class="demo-link" data-demo="poor" data-i18n="form.demo.poor">Poorly documented DS</button>
+          </div>
+        <p class="form-note"><span data-i18n="form.note.notEvaluable">For now the evaluator can't read content that only appears with JavaScript, pages behind a login, or Figma files. Those parts are left out of the score.</span> <a href="como-funciona.html" data-i18n="form.note.howLink">How it works</a></p>
+        <div id="result-area"></div>
         <div class="hero-meta">
           <span data-i18n="hero.meta1">No account required</span>
           <span data-i18n="hero.meta2">Free evaluation</span>
           <span data-i18n="hero.meta3">Takes ~2 min</span>
-        </div>
-      </div>
-
-      <div class="diagram">
-        <div class="diagram-flow">
-          <div class="flow-card">
-            <div class="flow-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-              <div class="flow-title" data-i18n="hero.flow1.title">Design System</div>
-              <div class="flow-sub" data-i18n="hero.flow1.sub">Components · Tokens · Docs · Code</div>
-            </div>
-          </div>
-          <div class="flow-connector"></div>
-          <div class="flow-card">
-            <div class="flow-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </div>
-            <div>
-              <div class="flow-title" data-i18n="hero.flow2.title">Evaluate</div>
-              <div class="flow-sub" data-i18n="hero.flow2.sub">Findings · Gaps · Readiness</div>
-            </div>
-          </div>
-          <div class="flow-connector"></div>
-          <div class="flow-card">
-            <div class="flow-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/><path d="M5 21c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </div>
-            <div>
-              <div class="flow-title" data-i18n="hero.flow3.title">AI Agent</div>
-              <div class="flow-sub" data-i18n="hero.flow3.sub">Understands · Interprets · Builds</div>
-            </div>
-          </div>
-        </div>
-        <div class="code-panel">
-          <div class="dots"><span></span><span></span><span></span></div>
-          <pre>const button = {
-  <span class="key">variant:</span> <span class="str">"primary"</span>,
-  <span class="key">size:</span> <span class="str">"medium"</span>,
-  <span class="key">state:</span> <span class="str">"enabled"</span>,
-};</pre>
         </div>
       </div>
     </div>
@@ -350,26 +405,7 @@
 
   <!-- EXAMPLE + DIMENSIONS -->
   <section class="section-alt" id="method">
-    <div class="wrap example-dims-grid">
-      <div>
-        <p class="eyebrow" data-i18n="example.eyebrow">EXAMPLE EVALUATION</p>
-        <div class="score-card">
-          <p class="form-hint" data-i18n="form.hint">Paste the main address or any component's address.</p>
-          <form id="evaluate-form" class="evaluate-form">
-            <input type="url" id="ds-url" data-i18n-placeholder="form.placeholder" placeholder="https://yourdesignsystem.com/docs" required>
-            <button type="submit" class="btn btn-primary" id="evaluate-submit" data-i18n="form.submit">Evaluate →</button>
-          </form>
-          <div class="demo-row">
-            <span data-i18n="form.or">or try a demo:</span>
-            <button type="button" class="demo-link" data-demo="good" data-i18n="form.demo.good">Well-documented DS</button>
-            <button type="button" class="demo-link" data-demo="poor" data-i18n="form.demo.poor">Poorly documented DS</button>
-          </div>
-
-          <p class="form-note"><span data-i18n="form.note.notEvaluable">For now the evaluator can't read content that only appears with JavaScript, pages behind a login, or Figma files. Those parts are left out of the score.</span> <a href="como-funciona.html" data-i18n="form.note.howLink">How it works</a></p>
-          <div id="result-area"></div>
-        </div>
-      </div>
-
+    <div class="wrap example-dims-grid dims-only">
       <div>
         <p class="eyebrow" data-i18n="dims.eyebrow">WHAT ARE WE ACTUALLY EVALUATING?</p>
         <div class="section-head" style="margin-bottom:24px;">
@@ -454,7 +490,7 @@
     <div class="wrap cta-inner">
       <p class="eyebrow" data-i18n="final.eyebrow">READY TO SEE WHERE YOU STAND?</p>
       <h2 data-i18n="final.title">Find out if your Design System is ready for agents.</h2>
-      <a href="#" class="btn btn-primary" data-i18n="final.cta">Evaluate my Design System →</a>
+      <a href="#evaluate-box" class="btn btn-primary js-go-eval" data-i18n="final.cta">Evaluate my Design System →</a>
       <p class="fine" data-i18n="final.fine">Built for teams working with AI-assisted development.</p>
     </div>
   </section>
@@ -508,6 +544,12 @@
 
   // ---------- Evaluation wiring: runs the evaluation, then hands off to results.html ----------
   const resultArea = document.getElementById('result-area');
+  // Los botones "Evaluar" del menú y del final llevan al buscador y lo dejan listo para escribir.
+  document.querySelectorAll('.js-go-eval').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('evaluate-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => document.getElementById('ds-url').focus({ preventScroll: true }), 450);
+  }));
   const form = document.getElementById('evaluate-form');
   const urlInput = document.getElementById('ds-url');
   const submitBtn = document.getElementById('evaluate-submit');

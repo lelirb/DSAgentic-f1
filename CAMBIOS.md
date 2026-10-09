@@ -1010,3 +1010,24 @@ Fluent 35 sin cambios; los nombres de Fluent ya salen sin "Preview".
     0,9 s antes de abrir el informe.
 
 Pruebas: una nueva en `tests/component-criteria.test.js`. Total: 177.
+
+## Página principal: Niko sobre el buscador — 2026-10-09
+
+Pedido de la dueña, con dos imágenes de referencia: el color, Niko apoyado
+sobre la barra, la barra grande y, debajo, las secciones actuales con sus textos.
+
+60. **Bloque superior nuevo:** fondo lavanda con brillo azul, título en azul
+    marino, etiqueta en píldora y el buscador grande (ícono de enlace, botón
+    "✦ Evaluar →", sombra azul). Las demos, el aviso de lo que no se puede leer
+    y "Sin necesidad de cuenta…" quedan debajo de la barra.
+61. **Niko** se recortó por color de la imagen de referencia de la dueña
+    (`public/niko/niko-barra.webp`, 43 KB, y una versión chica para teléfono).
+    La imagen termina un poco por debajo del borde de la barra para que los
+    tentáculos queden encima.
+62. **El buscador ya no está en "Seis dimensiones"**: esa sección ocupa todo el
+    ancho. Los botones "Evaluar" del menú y del final llevan a la barra y la
+    dejan lista para escribir.
+63. Los textos no cambiaron.
+
+Sin verificar: cómo se ve con la tipografía real (IBM Plex no carga en el
+entorno de trabajo) y en tamaños de pantalla intermedios.

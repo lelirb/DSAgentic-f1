@@ -1039,3 +1039,5 @@ entorno de trabajo) y en tamaños de pantalla intermedios.
     enlaces desaparecían en el teléfono). El botón "Evaluar mi DS" se oculta ahí
     porque la barra de búsqueda está en la primera pantalla. Se cierra con Esc,
     al elegir un enlace o al agrandar la ventana.
+65. **Campo de texto visible** (pedido de la dueña: "muy caleta está"): borde
+    lavanda, fondo apenas distinto y, al escribir, borde azul con halo.

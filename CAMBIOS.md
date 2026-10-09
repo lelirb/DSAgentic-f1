@@ -1031,3 +1031,11 @@ sobre la barra, la barra grande y, debajo, las secciones actuales con sus textos
 
 Sin verificar: cómo se ve con la tipografía real (IBM Plex no carga en el
 entorno de trabajo) y en tamaños de pantalla intermedios.
+
+## Menú en pantallas chicas — 2026-10-09
+
+64. Hasta 900 px de ancho: logo más grande en una línea, ES/EN visible y menú
+    hamburguesa con "Cómo funciona", "Metodología" y "Acerca de" (antes esos
+    enlaces desaparecían en el teléfono). El botón "Evaluar mi DS" se oculta ahí
+    porque la barra de búsqueda está en la primera pantalla. Se cierra con Esc,
+    al elegir un enlace o al agrandar la ventana.

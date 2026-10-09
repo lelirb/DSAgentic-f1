@@ -7,7 +7,9 @@ import { findBlocks, removeBlocks } from "./blocks.js";
 // ---------- vocabulario (ES / EN) ----------
 // Etiquetas de sección: se comparan contra el título ENTERO de la sección.
 export const VOCAB = {
-  whenToUse: [/^when to use( it| this)?:?$/i, /^use (it )?when:?$/i, /^usage guidelines:?$/i, /^cu[aá]ndo usar(lo|la)?:?$/i, /^us(a|á|e|ar)(lo|la)? cuando:?$/i],
+  // "Usage" / "Uso" a secas también cuenta (decisión de la dueña: "Usage es uso,
+  // indica cuándo algo será usado"). Material 3 titula así todas sus guías.
+  whenToUse: [/^when to use( it| this)?:?$/i, /^use (it )?when:?$/i, /^usage( guidelines)?:?$/i, /^uso:?$/i, /^cu[aá]ndo usar(lo|la)?:?$/i, /^us(a|á|e|ar)(lo|la)? cuando:?$/i],
   whenNotToUse: [
     /^when not to use( it| this)?:?$/i, /^do not use( when)?:?$/i, /^don(?:'|\u2019|&rsquo;|&#8217;|&#39;)?t use( when)?:?$/i,
     /^avoid( using)?( when)?:?$/i, /^cu[aá]ndo no usar(lo|la)?:?$/i, /^no (lo |la )?us(es|ar)( cuando)?:?$/i, /^evit(a|á|ar)( usar(lo|la)?)?( cuando)?:?$/i,

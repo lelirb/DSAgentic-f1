@@ -27,3 +27,16 @@ test("el nombre es aquello de lo que habla la página", () => {
   assert.equal(componentName("Toast", "toast"), "Toast");
   assert.equal(componentName("", "toast"), null);
 });
+
+import { extractSections, findSections, VOCAB } from "../engine/src/extractor/readPage.js";
+
+test("'Usage' y 'Uso' cuentan como 'Cuándo usar'", () => {
+  for (const title of ["Usage", "Uso", "Usage guidelines", "When to use", "Cuándo usarlo"]) {
+    const s = extractSections(`<h2>${title}</h2><p>Use badges to show counts on navigation items.</p>`);
+    assert.equal(findSections(s, VOCAB.whenToUse).length, 1, title);
+  }
+  for (const title of ["Usage examples", "Usuario", "Use cases"]) {
+    const s = extractSections(`<h2>${title}</h2><p>Texto.</p>`);
+    assert.equal(findSections(s, VOCAB.whenToUse).length, 0, title);
+  }
+});

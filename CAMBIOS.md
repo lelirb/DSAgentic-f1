@@ -995,3 +995,18 @@ probarlo directamente en producción.
     el título no empieza con lo que dice la dirección, se respeta tal cual.
 
 Pruebas: `tests/component-criteria.test.js` (2). Total: 176.
+
+## "Usage" cuenta como "Cuándo usar" y la barra se ve en sitios rápidos — 2026-10-08
+
+Resultados en producción tras los puntos 47–57: Material 3 pasó de 20 a 40 (22
+páginas leídas en 4 minutos, sin fallos; D3 0 → 57, D6 38 → 50). Carbon 80 y
+Fluent 35 sin cambios; los nombres de Fluent ya salen sin "Preview".
+
+58. **"Usage" y "Uso"** se aceptan como "Cuándo usar" (decisión de la dueña:
+    "Usage es uso. Indica cuándo algo será usado"). Los títulos leídos
+    confirmaron que Material 3 usa "Usage" en todas sus guías.
+59. **Barra en sitios rápidos.** Carbon y Fluent terminan en segundos y el
+    cargador saltaba al informe sin que la barra se viera. Ahora se muestra llena
+    0,9 s antes de abrir el informe.
+
+Pruebas: una nueva en `tests/component-criteria.test.js`. Total: 177.

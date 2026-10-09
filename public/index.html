@@ -744,7 +744,12 @@
         renderError(known ? t(key) : t('form.error.generic'));
         return;
       }
-      if (live){ loader.queue = []; showEvent({ step: 'done' }); }
+      if (live){
+        loader.queue = []; showEvent({ step: 'done' });
+        // En sitios rápidos el resultado llega en segundos: antes se saltaba al
+        // informe sin que la barra alcanzara a verse. Se deja ver llena un momento.
+        await sleep(900);
+      }
       sessionStorage.setItem('agentic-ds-last-result', JSON.stringify({ report: data.report, mode: data.mode, sources: data.sources || null, discovery: data.discovery || null, crawl_summary: data.crawl_summary || null, evaluated_at: new Date().toISOString() }));
       window.location.href = 'results.html';
     } catch (err) {

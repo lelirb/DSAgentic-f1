@@ -108,9 +108,25 @@
         "Archivos de Figma (por eso D7, la consistencia entre diseño y código, no se evalúa).",
         "Storybook, repositorios y paquetes publicados: se anotan, pero todavía no se leen.",
         "Sitios de otros dominios que la documentación no declara como oficiales.",
+        "Si un servidor MCP, una API, un llms.txt o un AGENTS.md funcionan o piden credenciales: solo se detecta que existen o que la documentación los menciona.",
+        "Contradicciones entre fuentes (por ejemplo, entre una página y un archivo de tokens): esta versión no las busca.",
+        "Qué componentes se parecen entre sí: no se detectan por separado, así que el criterio de desambiguación de D4 no cuenta en la nota. Las frases que comparan componentes se muestran como evidencia.",
+        "La cantidad de páginas leídas puede variar entre una evaluación y otra del mismo sitio, sobre todo en sitios lentos o cuando se alcanza el límite de tiempo. Por eso dos evaluaciones pueden dar resultados algo distintos. El informe lista lo que se leyó en cada una.",
       ],
       safetyTitle: "Límites y seguridad",
-      safety: "Cada evaluación tiene un tiempo máximo de 45 segundos, hasta 45 páginas y 5 MB por respuesta. No se visitan direcciones internas ni privadas. No se guarda nada en el servidor: el resultado vive en tu navegador hasta que lo descargues.",
+      safety: "Cada evaluación lee hasta 45 páginas, con 5 MB como máximo por respuesta. El tiempo máximo es de 45 segundos; si alguna página necesita navegador, puede llegar a unos 4 minutos en total. No se visitan direcciones internas ni privadas. El resultado no se guarda en una base de datos ni en archivos del servidor (ver «Privacidad»).",
+      privacyTitle: "Privacidad (nota provisional)",
+      privacy: [
+        "No necesitas cuenta. La app no pide nombre, correo ni otros datos personales.",
+        "La dirección que escribes se envía al servidor para evaluar ese sitio. El servidor visita sus páginas con su propia conexión; en las lecturas directas se identifica como «AgenticDS».",
+        "El servidor no guarda los resultados en una base de datos ni en archivos. Mientras dura la evaluación, y hasta 10 minutos después, el resultado queda en su memoria para recuperarlo si se corta la conexión; luego se descarta.",
+        "Para limitar el uso a 5 evaluaciones por minuto, el servidor guarda en memoria, durante uno o dos minutos, la dirección IP desde la que se pide cada evaluación.",
+        "Si una evaluación falla por un error interno, el servidor registra ese error, que puede incluir la dirección evaluada.",
+        "Tu navegador guarda el idioma elegido y el último resultado. El resultado se borra al cerrar la pestaña.",
+        "La app no usa herramientas de analítica ni cookies de seguimiento. Las páginas cargan tipografías de Google Fonts, así que al abrirlas tu navegador se conecta a Google.",
+        "La app está publicada en Render. No revisamos qué registros técnicos guarda Render (por ejemplo, direcciones IP u horas de acceso); se rigen por sus propias políticas.",
+        "Los términos de uso y la política de privacidad completos están pendientes. Esta nota describe lo que se comprobó en el código de la app.",
+      ],
       cta: "Evaluar un Design System",
     },
     en: {
@@ -136,7 +152,7 @@
       ],
       statesNote: "The difference between “Not found” and “Doesn't exist” changes the recommendation: in the first case, check whether it exists and make it easier to find; in the second, create it.",
       ruleTitle: "The half rule",
-      rule: "The score is calculated only from what could be reviewed. If that's less than half of what makes up the score, the report shows the number with a notice and doesn't assign a level (Opaque, Readable, Interpretable or Operable), because with so little evidence the level would claim more than is known.",
+      rule: "The score is calculated only from what could be reviewed. If that's less than half of what makes up the score, the report shows the number with a notice and doesn't assign a level (Opaque, Legible, Interpretable or Operable), because with so little evidence the level would claim more than is known.",
       limitsTitle: "What it can't read yet",
       limits: [
         "Content that only appears when JavaScript runs, when the page doesn\u2019t finish loading in time in the evaluator\u2019s browser. If it loads, it is read; the report says so and D1 records that the content isn\u2019t available without JavaScript.",
@@ -144,9 +160,25 @@
         "Figma files (that's why D7, design–code consistency, isn't evaluated).",
         "Storybook, repositories and published packages: they're noted, but not read yet.",
         "Sites on other domains that the documentation doesn't declare as official.",
+        "Whether an MCP server, an API, an llms.txt or an AGENTS.md works or requires credentials: it only detects that they exist or that the documentation mentions them.",
+        "Contradictions between sources (for example, between a page and a token file): this version doesn't look for them.",
+        "Which components are similar to each other: they aren't detected separately, so D4's disambiguation criterion isn't part of the score. Sentences comparing components are shown as evidence.",
+        "The number of pages read can vary from one evaluation of the same site to another, especially on slow sites or when the time limit is reached. So two evaluations may give somewhat different results. The report lists what was read in each one.",
       ],
       safetyTitle: "Limits and safety",
-      safety: "Each evaluation has a 45-second limit, up to 45 pages and 5 MB per response. Internal or private addresses are never visited. Nothing is stored on the server: the result lives in your browser until you download it.",
+      safety: "Each evaluation reads up to 45 pages, with at most 5 MB per response. The time limit is 45 seconds; if any page needs a browser, it can reach about 4 minutes in total. Internal or private addresses are never visited. The result isn't stored in a database or in files on the server (see “Privacy”).",
+      privacyTitle: "Privacy (provisional note)",
+      privacy: [
+        "You don't need an account. The app doesn't ask for your name, email or other personal data.",
+        "The address you type is sent to the server to evaluate that site. The server visits its pages through its own connection; in direct reads it identifies itself as “AgenticDS”.",
+        "The server doesn't store results in a database or in files. While the evaluation runs, and for up to 10 minutes after, the result stays in its memory so it can be recovered if the connection drops; then it's discarded.",
+        "To limit use to 5 evaluations per minute, the server keeps in memory, for one or two minutes, the IP address each evaluation is requested from.",
+        "If an evaluation fails because of an internal error, the server logs that error, which may include the evaluated address.",
+        "Your browser stores the language you chose and the latest result. The result is deleted when you close the tab.",
+        "The app doesn't use analytics tools or tracking cookies. The pages load fonts from Google Fonts, so when you open them your browser connects to Google.",
+        "The app is hosted on Render. We haven't reviewed which technical logs Render keeps (for example, IP addresses or access times); they're governed by Render's own policies.",
+        "The full terms of use and privacy policy are still pending. This note describes what was checked in the app's code.",
+      ],
       cta: "Evaluate a Design System",
     },
   };
@@ -175,6 +207,8 @@
       <ul class="plain">${t.limits.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
       <h2>${esc(t.safetyTitle)}</h2>
       <p>${esc(t.safety)}</p>
+      <h2 id="privacidad">${esc(t.privacyTitle)}</h2>
+      <ul class="plain">${t.privacy.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
       <a class="cta" href="index.html#evaluate">${esc(t.cta)}</a>`;
   }
   function setLang(l) {

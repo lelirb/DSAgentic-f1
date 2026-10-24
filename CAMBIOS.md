@@ -1041,3 +1041,47 @@ entorno de trabajo) y en tamaños de pantalla intermedios.
     al elegir un enlace o al agrandar la ventana.
 65. **Campo de texto visible** (pedido de la dueña: "muy caleta está"): borde
     lavanda, fondo apenas distinto y, al escribir, borde azul con halo.
+
+## Fiabilidad del informe para el lanzamiento de la Fase 1 — 2026-10-24 (sin publicar)
+
+Reglas 0.1.1. Pesos, máximos y niveles sin cambio. Las 8 demos dan el mismo
+resultado del motor que en 0.1.
+
+66. **Niveles con una sola fuente.** El motor incluye la tabla de
+    `rules.json` en cada informe (`readiness_levels`) y la interfaz la usa para
+    colores, listas y rangos. Antes la interfaz tenía 26/51/76 escritos a mano:
+    una dimensión con 75 se veía «Interpretable» con un motor que decía
+    «Operable». Una dimensión decide su nivel con el número que se muestra.
+67. **«Cuenta como 0» corregido.** Un criterio sin propiedades para comparar
+    queda fuera de la nota; el texto decía lo contrario (ES y EN).
+68. **Lenguaje de evidencia, no de capacidad.** Listas («Bien documentado»,
+    «Con poca evidencia publicada»), niveles e interpretación por dimensión
+    describen lo publicado; ya no afirman lo que un agente logra hacer.
+69. **D4 · desambiguación fuera de la Fase 1 (0.1.1).** El extractor solo
+    detectaba componentes parecidos a partir de la propia frase de
+    desambiguación: el criterio daba 20/20 o «no aplica», nunca menos. En
+    sitios reales queda «fuera de esta fase»: no suma, no resta y no baja la
+    cobertura. Las frases se siguen mostrando como evidencia.
+70. **D2 y D3: descripciones fieles al código.** «Consistencia de nombres»
+    solo mira el separador de puntos; «Repetición de nombres de propiedades»
+    (antes «Consistencia de la API») mide cuánto se repiten los nombres.
+71. **Límites declarados:** MCP, API, llms.txt y AGENTS.md (se detecta que
+    existen, no si funcionan ni si piden credenciales); contradicciones entre
+    fuentes (no se buscan); componentes parecidos (no se detectan).
+72. **«Cómo funciona»:** tiempo real (45 s, hasta unos 4 minutos con
+    navegador) y el nivel «Legible» con el mismo nombre en inglés.
+73. **Cobertura variable declarada.** En los resultados en vivo, junto al
+    resultado y en «Limitaciones»: la cantidad de páginas leídas puede variar
+    entre evaluaciones del mismo sitio, sobre todo en sitios lentos o al llegar
+    al límite de tiempo. También en «Cómo funciona».
+74. **Nota de privacidad provisional** en «Cómo funciona» (ES y EN), limitada a
+    lo comprobado en el código: resultado en memoria hasta 10 minutos, IP en
+    memoria para el límite de 5 evaluaciones por minuto, errores internos en
+    el registro del servidor, Google Fonts, sin analítica ni cookies de
+    seguimiento. Declara que no se revisaron los registros de Render y que los
+    términos y la política completos están pendientes. Se quitó «No se guarda
+    nada en el servidor», que afirmaba más de lo comprobado.
+75. Pruebas: `tests/report-claims.test.js` (30).
+
+Sin verificar: el aspecto en un navegador real y evaluaciones de sitios
+reales (el entorno de trabajo no llega a internet).

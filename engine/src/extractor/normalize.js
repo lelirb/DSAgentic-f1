@@ -34,7 +34,7 @@ export function normalize(entryUrl, crawlResult, access, components, tokens, ext
   return {
     schema_version: "0.1",
     methodology_version: "0.1",
-    rules_version: "0.1",
+    rules_version: "0.1.1",
     system: { url: entryUrl, name: null, version: null },
     coverage: {
       // Correction prompt section 7: explicit denominators, not just detected/evaluated.
@@ -130,6 +130,13 @@ export function criteriaStatus({ crawlResult, discovery, access, components, tok
       }
     }
   }
+
+  // D4: desambiguación. El extractor solo marca «componentes que compiten»
+  // cuando encuentra una frase de desambiguación («instead of», «en lugar de»),
+  // así que el criterio daba 20/20 o «no aplica», nunca menos: era circular.
+  // Sin una detección independiente de componentes parecidos, la Fase 1 no lo
+  // puntúa. Las frases encontradas siguen registradas como evidencia.
+  set("D4.disambiguation", "OUT_OF_SCOPE", "NO_INDEPENDENT_PAIRS");
 
   // D6
   if (readable.length && !readable.some((c) => c.executable_examples_count > 0) && hasStorybook) {

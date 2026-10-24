@@ -85,18 +85,20 @@ const LIVE = {
   evaluated_at: "2026-09-14T15:30:00.000Z",
 };
 
-test("el informe muestra los botones de descarga y el aviso de que no se guarda nada", () => {
+test("el informe muestra los botones de descarga y el aviso de cuánto se conserva el resultado", () => {
   const html = mount(LIVE).html();
   assert.ok(html.includes('data-action="pdf"'));
   assert.ok(html.includes('data-action="json"'));
   assert.ok(html.includes("Descargar PDF"));
-  assert.ok(html.includes("No guardamos tu resultado"));
+  // 0.1.1: antes decía «No guardamos tu resultado», pero el servidor lo
+  // conserva en memoria hasta 10 minutos (JOB_TTL_MS) para poder recuperarlo.
+  assert.ok(html.includes("El servidor solo conserva tu resultado unos minutos"));
 });
 
 test("en inglés, los botones y el aviso también se traducen", () => {
   const html = mount(LIVE, "en").html();
   assert.ok(html.includes("Download PDF"));
-  assert.ok(html.includes("We don&#39;t store your result"));
+  assert.ok(html.includes("The server only keeps your result for a few minutes"));
 });
 
 test("la versión impresa lleva encabezado con fecha y un pie aclaratorio", () => {

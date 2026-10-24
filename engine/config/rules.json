@@ -1,5 +1,5 @@
 {
-  "rules_version": "0.1",
+  "rules_version": "0.1.1",
   "readiness_levels": [
     {
       "min": 0,
@@ -136,7 +136,8 @@
       "restrictions": 20,
       "justification": 20
     },
-    "note": "Fase 1 measures via documentary/structural evidence only (purpose, when_to_use, when_not_to_use, disambiguation_rules, restrictions present in component.usage). Real Agent Task execution is Fase 2 (section 25)."
+    "note": "Fase 1 measures via documentary/structural evidence only (purpose, when_to_use, when_not_to_use, disambiguation_rules, restrictions present in component.usage). Real Agent Task execution is Fase 2 (section 25).",
+    "disambiguation_note": "0.1.1 (2026-10-24): en evaluaciones de sitios reales, disambiguation queda OUT_OF_SCOPE (no suma ni resta). El extractor solo detecta componentes que compiten a partir de la propia frase de desambiguación, así que el criterio era circular (20/20 o no aplica). Pesos y máximos sin cambio. Las entradas que traen competing_components independientes (demos) se puntúan igual que en 0.1."
   },
   "d5_patterns_composition": {
     "max": 100,

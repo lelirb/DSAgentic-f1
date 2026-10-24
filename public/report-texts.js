@@ -6,29 +6,34 @@
 // (sub_criteria) tiene aquí su traducción humana; el identificador técnico se
 // sigue mostrando en la sección "Evidencia técnica".
 //
-// Umbrales de interpretación por dimensión (mismas bandas que el score global):
-//   full  = score 100 sin gaps
-//   high  = 76–99   ("operable" en esa capacidad, con gaps menores)
-//   mid   = 51–75
-//   low   = 0–50
+// Interpretación por dimensión: usa los mismos niveles que el score global,
+// leídos de report.readiness_levels (engine/config/rules.json):
+//   full  = nivel más alto sin gaps
+//   high  = nivel más alto, con gaps
+//   mid   = segundo nivel
+//   low   = niveles inferiores
+//
+// Fase 1 solo inspecciona lo que el sistema publica. Los textos de resultado
+// describen esa evidencia; no afirman lo que un agente logra hacer (eso es
+// Fase 2). tests/report-claims.test.js lo verifica.
 (function () {
   const es = {
     ui: {
       question: "¿Qué tan preparado está este Design System para trabajar con agentes?",
       scoreNote:
-        "El puntaje mide qué tan preparado está el sistema para que un agente lo descubra, lo entienda y lo use sin intervención humana. No es una medida de la calidad del Design System para personas.",
+        "El puntaje mide cuánto de lo que un agente necesitaría para descubrir, entender y usar el sistema está publicado en un formato recuperable. Se basa en lo publicado; no pone a un agente a ejecutar tareas. No mide la calidad del Design System para personas.",
       gate:
         "El acceso (D1) es muy bajo, así que el resultado general queda limitado a un máximo de 40, sin importar las demás dimensiones: si un agente no puede llegar a la información, lo demás no se puede aprovechar.",
       liveCaveat:
         "Algunas partes del sistema no se pudieron leer desde el sitio (ver «Limitaciones»), así que este resultado podría subestimar al Design System.",
-      canDo: "Puede hacer bien",
-      mayInfer: "Todavía puede necesitar inferir",
-      cannot: "Todavía no puede hacerlo de forma confiable",
+      canDo: "Bien documentado",
+      mayInfer: "Lo que un agente todavía tendría que inferir",
+      cannot: "Con poca evidencia publicada",
       notEvaluated: "No se pudo evaluar",
       therefore: "Por tanto:",
       expected: "Se esperaba encontrar:",
-      chainTitle: "Las capacidades que necesita un agente",
-      chainLead: "Cada dimensión mide una capacidad que un agente necesita para trabajar de forma autónoma. Van de la más básica a la más avanzada.",
+      chainTitle: "Lo que necesita un agente",
+      chainLead: "Cada dimensión revisa si el sistema publica lo que un agente necesitaría para una capacidad, de la más básica a la más avanzada. Se revisa lo publicado; no se pone a un agente a ejecutar tareas.",
       dimsTitle: "Las dimensiones, explicadas",
       aboutDim: "Sobre esta dimensión",
       inThisDs: "En este Design System",
@@ -43,7 +48,7 @@
       tagReco: "Recomendación",
       tagLimit: "Limitación",
       result: "Resultado",
-      capability: "Capacidad agentic evaluada",
+      capability: "Capacidad relacionada",
       notScored: "Sin puntaje",
       evidenceTitle: "Evidencia técnica",
       evCrit: "Criterio técnico",
@@ -88,7 +93,7 @@
       limD3Live:
         "No se encontraron propiedades ni variantes de componentes en las páginas revisadas. Esta versión del evaluador todavía no lee tablas de propiedades ni listas de variantes desde páginas web, ni documentación alojada en otros sitios (por ejemplo, Storybook), así que D3 puede estar subestimada.",
       noBasisApi:
-        "no se encontraron propiedades para comparar entre componentes. El motor lo cuenta como 0 en el puntaje, pero eso no indica que la API sea inconsistente.",
+        "no se encontraron propiedades para comparar entre componentes. Este criterio queda fuera de la nota (no cuenta como 0) y no indica que la API sea inconsistente.",
       stNone: "sin evidencia",
       meaningCaveat: "Con la información que se pudo leer:",
       // ---- certeza de la evidencia ----
@@ -98,6 +103,10 @@
       certAbsent: "No existe",
       certNotEvaluated: "No se pudo leer",
       certNA: "No aplica",
+      certScope: "Fuera de esta fase",
+      grpScope: "Fuera del alcance de esta fase (no cuenta en la nota):",
+      rsNoPairs:
+        "esta versión no detecta por separado qué componentes se parecen, así que no sabe cuáles necesitarían una regla para elegir entre ellos. Las frases de desambiguación encontradas se registran como evidencia, pero no puntúan.",
       certHelp:
         "Encontrado: se buscó y está. No encontrado: se buscó en lo que se leyó y no apareció; podría estar en otra parte. No existe: hay certeza de que falta. No se pudo leer: el evaluador no pudo buscarlo; queda fuera de la nota.",
       rsObservable: "se buscó en las páginas leídas y no se encontró en un formato que el evaluador reconozca",
@@ -132,7 +141,9 @@
       downloadPdf: "Descargar PDF",
       downloadJson: "Descargar datos (JSON)",
       downloadNote:
-        "No guardamos tu resultado: descárgalo para conservarlo. Para el PDF, elige «Guardar como PDF».",
+        "El servidor solo conserva tu resultado unos minutos: descárgalo para guardarlo. Para el PDF, elige «Guardar como PDF».",
+      coverageVaries:
+        "La cantidad de páginas leídas puede variar entre una evaluación y otra del mismo sitio, sobre todo en sitios lentos o cuando se alcanza el límite de tiempo. Por eso dos evaluaciones pueden dar resultados algo distintos. En «Qué revisamos» está lo que se leyó en esta.",
       printHead: "Informe de preparación de un Design System para agentes de IA",
       evaluatedAt: "Evaluado el {date}",
       printFooter:
@@ -200,6 +211,10 @@
       limNotEvaluableNow:
         "Qué todavía no se puede leer: contenido que solo aparece al ejecutar JavaScript, páginas con login, archivos de Figma y documentación publicada en otros sitios (por ejemplo, Storybook o el repositorio). Eso se marca como «no se pudo leer» y queda fuera de la nota. Si lo que se pudo revisar es menos de la mitad de la nota, no se asigna nivel.",
       limExternal: "Parte de la información está en fuentes oficiales del sistema (Storybook, repositorio o paquetes) que esta versión todavía no lee. Esos criterios quedaron fuera de la nota.",
+      limAgentFiles:
+        "Detectar un servidor MCP, una API, un llms.txt o un AGENTS.md solo confirma que existen o que la documentación los menciona. El evaluador no comprueba si son accesibles, si funcionan ni si requieren credenciales.",
+      limNoContradictions:
+        "Esta versión no busca contradicciones entre fuentes (por ejemplo, entre una página y un archivo de tokens). Que el informe no muestre contradicciones no significa que no existan.",
       limNotLooked: "Algunos lugares donde suele estar la información (patrones, tokens) no se llegaron a leer. Esos criterios quedaron fuera de la nota.",
       discStart: "empezamos por {url}",
       discRoot: "reconocimos el Design System en {url}",
@@ -219,13 +234,13 @@
       provisionalLead:
         "Solo se pudo revisar el {pct} % de lo que compone la nota. Con menos de la mitad no asignamos nivel: el número refleja lo revisado, pero no alcanza para una conclusión.",
       provisionalSummary:
-        "Esta nota refleja solo lo que el evaluador pudo leer. Abajo se ve qué capacidades quedaron demostradas y cuáles no se pudieron evaluar.",
+        "Esta nota refleja solo lo que el evaluador pudo leer. Abajo se ve qué quedó documentado y qué no se pudo evaluar.",
       dimUnreadable: "No se pudo leer",
       dimUnreadableNote: "",
       notDemonstratedList: "No se pudo demostrar",
-      notDemonstratedCap: "La capacidad «{verb}» queda no demostrada, no necesariamente ausente.",
+      notDemonstratedCap: "La evidencia sobre «{verb}» quedó incompleta: no demuestra que falte.",
       meaningIncomplete: "Con la evidencia recuperada:",
-      meaningLowIncomplete: "Lo que se pudo leer alcanza para demostrar solo una parte de esta capacidad. No se puede concluir que el sistema no permita {can}: parte de la evidencia quedó fuera del alcance de esta evaluación.",
+      meaningLowIncomplete: "Lo que se pudo leer muestra solo una parte de lo que el sistema publica en esta dimensión. No hay base para concluir que el sistema no publique {can}: parte de la evidencia quedó fuera del alcance de esta evaluación.",
       grpDemonstrated: "Encontrado. El sistema documenta:",
       grpNotDemonstrated: "No encontrado (se buscó y no apareció; puede estar en otra parte):",
       grpAbsent: "No existe:",
@@ -253,7 +268,6 @@
       d5LiveImprove:
         "Primero, comprobar si el sistema ya documenta patrones en un formato que el evaluador todavía no lee. Si realmente faltan:",
       bandLabel: { Opaco: "Opaco", Legible: "Legible", Interpretable: "Interpretable", Operable: "Operable" },
-      bandRange: { Opaco: "0–24", Legible: "25–49", Interpretable: "50–74", Operable: "75–100" },
       modeDemo: "Resultado de demostración",
       modeLive: "Resultado en vivo",
       noResult: "No hay suficiente evidencia para dar un resultado general.",
@@ -266,28 +280,28 @@
     bands: {
       Operable: {
         summary:
-          "Este Design System está altamente preparado para que un agente pueda descubrir, interpretar y reutilizar gran parte del sistema de manera autónoma.",
+          "Este Design System publica, en formatos recuperables por un agente, la mayor parte de lo que esta evaluación revisa: acceso, tokens, componentes, criterios de uso, patrones y documentación.",
         conclusion:
-          "El sistema es operable para agentes, pero todavía existen puntos donde el agente debe inferir decisiones que idealmente deberían estar expresadas explícitamente por el Design System.",
+          "Nivel Operable según la evidencia publicada. Quedan puntos que un agente tendría que inferir porque el sistema no los expresa de forma explícita. Esta fase no comprueba cómo trabaja un agente con el sistema.",
         conclusionNoGaps:
-          "El sistema es operable para agentes: no se detectaron puntos donde el agente deba inferir decisiones importantes.",
+          "Nivel Operable según la evidencia publicada: no se detectaron puntos importantes que un agente tuviera que inferir. Esta fase no comprueba cómo trabaja un agente con el sistema.",
       },
       Interpretable: {
         summary:
-          "Un agente puede entender buena parte de este Design System, pero en varios puntos tendrá que inferir decisiones que el sistema no expresa de forma explícita.",
+          "El sistema publica buena parte de lo que esta evaluación revisa, pero en varios puntos no expresa de forma explícita decisiones que un agente tendría que inferir.",
         conclusion:
-          "El sistema es interpretable para agentes: un agente puede trabajar con él, pero su autonomía queda limitada por todo lo que todavía tiene que inferir.",
+          "Nivel Interpretable según la evidencia publicada: hay una base documental, con vacíos que un agente tendría que resolver por su cuenta.",
       },
       Legible: {
         summary:
-          "Un agente puede leer parte de la documentación de este Design System, pero le falta información estructurada para utilizarlo sin adivinar.",
+          "El sistema publica parte de su documentación en un formato recuperable, pero falta información estructurada sobre cómo usarlo.",
         conclusion:
-          "El sistema es legible para agentes, pero todavía no utilizable de forma autónoma: muchas decisiones quedarían en manos del agente.",
+          "Nivel Legible según la evidencia publicada: muchas decisiones de uso no están documentadas y quedarían a criterio del agente.",
       },
       Opaco: {
-        summary: "Hoy un agente casi no puede acceder a este Design System ni interpretarlo por su cuenta.",
+        summary: "Casi no se encontró información del sistema en un formato recuperable por un agente.",
         conclusion:
-          "El sistema es opaco para agentes: antes de pensar en autonomía, el primer paso es que el agente pueda llegar a la información.",
+          "Nivel Opaco según la evidencia publicada: el primer paso es publicar la información en un formato recuperable por agentes.",
       },
     },
 
@@ -295,58 +309,58 @@
       D1: {
         name: "Acceso",
         verb: "Descubrir",
-        can: "descubrir y recuperar la información del sistema",
+        can: "acceso a la documentación y a la información estructurada",
         what:
-          "Si un agente puede encontrar y recuperar de manera mecánica la información que necesita para trabajar con el Design System: documentación, catálogo de componentes, propiedades y tipos, tokens e información estructurada.",
+          "Si la información que un agente necesita para trabajar con el Design System está publicada de forma que se pueda encontrar y recuperar mecánicamente: documentación, catálogo de componentes, propiedades y tipos, tokens e información estructurada.",
         purpose:
           "Un Design System puede tener excelente documentación y componentes perfectamente definidos, pero si esa información no es accesible para un agente, en la práctica el agente no puede utilizarla.",
         why:
           "Es la primera capacidad: descubrir. Antes de poder interpretar o utilizar un Design System, el agente tiene que poder llegar hasta él. Por eso, si el acceso es muy bajo, el resultado general queda limitado sin importar el resto.",
         meaning: {
-          full: "El agente tiene una base adecuada para empezar a trabajar con el Design System sin depender de una persona que le indique dónde encontrar la información.",
-          high: "El agente puede llegar a la mayor parte de la información por su cuenta, aunque algunas piezas no estarán en un formato que pueda recuperar directamente.",
-          mid: "El agente puede llegar a parte de la información, pero otras piezas importantes no están en un formato que pueda recuperar por sí solo. Dependerá más de lo que alguien le indique.",
-          low: "El agente tiene serias dificultades para llegar a la información del sistema. Sin acceso, las demás capacidades casi no pueden aprovecharse.",
+          full: "La información revisada está publicada en formatos recuperables por un agente, sin depender de que alguien le indique dónde está.",
+          high: "La mayor parte de la información revisada está en formatos recuperables; algunas piezas no lo están.",
+          mid: "Parte de la información está en formatos recuperables, pero otras piezas importantes no. Un agente dependería más de que alguien se las indique.",
+          low: "Casi no se encontró información en formatos recuperables por un agente. Sin acceso, lo demás que publique el sistema difícilmente se aprovecha.",
         },
       },
       D2: {
         name: "Tokens",
         verb: "Reutilizar",
-        can: "reutilizar las decisiones visuales del sistema (tokens)",
+        can: "decisiones visuales reutilizables (tokens)",
         what:
-          "Si un agente puede identificar y reutilizar los valores visuales definidos por el Design System: color, espaciado, tipografía, tamaños, etc.",
+          "Si los valores visuales definidos por el Design System están publicados de forma que un agente los identifique y los reutilice: color, espaciado, tipografía, tamaños, etc.",
         purpose:
           "Los tokens permiten que las decisiones visuales del sistema estén expresadas de forma reutilizable y no dependan de valores inventados en cada interfaz.",
         why:
           "Un agente puede generar una interfaz visualmente plausible usando valores arbitrarios, y eso no significa que esté usando el Design System. Para trabajar de forma agentic, el agente debe poder reconocer: «el sistema ya tomó esta decisión; debo reutilizarla».",
         meaning: {
-          full: "El agente puede reutilizar los valores del sistema y entender qué representa cada uno, en lugar de inventarlos.",
-          high: "El agente puede reutilizar los valores existentes, pero algunas decisiones todavía requieren inferencia, por ejemplo cuando hay varias opciones posibles para un mismo uso.",
-          mid: "El agente encuentra parte de los valores del sistema, pero en muchos casos tendrá que elegir sin saber cuál corresponde, o aproximar valores.",
-          low: "El agente no encuentra los valores del sistema en un formato que pueda reutilizar. Lo más probable es que genere valores parecidos, pero no los del sistema.",
+          full: "Los tokens revisados están publicados con su valor y su intención: un agente tendría con qué reutilizar las decisiones visuales en lugar de inventarlas.",
+          high: "Los valores del sistema están publicados, pero en algunos casos no queda claro cuál corresponde a cada uso; un agente tendría que inferirlo.",
+          mid: "Se encontró parte de los valores del sistema. En muchos casos un agente tendría que elegir sin saber cuál corresponde, o aproximar valores.",
+          low: "No se encontraron los valores del sistema en un formato reutilizable. Sin ellos, lo esperable es que un agente genere valores parecidos, no los del sistema.",
         },
       },
       D3: {
         name: "Componentes y API",
         verb: "Utilizar",
-        can: "utilizar correctamente los componentes existentes",
+        can: "configuración de los componentes (propiedades, tipos, variantes y estados)",
         what:
-          "Si el Design System proporciona suficiente información para que un agente entienda y use correctamente sus componentes. No basta con encontrar un componente como Button: el agente debe entender qué propiedades tiene, qué valores acepta, qué variantes y estados existen, cuáles son sus valores por defecto y para qué sirve cada propiedad.",
+          "Si el Design System publica la información que un agente necesita para entender y usar sus componentes. No basta con encontrar un componente como Button: el agente debe entender qué propiedades tiene, qué valores acepta, qué variantes y estados existen, cuáles son sus valores por defecto y para qué sirve cada propiedad.",
         purpose:
-          "Sirve para determinar si los componentes son realmente utilizables por un sistema que trabaja de forma autónoma. Una persona puede preguntarle a otro diseñador «¿qué variante debería usar aquí?»; un agente no necesariamente tiene esa posibilidad. La información tiene que estar en el propio sistema.",
+          "Sirve para revisar si los componentes publican lo que un sistema que trabaja de forma autónoma necesitaría para usarlos. Una persona puede preguntarle a otro diseñador «¿qué variante debería usar aquí?»; un agente no necesariamente tiene esa posibilidad. La información tiene que estar en el propio sistema.",
         why:
           "Un agente puede generar código sintácticamente válido sin usar correctamente el Design System. Si la API está incompleta o es ambigua, puede inventar valores, usar propiedades inexistentes, combinar variantes de forma incorrecta, ignorar estados o interpretar de manera diferente componentes parecidos.",
         meaning: {
-          full: "El agente tiene la información necesaria para usar los componentes sin tener que adivinar cómo funcionan.",
-          high: "El agente tiene suficiente información para usar gran parte de los componentes correctamente. En algunos casos tendrá que inferir, y el riesgo no es que no pueda usarlos, sino que produzca una implementación aparentemente correcta que use la API de una manera que el sistema no contempla.",
-          mid: "El agente puede usar los componentes, pero con frecuencia tendrá que adivinar propiedades, valores o estados. Es probable que produzca implementaciones que funcionan pero no respetan el sistema.",
-          low: "El agente no encuentra cómo se configuran los componentes. Podrá nombrarlos, pero tendrá que adivinar casi todo sobre su uso.",
+          full: "Para los componentes revisados se publican propiedades, tipos, valores, variantes y estados: un agente no tendría que adivinar cómo configurarlos.",
+          high: "La mayoría de los componentes revisados documenta su configuración. En algunos casos un agente tendría que inferir, y el riesgo es una implementación aparentemente correcta que usa la API de una forma que el sistema no contempla.",
+          mid: "La configuración de los componentes está documentada solo en parte. Un agente tendría que adivinar con frecuencia propiedades, valores o estados.",
+          low: "No se encontró cómo se configuran los componentes. Un agente podría nombrarlos, pero tendría que adivinar casi todo sobre su uso.",
         },
       },
       D4: {
         name: "Semántica",
         verb: "Decidir",
-        can: "elegir el componente adecuado para cada situación",
+        can: "criterios para elegir cada componente",
         what:
           "Si el Design System explica para qué sirve cada componente, cuándo usarlo, cuándo no, qué no se debe hacer y cómo elegir entre componentes parecidos.",
         purpose:
@@ -354,16 +368,16 @@
         why:
           "Sin criterios explícitos, un agente elige entre componentes técnicamente válidos sin fundamento: un modal donde correspondía una notificación, un checkbox donde iba un switch. El resultado funciona, pero no es la decisión que el sistema habría tomado.",
         meaning: {
-          full: "El agente encuentra criterios explícitos para decidir qué componente usar, cuándo no usarlo y qué evitar.",
-          high: "El agente encuentra criterios para la mayoría de las decisiones, pero en algunos casos tendrá que decidir por su cuenta lo que el sistema no explica.",
-          mid: "El agente puede identificar para qué sirven varios componentes, pero muchas decisiones de uso quedarán a su criterio.",
-          low: "El agente no encuentra criterios para decidir cuándo usar cada componente. Elegirá por parecido, no por intención de diseño.",
+          full: "Se publican criterios explícitos para elegir cada componente, cuándo no usarlo y qué evitar.",
+          high: "Hay criterios publicados para la mayoría de las decisiones de uso; las que faltan quedarían a criterio del agente.",
+          mid: "Se publica para qué sirven varios componentes, pero muchas decisiones de uso no están documentadas.",
+          low: "No se encontraron criterios para decidir cuándo usar cada componente. Sin ellos, lo esperable es que un agente elija por parecido, no por intención de diseño.",
         },
       },
       D5: {
         name: "Patrones",
         verb: "Componer",
-        can: "combinar componentes siguiendo las reglas del sistema",
+        can: "reglas para combinar componentes",
         what:
           "Si el Design System documenta cómo se combinan los componentes: patrones (formularios, tablas, páginas), reglas de composición, qué puede ir dentro de qué, y la distribución y los espacios entre elementos.",
         purpose:
@@ -371,33 +385,33 @@
         why:
           "Un agente que sabe usar cada componente por separado puede, igualmente, armar pantallas incoherentes. Para componer de forma autónoma necesita reglas explícitas de combinación.",
         meaning: {
-          full: "El agente puede componer pantallas siguiendo patrones y reglas documentadas por el sistema.",
-          high: "El agente puede seguir los patrones del sistema en la mayoría de los casos, pero algunas combinaciones tendrá que inferirlas.",
-          mid: "El agente encuentra algunos patrones, pero muchas decisiones de composición quedarán a su criterio.",
-          low: "El agente no encuentra patrones ni reglas de composición. Armará las pantallas por intuición, no siguiendo el sistema.",
+          full: "Se publican patrones y reglas de composición para combinar componentes.",
+          high: "Hay patrones publicados para la mayoría de los casos; algunas combinaciones tendría que inferirlas el agente.",
+          mid: "Se encontraron algunos patrones, pero muchas decisiones de composición no están documentadas.",
+          low: "No se encontraron patrones ni reglas de composición. Un agente armaría las pantallas por intuición, no siguiendo el sistema.",
         },
       },
       D6: {
         name: "Documentación",
         verb: "Resolver",
-        can: "obtener contexto y ejemplos para resolver dudas",
+        can: "contexto y ejemplos de uso",
         what:
-          "Si hay suficiente documentación recuperable —descripciones, ejemplos de código, explicación de variantes y estados, accesibilidad y versiones— para que un agente tenga contexto al tomar decisiones.",
+          "Cuánta documentación recuperable hay —descripciones, ejemplos de código, explicación de variantes y estados, accesibilidad y versiones— para que un agente tenga contexto al tomar decisiones.",
         purpose:
           "La documentación es el contexto que acompaña a las piezas: explica, muestra ejemplos y ayuda a resolver casos que la API no cubre por sí sola.",
         why:
           "Cuando algo no está claro, una persona pregunta o busca un ejemplo. Un agente solo cuenta con lo que el sistema publica. Sin ejemplos ni explicaciones, resuelve las dudas adivinando.",
         meaning: {
-          full: "El agente cuenta con contexto y ejemplos suficientes para resolver dudas sin intervención humana.",
-          high: "El agente cuenta con buen contexto para la mayoría de los casos, pero algunas dudas no encontrarán respuesta en la documentación.",
-          mid: "El agente encuentra contexto para parte del sistema, pero muchas dudas quedarán sin ejemplos ni explicaciones en los que apoyarse.",
-          low: "El agente casi no encuentra contexto ni ejemplos. Resolverá la mayoría de las dudas por su cuenta.",
+          full: "Se publican descripciones, ejemplos y explicaciones para los componentes revisados.",
+          high: "La documentación cubre la mayoría de los casos revisados; algunas dudas no tendrían respuesta en lo publicado.",
+          mid: "La documentación cubre parte del sistema; muchas dudas quedarían sin ejemplos ni explicaciones.",
+          low: "Casi no se encontró documentación ni ejemplos. Un agente tendría que resolver la mayoría de las dudas por su cuenta.",
         },
       },
       D7: {
         name: "Consistencia Design–Code",
         verb: "Verificar",
-        can: "verificar que diseño y código representan el mismo sistema",
+        can: "correspondencia entre diseño y código",
         what:
           "Si lo que está en el diseño (Figma) y lo que está en el código representan realmente el mismo sistema: los mismos componentes, variantes y valores.",
         purpose:
@@ -418,12 +432,12 @@
       props_types_accessibility: { name: "Propiedades y tipos accesibles", found: "las propiedades de cada componente (nombre, tipo y valores permitidos) publicadas en un formato estructurado como JSON o TypeScript, no solo descritas en prosa", gap: "No se encontraron las propiedades y tipos de los componentes en un formato estructurado que un agente pueda recuperar.", infer: "qué propiedades y tipos tiene cada componente", fix: "Publicar las propiedades de cada componente, con sus tipos y valores, en un formato estructurado, no solo en texto o imágenes." },
       structured_tokens: { name: "Tokens estructurados", found: "un archivo de tokens en formato de datos (JSON, idealmente siguiendo el estándar W3C Design Tokens) con los valores de color, espaciado, tipografía, etc., no solo variables CSS sueltas", gap: "No se encontraron tokens en un archivo estructurado que un agente pueda descargar.", infer: "dónde están los valores visuales del sistema", fix: "Publicar los tokens en un archivo JSON enlazado desde la documentación." },
       types_or_schema: { name: "Tipos o esquema", found: "un archivo de definiciones de tipos (.d.ts) o un JSON Schema que describa exactamente qué props acepta cada componente y de qué tipo son", gap: "No se encontraron tipos ni esquema del código (por ejemplo, archivos .d.ts o JSON Schema).", infer: "la estructura exacta de las APIs", fix: "Publicar los tipos de los componentes (archivos .d.ts o un JSON Schema) en un lugar accesible." },
-      agent_manifest: { name: "Manifiesto para agentes", found: "un archivo llms.txt o AGENTS.md en la raíz del sitio, en texto plano, que indique qué hay en el sistema y por dónde empezar a recorrerlo", gap: "No se encontró un manifiesto para agentes (llms.txt o AGENTS.md).", infer: "por dónde empezar a recorrer el sistema", fix: "Agregar un archivo llms.txt en la raíz del sitio: un índice breve, en texto, que le indica a un agente dónde está cada cosa." },
-      agent_interface: { name: "Interfaz para agentes", found: "un servidor MCP u otra API que un agente pueda consultar directamente, sin tener que leer e interpretar páginas HTML", gap: "No se encontró una interfaz directa para agentes (por ejemplo, un servidor MCP).", infer: "cómo consultar el sistema sin recorrer páginas web", fix: "Ofrecer un servidor MCP u otra interfaz para que los agentes consulten el sistema directamente." },
+      agent_manifest: { name: "Manifiesto para agentes", found: "un archivo llms.txt o AGENTS.md publicado en el sitio (se verifica que exista; no se revisa su contenido)", gap: "No se encontró un manifiesto para agentes (llms.txt o AGENTS.md).", infer: "por dónde empezar a recorrer el sistema", fix: "Agregar un archivo llms.txt en la raíz del sitio: un índice breve, en texto, que le indica a un agente dónde está cada cosa." },
+      agent_interface: { name: "Interfaz para agentes", found: "un servidor MCP u otra API publicada para agentes (se detecta que existe o que la documentación lo menciona; no se comprueba que se pueda consultar)", gap: "No se encontró una interfaz directa para agentes (por ejemplo, un servidor MCP).", infer: "cómo consultar el sistema sin recorrer páginas web", fix: "Ofrecer un servidor MCP u otra interfaz para que los agentes consulten el sistema directamente." },
 
       tokens_identifiable: { name: "Tokens identificables", found: "al menos un archivo o sección donde los valores visuales (colores, espaciados, etc.) tengan un nombre propio, no solo números sueltos dentro del CSS", gap: "No se encontraron tokens identificables.", infer: "qué valores visuales define el sistema", fix: "Expresar las decisiones visuales como tokens con nombre, no como valores sueltos." },
       structured_format: { name: "Formato estructurado", found: "los tokens exportados como datos (JSON o YAML), no solo como variables CSS o Sass", gap: "Los tokens no están en un formato estructurado.", infer: "cómo leer los tokens", fix: "Exportar los tokens en un formato estándar, idealmente W3C Design Tokens (DTCG)." },
-      naming_consistency: { name: "Consistencia de nombres", found: "que todos los tokens sigan el mismo patrón de nombres (por ejemplo, siempre categoría-propiedad-variante), en vez de mezclar varios estilos", gap: "Los nombres de los tokens no siguen una única convención.", infer: "cómo se llaman los tokens que no vio", fix: "Unificar la convención de nombres de todos los tokens." },
+      naming_consistency: { name: "Consistencia de nombres", found: "que los nombres de los tokens usen el punto como separador de forma pareja: casi todos con punto (color.primary) o casi todos sin punto. Es una revisión limitada: no comprueba si siguen un mismo patrón de partes ni un mismo estilo (guiones, camelCase)", gap: "Los nombres de los tokens mezclan nombres con punto y sin punto.", infer: "cómo se llaman los tokens que no vio", fix: "Usar el mismo separador en los nombres de todos los tokens." },
       primitive_to_semantic: { name: "Relación base → semántico", found: "tokens con nombre de intención (por ejemplo color-action-primary) que referencian a un token base (por ejemplo blue-600), en vez de que los componentes usen el valor base directamente", gap: "No se encontró, o se encontró solo en parte, la relación entre tokens base y tokens con significado.", infer: "qué token corresponde a cada uso", fix: "Separar tokens base (por ejemplo, blue-600) de tokens con significado (por ejemplo, color-action-primary), y hacer que los segundos apunten a los primeros." },
       color_coverage: { name: "Color", found: "tokens de color con nombre de uso (por ejemplo color-text-primary, color-border-error), no solo una paleta de colores sin asignar", gap: "No se encontraron tokens de color.", infer: "los colores del sistema", fix: "Incluir los colores como tokens." },
       spacing_sizing_coverage: { name: "Espaciado y tamaños", found: "tokens para márgenes, padding y tamaños de elementos, en vez de valores en píxeles escritos directo en el código", gap: "No se encontraron tokens de espaciado ni de tamaños.", infer: "los espacios y tamaños del sistema", fix: "Incluir espaciados y tamaños como tokens." },
@@ -438,7 +452,7 @@
       defaults: { name: "Valores por defecto", found: "qué valor toma cada propiedad cuando no se especifica", gap: "No siempre se indica el valor por defecto de cada propiedad.", infer: "qué pasa cuando una propiedad no se especifica", fix: "Indicar el valor por defecto de cada propiedad." },
       variants: { name: "Variantes", found: "el nombre exacto de cada variante visual del componente (por ejemplo primary, secondary, ghost)", gap: "No todos los componentes documentan sus variantes.", infer: "qué variantes existen", fix: "Documentar las variantes de cada componente con su nombre exacto." },
       states: { name: "Estados", found: "los estados de interacción documentados por nombre (hover, foco, deshabilitado, error, cargando)", gap: "No todos los estados de los componentes están documentados.", infer: "qué estados existen (deshabilitado, error, cargando…)", fix: "Documentar los estados de cada componente: hover, foco, deshabilitado, error, cargando." },
-      api_consistency: { name: "Consistencia de la API", found: "el mismo nombre de propiedad usado para el mismo concepto en todos los componentes (por ejemplo, siempre variant, nunca type en uno y kind en otro)", gap: "La forma de nombrar y describir las propiedades no es completamente consistente entre componentes.", infer: "algunas convenciones de API", fix: "Establecer una convención única para nombrar y documentar propiedades, y mantenerla en todos los componentes." },
+      api_consistency: { name: "Repetición de nombres de propiedades", found: "nombres de propiedad que se repiten entre componentes (por ejemplo, size en varios). Es una señal indirecta: no comprueba si un mismo concepto usa nombres distintos (type en uno, kind en otro), y un sistema con propiedades muy especializadas puede puntuar bajo sin ser inconsistente", gap: "Pocos nombres de propiedad se repiten entre los componentes revisados; esto por sí solo no prueba que la API sea inconsistente.", infer: "algunas convenciones de API", fix: "Revisar si un mismo concepto tiene nombres distintos en distintos componentes y, si es así, unificarlos." },
       prop_purpose: { name: "Propósito de las propiedades", found: "una frase breve junto a cada propiedad que explique para qué sirve, no solo su nombre y tipo", gap: "No siempre se explica para qué sirve cada propiedad.", infer: "para qué sirven algunas propiedades", fix: "Agregar una descripción breve del propósito de cada propiedad." },
 
       purpose_identification: { name: "Propósito del componente", found: "una frase al inicio de cada componente que explique para qué sirve", gap: "No todos los componentes declaran para qué sirven.", infer: "para qué sirven algunos componentes", fix: "Empezar cada página de componente con una frase que diga para qué sirve." },
@@ -466,19 +480,19 @@
     ui: {
       question: "How ready is this Design System to work with AI agents?",
       scoreNote:
-        "The score measures how ready the system is for an agent to discover, understand and use it without human intervention. It is not a measure of the Design System's quality for people.",
+        "The score measures how much of what an agent would need to discover, understand and use the system is published in a retrievable format. It's based on what's published; it doesn't put an agent to work on tasks. It isn't a measure of the Design System's quality for people.",
       gate:
         "Access (D1) is very low, so the overall result is capped at 40 regardless of the other dimensions: if an agent can't reach the information, nothing else can be put to use.",
       liveCaveat:
         "Some parts of the system couldn't be read from the site (see “Limitations”), so this result may underestimate the Design System.",
-      canDo: "Can do well",
-      mayInfer: "May still need to infer",
-      cannot: "Can't yet do reliably",
+      canDo: "Well documented",
+      mayInfer: "What an agent would still have to infer",
+      cannot: "Little published evidence",
       notEvaluated: "Couldn't be evaluated",
       therefore: "In short:",
       expected: "Expected to find:",
-      chainTitle: "The capabilities an agent needs",
-      chainLead: "Each dimension measures a capability an agent needs to work autonomously. They go from the most basic to the most advanced.",
+      chainTitle: "What an agent needs",
+      chainLead: "Each dimension checks whether the system publishes what an agent would need for one capability, from the most basic to the most advanced. What's published is reviewed; no agent is put to work on tasks.",
       dimsTitle: "The dimensions, explained",
       aboutDim: "About this dimension",
       inThisDs: "In this Design System",
@@ -493,7 +507,7 @@
       tagReco: "Recommendation",
       tagLimit: "Limitation",
       result: "Result",
-      capability: "Agentic capability evaluated",
+      capability: "Related capability",
       notScored: "No score",
       evidenceTitle: "Technical evidence",
       evCrit: "Technical criterion",
@@ -537,7 +551,7 @@
       limD3Live:
         "No component properties or variants were found on the reviewed pages. This version of the evaluator can't yet read property tables or variant lists from web pages, or documentation hosted on other sites (for example, Storybook), so D3 may be underestimated.",
       noBasisApi:
-        "no properties were found to compare across components. The engine counts it as 0 in the score, but that doesn't mean the API is inconsistent.",
+        "no properties were found to compare across components. This criterion is left out of the score (it doesn't count as 0) and doesn't mean the API is inconsistent.",
       stNone: "no evidence",
       meaningCaveat: "Based on the information that could be read:",
       certDemonstrated: "Found",
@@ -546,6 +560,10 @@
       certAbsent: "Doesn't exist",
       certNotEvaluated: "Couldn't be read",
       certNA: "Not applicable",
+      certScope: "Outside this phase",
+      grpScope: "Outside the scope of this phase (not part of the score):",
+      rsNoPairs:
+        "this version doesn't detect separately which components are similar, so it doesn't know which ones would need a rule for choosing between them. Disambiguation sentences it finds are recorded as evidence, but they aren't scored.",
       certHelp:
         "Found: we looked and it's there. Not found: we looked in what we read and it didn't show up; it may be elsewhere. Doesn't exist: we're certain it's missing. Couldn't be read: the evaluator couldn't look for it; it's left out of the score.",
       rsObservable: "we looked in the pages that were read and didn't find it in a format the evaluator recognizes",
@@ -580,7 +598,9 @@
       downloadPdf: "Download PDF",
       downloadJson: "Download data (JSON)",
       downloadNote:
-        "We don't store your result: download it to keep it. For the PDF, choose “Save as PDF”.",
+        "The server only keeps your result for a few minutes: download it to save it. For the PDF, choose “Save as PDF”.",
+      coverageVaries:
+        "The number of pages read can vary from one evaluation of the same site to another, especially on slow sites or when the time limit is reached. So two evaluations may give somewhat different results. “What we reviewed” lists what was read in this one.",
       printHead: "AI agent readiness report for a Design System",
       evaluatedAt: "Evaluated on {date}",
       printFooter:
@@ -648,6 +668,10 @@
       limNotEvaluableNow:
         "What can't be read yet: content that only appears when JavaScript runs, pages behind a login, Figma files, and documentation published on other sites (for example, Storybook or the repository). That's marked as “couldn't be read” and left out of the score. If what could be reviewed is less than half of the score, no level is assigned.",
       limExternal: "Some information lives in official sources of the system (Storybook, repository or packages) that this version doesn't read yet. Those criteria were left out of the score.",
+      limAgentFiles:
+        "Detecting an MCP server, an API, an llms.txt or an AGENTS.md only confirms that they exist or that the documentation mentions them. The evaluator doesn't check whether they're accessible, whether they work, or whether they require credentials.",
+      limNoContradictions:
+        "This version doesn't look for contradictions between sources (for example, between a page and a token file). The report showing no contradictions doesn't mean there are none.",
       limNotLooked: "Some places where the information usually lives (patterns, tokens) weren't read. Those criteria were left out of the score.",
       discStart: "we started at {url}",
       discRoot: "recognized the Design System at {url}",
@@ -667,13 +691,13 @@
       provisionalLead:
         "Only {pct}% of what makes up the score could be reviewed. With less than half we don't assign a level: the number reflects what was reviewed, but it isn't enough for a conclusion.",
       provisionalSummary:
-        "This score only reflects what the evaluator could read. Below you can see which capabilities were demonstrated and which couldn't be evaluated.",
+        "This score only reflects what the evaluator could read. Below is what was found documented and what couldn't be evaluated.",
       dimUnreadable: "Couldn't be read",
       dimUnreadableNote: "",
       notDemonstratedList: "Couldn't be demonstrated",
-      notDemonstratedCap: "The “{verb}” capability is not demonstrated, not necessarily absent.",
+      notDemonstratedCap: "The evidence on “{verb}” is incomplete: it doesn't show that it's missing.",
       meaningIncomplete: "Based on the retrieved evidence:",
-      meaningLowIncomplete: "What could be read demonstrates only part of this capability. It cannot be concluded that the system does not let an agent {can}: some of the evidence was out of reach for this evaluation.",
+      meaningLowIncomplete: "What could be read shows only part of what the system publishes in this dimension. There's no basis to conclude that the system doesn't publish {can}: some of the evidence was out of reach for this evaluation.",
       grpDemonstrated: "Found. The system documents:",
       grpNotDemonstrated: "Not found (we looked and it didn't show up; it may be elsewhere):",
       grpAbsent: "Doesn't exist:",
@@ -701,7 +725,6 @@
       d5LiveImprove:
         "First, check whether the system already documents patterns in a format the evaluator can't read yet. If they really are missing:",
       bandLabel: { Opaco: "Opaque", Legible: "Legible", Interpretable: "Interpretable", Operable: "Operable" },
-      bandRange: { Opaco: "0–24", Legible: "25–49", Interpretable: "50–74", Operable: "75–100" },
       modeDemo: "Demo result",
       modeLive: "Live result",
       noResult: "There isn't enough evidence to give an overall result.",
@@ -714,106 +737,106 @@
     bands: {
       Operable: {
         summary:
-          "This Design System is highly prepared for an agent to discover, interpret and reuse most of the system autonomously.",
+          "This Design System publishes, in formats retrievable by an agent, most of what this evaluation reviews: access, tokens, components, usage criteria, patterns and documentation.",
         conclusion:
-          "The system is operable for agents, but there are still points where the agent has to infer decisions that the Design System should ideally state explicitly.",
+          "Operable level based on the published evidence. There are still points an agent would have to infer because the system doesn't state them explicitly. This phase doesn't test how an agent actually works with the system.",
         conclusionNoGaps:
-          "The system is operable for agents: no points were detected where the agent would have to infer important decisions.",
+          "Operable level based on the published evidence: no important points were detected that an agent would have to infer. This phase doesn't test how an agent actually works with the system.",
       },
       Interpretable: {
         summary:
-          "An agent can understand a good part of this Design System, but at several points it will have to infer decisions the system doesn't state explicitly.",
+          "The system publishes a good part of what this evaluation reviews, but at several points it doesn't explicitly state decisions an agent would have to infer.",
         conclusion:
-          "The system is interpretable for agents: an agent can work with it, but its autonomy is limited by everything it still has to infer.",
+          "Interpretable level based on the published evidence: there is a documentary base, with gaps an agent would have to resolve on its own.",
       },
       Legible: {
         summary:
-          "An agent can read part of this Design System's documentation, but lacks the structured information to use it without guessing.",
+          "The system publishes part of its documentation in a retrievable format, but structured information on how to use it is missing.",
         conclusion:
-          "The system is legible for agents but not yet usable autonomously: many decisions would be left to the agent.",
+          "Legible level based on the published evidence: many usage decisions aren't documented and would be left to the agent's judgment.",
       },
       Opaco: {
-        summary: "Today an agent can barely access or interpret this Design System on its own.",
+        summary: "Almost no information about the system was found in a format retrievable by an agent.",
         conclusion:
-          "The system is opaque to agents: before thinking about autonomy, the first step is for the agent to be able to reach the information.",
+          "Opaque level based on the published evidence: the first step is to publish the information in a format retrievable by agents.",
       },
     },
 
     dims: {
       D1: {
-        name: "Access", verb: "Discover", can: "discover and retrieve the system's information",
-        what: "Whether an agent can mechanically find and retrieve the information it needs to work with the Design System: documentation, component catalog, properties and types, tokens and structured information.",
+        name: "Access", verb: "Discover", can: "access to the documentation and structured information",
+        what: "Whether the information an agent needs to work with the Design System is published in a form that is mechanically findable and retrievable: documentation, component catalog, properties and types, tokens and structured information.",
         purpose: "A Design System can have excellent documentation and perfectly defined components, but if that information isn't accessible to an agent, in practice the agent can't use it.",
         why: "It's the first capability: discovering. Before an agent can interpret or use a Design System, it has to be able to reach it. That's why, if access is very low, the overall result is capped regardless of everything else.",
         meaning: {
-          full: "The agent has a solid base to start working with the Design System without depending on a person to tell it where the information is.",
-          high: "The agent can reach most of the information on its own, although some pieces won't be in a format it can retrieve directly.",
-          mid: "The agent can reach part of the information, but other important pieces aren't in a format it can retrieve by itself. It will depend more on someone pointing the way.",
-          low: "The agent has serious trouble reaching the system's information. Without access, the other capabilities can barely be used.",
+          full: "The reviewed information is published in formats retrievable by an agent, without depending on someone to point out where it is.",
+          high: "Most of the reviewed information is in retrievable formats; some pieces aren't.",
+          mid: "Part of the information is in retrievable formats, but other important pieces aren't. An agent would depend more on someone pointing the way.",
+          low: "Almost no information was found in formats retrievable by an agent. Without access, whatever else the system publishes is hard to put to use.",
         },
       },
       D2: {
-        name: "Tokens", verb: "Reuse", can: "reuse the system's visual decisions (tokens)",
-        what: "Whether an agent can identify and reuse the visual values defined by the Design System: color, spacing, typography, sizing, etc.",
+        name: "Tokens", verb: "Reuse", can: "reusable visual decisions (tokens)",
+        what: "Whether the visual values defined by the Design System are published in a form an agent could identify and reuse: color, spacing, typography, sizing, etc.",
         purpose: "Tokens let the system's visual decisions be expressed in a reusable way, instead of depending on values invented for each interface.",
         why: "An agent can produce a visually plausible interface using arbitrary values, and that doesn't mean it's using the Design System. To work agentically, it must be able to recognize: “the system already made this decision; I should reuse it.”",
         meaning: {
-          full: "The agent can reuse the system's values and understand what each one represents, instead of inventing them.",
-          high: "The agent can reuse existing values, but some decisions still require inference, for example when several options could fit the same use.",
-          mid: "The agent finds part of the system's values, but in many cases it will have to choose without knowing which one applies, or approximate values.",
-          low: "The agent can't find the system's values in a reusable format. It will most likely generate similar values, but not the system's own.",
+          full: "The reviewed tokens are published with their value and intent: an agent would have what it needs to reuse the visual decisions instead of inventing them.",
+          high: "The system's values are published, but in some cases it isn't clear which one fits each use; an agent would have to infer it.",
+          mid: "Part of the system's values were found. In many cases an agent would have to choose without knowing which one applies, or approximate values.",
+          low: "The system's values weren't found in a reusable format. Without them, an agent would most likely generate similar values, not the system's own.",
         },
       },
       D3: {
-        name: "Components & API", verb: "Use", can: "correctly use the existing components",
-        what: "Whether the Design System provides enough information for an agent to understand and correctly use its components. Finding a component like Button isn't enough: the agent must understand its properties, accepted values, variants and states, defaults, and what each property is for.",
-        purpose: "It shows whether the components are truly usable by a system that works autonomously. A person can ask another designer “which variant should I use here?”; an agent may not have that option. The information has to live in the system itself.",
+        name: "Components & API", verb: "Use", can: "component configuration (properties, types, variants and states)",
+        what: "Whether the Design System publishes the information an agent needs to understand and use its components. Finding a component like Button isn't enough: the agent must understand its properties, accepted values, variants and states, defaults, and what each property is for.",
+        purpose: "It checks whether the components publish what a system working autonomously would need to use them. A person can ask another designer “which variant should I use here?”; an agent may not have that option. The information has to live in the system itself.",
         why: "An agent can generate syntactically valid code without using the Design System correctly. If the API is incomplete or ambiguous, it may invent values, use properties that don't exist, combine variants incorrectly, ignore states, or read similar components differently.",
         meaning: {
-          full: "The agent has what it needs to use the components without guessing how they work.",
-          high: "The agent has enough information to use most components correctly. In some cases it will have to infer, and the risk isn't that it can't use them, but that it produces a seemingly correct implementation that uses the API in a way the system doesn't intend.",
-          mid: "The agent can use the components, but will often have to guess properties, values or states. It will likely produce implementations that work but don't respect the system.",
-          low: "The agent can't find how components are configured. It will be able to name them, but will have to guess almost everything about using them.",
+          full: "For the reviewed components, properties, types, values, variants and states are published: an agent wouldn't have to guess how to configure them.",
+          high: "Most reviewed components document their configuration. In some cases an agent would have to infer, and the risk is a seemingly correct implementation that uses the API in a way the system doesn't intend.",
+          mid: "Component configuration is only partly documented. An agent would often have to guess properties, values or states.",
+          low: "No documentation was found on how components are configured. An agent could name them, but would have to guess almost everything about using them.",
         },
       },
       D4: {
-        name: "Semantics", verb: "Decide", can: "choose the right component for each situation",
+        name: "Semantics", verb: "Decide", can: "criteria for choosing each component",
         what: "Whether the Design System explains what each component is for, when to use it, when not to, what to avoid, and how to choose between similar components.",
         purpose: "The API says how to use a component; semantics says when it's the right one. It's the difference between a catalog of parts and a system with judgment.",
         why: "Without explicit criteria, an agent chooses between technically valid components without grounds: a modal where a notification belonged, a checkbox where a switch should go. The result works, but it isn't the decision the system would have made.",
         meaning: {
-          full: "The agent finds explicit criteria to decide which component to use, when not to use it, and what to avoid.",
-          high: "The agent finds criteria for most decisions, but in some cases it will have to decide on its own what the system doesn't explain.",
-          mid: "The agent can tell what several components are for, but many usage decisions will be left to its judgment.",
-          low: "The agent finds no criteria for when to use each component. It will choose by resemblance, not by design intent.",
+          full: "Explicit criteria are published for choosing each component, when not to use it, and what to avoid.",
+          high: "Criteria are published for most usage decisions; the missing ones would be left to the agent's judgment.",
+          mid: "What several components are for is published, but many usage decisions aren't documented.",
+          low: "No criteria were found for when to use each component. Without them, an agent would likely choose by resemblance, not by design intent.",
         },
       },
       D5: {
-        name: "Patterns", verb: "Compose", can: "combine components following the system's rules",
+        name: "Patterns", verb: "Compose", can: "rules for combining components",
         what: "Whether the Design System documents how components combine: patterns (forms, tables, pages), composition rules, what can go inside what, and layout and spacing between elements.",
         purpose: "Real screens aren't built from a single component. Patterns capture decisions the team has already made about how things are put together.",
         why: "An agent that knows how to use each component on its own can still assemble incoherent screens. To compose autonomously it needs explicit rules for combining them.",
         meaning: {
-          full: "The agent can compose screens following patterns and rules documented by the system.",
-          high: "The agent can follow the system's patterns in most cases, but will have to infer some combinations.",
-          mid: "The agent finds some patterns, but many composition decisions will be left to its judgment.",
-          low: "The agent finds no patterns or composition rules. It will assemble screens by intuition, not by following the system.",
+          full: "Patterns and composition rules for combining components are published.",
+          high: "Patterns are published for most cases; an agent would have to infer some combinations.",
+          mid: "Some patterns were found, but many composition decisions aren't documented.",
+          low: "No patterns or composition rules were found. An agent would assemble screens by intuition, not by following the system.",
         },
       },
       D6: {
-        name: "Documentation", verb: "Resolve", can: "get context and examples to resolve doubts",
-        what: "Whether there is enough retrievable documentation —descriptions, code examples, explanations of variants and states, accessibility and versions— for an agent to have context when making decisions.",
+        name: "Documentation", verb: "Resolve", can: "context and usage examples",
+        what: "How much retrievable documentation there is —descriptions, code examples, explanations of variants and states, accessibility and versions— for an agent to have context when making decisions.",
         purpose: "Documentation is the context around the parts: it explains, shows examples, and helps resolve cases the API doesn't cover on its own.",
         why: "When something is unclear, a person asks or looks for an example. An agent only has what the system publishes. Without examples or explanations, it resolves doubts by guessing.",
         meaning: {
-          full: "The agent has enough context and examples to resolve doubts without human intervention.",
-          high: "The agent has good context for most cases, but some questions won't find an answer in the documentation.",
-          mid: "The agent finds context for part of the system, but many questions will lack examples or explanations to lean on.",
-          low: "The agent finds almost no context or examples. It will resolve most doubts on its own.",
+          full: "Descriptions, examples and explanations are published for the reviewed components.",
+          high: "The documentation covers most of the reviewed cases; some questions wouldn't find an answer in what's published.",
+          mid: "The documentation covers part of the system; many questions would lack examples or explanations.",
+          low: "Almost no documentation or examples were found. An agent would have to resolve most questions on its own.",
         },
       },
       D7: {
-        name: "Design–Code consistency", verb: "Verify", can: "verify that design and code represent the same system",
+        name: "Design–Code consistency", verb: "Verify", can: "design–code correspondence",
         what: "Whether what's in design (Figma) and what's in code truly represent the same system: the same components, variants and values.",
         purpose: "When design and code drift apart, in practice there are two versions of the system and neither is fully reliable.",
         why: "An agent working from design or from code needs to trust that both match. If they don't, it reproduces the inconsistency.",
@@ -827,12 +850,12 @@
       props_types_accessibility: { name: "Accessible properties and types", found: "each component's properties (name, type and allowed values) published in a structured format like JSON or TypeScript, not only described in prose", gap: "Component properties and types weren't found in a structured format an agent can retrieve.", infer: "which properties and types each component has", fix: "Publish each component's properties, with types and values, in a structured format — not only in text or images." },
       structured_tokens: { name: "Structured tokens", found: "a token file in a data format (JSON, ideally following the W3C Design Tokens standard) with color, spacing, typography values, etc. — not just loose CSS variables", gap: "No tokens were found in a structured file an agent can download.", infer: "where the system's visual values live", fix: "Publish the tokens in a JSON file linked from the documentation." },
       types_or_schema: { name: "Types or schema", found: "a type-definition file (.d.ts) or a JSON Schema describing exactly which props each component accepts and their types", gap: "No code types or schema were found (for example, .d.ts files or JSON Schema).", infer: "the exact structure of the APIs", fix: "Publish component types (.d.ts files or a JSON Schema) somewhere accessible." },
-      agent_manifest: { name: "Agent manifest", found: "an llms.txt or AGENTS.md file at the site root, in plain text, stating what's in the system and where to start exploring it", gap: "No agent manifest was found (llms.txt or AGENTS.md).", infer: "where to start exploring the system", fix: "Add an llms.txt file at the site root: a short text index that tells an agent where everything is." },
-      agent_interface: { name: "Agent interface", found: "an MCP server or other API an agent can query directly, without having to read and interpret HTML pages", gap: "No direct interface for agents was found (for example, an MCP server).", infer: "how to query the system without crawling web pages", fix: "Offer an MCP server or another interface so agents can query the system directly." },
+      agent_manifest: { name: "Agent manifest", found: "an llms.txt or AGENTS.md file published on the site (its existence is checked; its content isn't reviewed)", gap: "No agent manifest was found (llms.txt or AGENTS.md).", infer: "where to start exploring the system", fix: "Add an llms.txt file at the site root: a short text index that tells an agent where everything is." },
+      agent_interface: { name: "Agent interface", found: "an MCP server or other API published for agents (its existence or a mention in the documentation is detected; whether it can actually be queried isn't checked)", gap: "No direct interface for agents was found (for example, an MCP server).", infer: "how to query the system without crawling web pages", fix: "Offer an MCP server or another interface so agents can query the system directly." },
 
       tokens_identifiable: { name: "Identifiable tokens", found: "at least one file or section where visual values (colors, spacing, etc.) have a proper name, not just loose numbers in the CSS", gap: "No identifiable tokens were found.", infer: "which visual values the system defines", fix: "Express visual decisions as named tokens, not loose values." },
       structured_format: { name: "Structured format", found: "tokens exported as data (JSON or YAML), not only as CSS or Sass variables", gap: "Tokens aren't in a structured format.", infer: "how to read the tokens", fix: "Export tokens in a standard format, ideally W3C Design Tokens (DTCG)." },
-      naming_consistency: { name: "Naming consistency", found: "every token following the same naming pattern (for example, always category-property-variant), instead of mixing several styles", gap: "Token names don't follow a single convention.", infer: "what tokens it hasn't seen are called", fix: "Unify the naming convention across all tokens." },
+      naming_consistency: { name: "Naming consistency", found: "token names using the dot as a separator evenly: almost all with a dot (color.primary) or almost all without. It's a limited check: it doesn't verify that names follow the same pattern of parts or the same style (hyphens, camelCase)", gap: "Token names mix names with and without dots.", infer: "what tokens it hasn't seen are called", fix: "Use the same separator in every token name." },
       primitive_to_semantic: { name: "Base → semantic relationship", found: "intent-named tokens (for example color-action-primary) that reference a base token (for example blue-600), instead of components using the base value directly", gap: "The relationship between base tokens and meaningful tokens wasn't found, or was only partly found.", infer: "which token fits each use", fix: "Separate base tokens (for example, blue-600) from meaningful tokens (for example, color-action-primary), and make the latter point to the former." },
       color_coverage: { name: "Color", found: "color tokens named by usage (for example color-text-primary, color-border-error), not just an unassigned color palette", gap: "No color tokens were found.", infer: "the system's colors", fix: "Include colors as tokens." },
       spacing_sizing_coverage: { name: "Spacing and sizing", found: "tokens for margins, padding and element sizes, instead of pixel values written directly in the code", gap: "No spacing or sizing tokens were found.", infer: "the system's spacing and sizes", fix: "Include spacing and sizes as tokens." },
@@ -847,7 +870,7 @@
       defaults: { name: "Default values", found: "what value each property takes when it isn't specified", gap: "Each property's default value isn't always stated.", infer: "what happens when a property isn't set", fix: "State each property's default value." },
       variants: { name: "Variants", found: "the exact name of each visual variant of the component (for example primary, secondary, ghost)", gap: "Not every component documents its variants.", infer: "which variants exist", fix: "Document each component's variants with their exact names." },
       states: { name: "States", found: "interaction states documented by name (hover, focus, disabled, error, loading)", gap: "Not all component states are documented.", infer: "which states exist (disabled, error, loading…)", fix: "Document each component's states: hover, focus, disabled, error, loading." },
-      api_consistency: { name: "API consistency", found: "the same property name used for the same concept across every component (for example, always variant, never type on one and kind on another)", gap: "The way properties are named and described isn't fully consistent across components.", infer: "some API conventions", fix: "Establish one convention for naming and documenting properties, and keep it across all components." },
+      api_consistency: { name: "Repeated property names", found: "property names that repeat across components (for example, size on several). It's an indirect signal: it doesn't verify whether one concept uses different names (type on one, kind on another), and a system with very specialized properties may score low without being inconsistent", gap: "Few property names repeat across the reviewed components; that alone doesn't prove the API is inconsistent.", infer: "some API conventions", fix: "Check whether one concept has different names on different components and, if so, unify them." },
       prop_purpose: { name: "Property purpose", found: "a short phrase next to each property explaining what it's for, not just its name and type", gap: "It isn't always explained what each property is for.", infer: "what some properties are for", fix: "Add a short description of each property's purpose." },
 
       purpose_identification: { name: "Component purpose", found: "a sentence at the start of each component explaining what it's for", gap: "Not every component states what it's for.", infer: "what some components are for", fix: "Start each component page with a sentence saying what it's for." },
@@ -875,5 +898,15 @@
   // gaps mostrar primero en el resumen, nunca para recalcular un score.
   const WEIGHTS = { D1: 0.2, D2: 0.15, D3: 0.2, D4: 0.25, D5: 0.1, D6: 0.1 };
 
-  window.AgenticDSReport = { es, en, WEIGHTS };
+  // Solo para informes guardados antes de que el motor incluyera
+  // readiness_levels. Debe ser igual a engine/config/rules.json
+  // (tests/report-claims.test.js lo comprueba).
+  const LEVELS_FALLBACK = [
+    { min: 0, max: 24, label: "Opaco" },
+    { min: 25, max: 49, label: "Legible" },
+    { min: 50, max: 74, label: "Interpretable" },
+    { min: 75, max: 100, label: "Operable" },
+  ];
+
+  window.AgenticDSReport = { es, en, WEIGHTS, LEVELS_FALLBACK };
 })();

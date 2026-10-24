@@ -52,6 +52,9 @@ export function evaluate(input, { weights, rules }) {
     schema_version: input.schema_version || "0.1",
     methodology_version: weights.methodology_version,
     rules_version: rules.rules_version,
+    // La tabla de niveles viaja con el informe para que la interfaz use los
+    // mismos cortes que el motor (una sola fuente: engine/config/rules.json).
+    readiness_levels: rules.readiness_levels,
 
     system: input.system,
 
@@ -95,6 +98,15 @@ export function finalizeDimension(d, criteria = {}) {
   const missing = [];
   for (const [k, sc] of Object.entries(subs)) {
     const o = criteria[`${d.dimension}.${k}`];
+    if (o && o.status === "OUT_OF_SCOPE") {
+      // Criterio que esta fase no puede medir con evidencia independiente (hoy:
+      // la desambiguación de D4 en sitios reales). No suma ni resta, y no se
+      // cuenta como algo que se dejó de revisar: no baja la cobertura.
+      sc.points = null;
+      sc.status = "OUT_OF_SCOPE";
+      sc.reason = o.reason || null;
+      continue;
+    }
     sumAll += sc.max;
     if (o && o.status === "NOT_EVALUABLE") {
       sc.points = null;

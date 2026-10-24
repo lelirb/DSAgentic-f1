@@ -8,8 +8,7 @@
 //   notDemonstrated  0 puntos, pero la evidencia no permite afirmar ausencia
 //   absent         0 puntos Y evidencia completa (solo demos sin páginas
 //                  fallidas ni rastreo limitado: el ejemplo ES todo el corpus)
-//   notEvaluated   el motor no lo evaluó (null) o, en vivo, el extractor no
-//                  puede leer esa fuente desde HTML (aunque cuente 0 en el score)
+//   notEvaluated   el motor no lo evaluó (null): queda fuera de la nota
 //   na             no aplica (desambiguación sin componentes parecidos)
 // En rastreos en vivo NUNCA se afirma ausencia: el extractor reconoce formatos y
 // frases concretas, así que "no lo encontré" no prueba "no existe".
@@ -26,6 +25,7 @@
   const REASON_KEY = {
     EXTERNAL_NOT_READ: "rsExternal", NOT_LOOKED: "rsNotLooked", NOT_READ: "rsNotRead",
     UNREADABLE: "rsUnreadable", NO_BASIS: "rsExcluded", PROBED: "rsProbed",
+    NO_INDEPENDENT_PAIRS: "rsNoPairs",
   };
 
   const root = document.getElementById("page-root");
@@ -35,7 +35,36 @@
   const fmt = (s, vars) => s.replace(/\{(\w+)\}/g, (_, k) => vars[k]);
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const isNum = (v) => v !== null && v !== undefined;
-  const bandOf = (score) => (score >= 76 ? "Operable" : score >= 51 ? "Interpretable" : score >= 26 ? "Legible" : "Opaco");
+  // Niveles: una sola fuente de verdad. El motor copia en cada informe la tabla
+  // de engine/config/rules.json (report.readiness_levels) y la interfaz la usa
+  // con la misma regla que readinessLevel() del motor: cada nivel empieza en su
+  // `min`. Antes los cortes estaban escritos aquí (26/51/76) y habían quedado
+  // viejos: un 75 se coloreaba Interpretable mientras el motor decía Operable.
+  // Solo un informe guardado antes de este cambio, que no trae la tabla, usa
+  // R.LEVELS_FALLBACK (una prueba exige que sea igual a rules.json).
+  let LEVELS = [];
+  const levelsOf = (report) => {
+    const l = report && Array.isArray(report.readiness_levels) && report.readiness_levels.length
+      ? report.readiness_levels
+      : R.LEVELS_FALLBACK;
+    return [...l].sort((a, b) => a.min - b.min);
+  };
+  const levelIndex = (score) => {
+    if (!isNum(score) || !Number.isFinite(score) || !LEVELS.length) return -1;
+    let idx = 0;
+    LEVELS.forEach((l, i) => { if (score >= l.min) idx = i; });
+    return idx;
+  };
+  const TOP = () => LEVELS.length - 1;
+  // Una dimensión se muestra redondeada a entero: su nivel, su color y sus
+  // textos se deciden con ese mismo número (si no, 74,6 se vería «75» en color
+  // Operable con un texto de segundo nivel).
+  const dimRank = (score) => levelIndex(isNum(score) ? Math.round(score) : score);
+  const bandOf = (score) => { const i = levelIndex(score); return i < 0 ? null : LEVELS[i].label; };
+  const rangeOf = (label) => {
+    const l = LEVELS.find((x) => x.label === label);
+    return l ? `${l.min}–${l.max}` : "";
+  };
 
   // ---------- contexto de evidencia global ----------
   function evidenceContext(report, mode) {
@@ -59,7 +88,10 @@
       const scope = ctx.mode === "live" ? "observable" : "provided";
       let cert, reason = null;
       const st = sc.status;
-      if (st === "NOT_APPLICABLE" || (key === "disambiguation" && sc.applicable === false)) cert = "na";
+      // Fuera del alcance de esta fase: no es una falta del sistema ni una
+      // lectura incompleta, así que no marca la dimensión como incompleta.
+      if (st === "OUT_OF_SCOPE") { cert = "scope"; reason = REASON_KEY[sc.reason] || null; }
+      else if (st === "NOT_APPLICABLE" || (key === "disambiguation" && sc.applicable === false)) cert = "na";
       else if (st === "NOT_EVALUABLE" || !isNum(sc.points)) {
         cert = "notEvaluated";
         reason = dimKey === "D3" && key === "api_consistency" ? "noBasisApi" : REASON_KEY[sc.reason] || "rsExcluded";
@@ -93,15 +125,16 @@
     return {
       items, whole, incomplete,
       demonstrated: by("demonstrated"), partial: by("partial"), notDemonstrated: by("notDemonstrated"),
-      absent: by("absent"), notEvaluated: by("notEvaluated"), na: by("na"),
+      absent: by("absent"), notEvaluated: by("notEvaluated"), na: by("na"), scope: by("scope"),
     };
   }
 
   function meaningKey(dim, cls) {
     const gapLike = cls.partial.length + cls.notDemonstrated.length + cls.absent.length;
-    if (gapLike === 0 && !cls.whole && dim.score >= 76) return "full";
-    if (dim.score >= 76) return "high";
-    if (dim.score >= 51) return "mid";
+    const rank = dimRank(dim.score);
+    if (gapLike === 0 && !cls.whole && rank === TOP()) return "full";
+    if (rank === TOP()) return "high";
+    if (rank === TOP() - 1) return "mid";
     return "low";
   }
 
@@ -150,9 +183,10 @@
     for (const k of DIMS) {
       const d = report.dimensions[k], td = T().dims[k], c = analysis[k];
       if (!isNum(d.score)) { notEval.push({ text: td.can, k }); continue; }
-      if (d.score >= 76) canDo.push({ text: td.can, k });
-      else if (d.score <= 50) (c.incomplete ? notDem : cannot).push({ text: td.can, k });
-      if (d.score > 50)
+      const rank = dimRank(d.score);
+      if (rank === TOP()) canDo.push({ text: td.can, k });
+      else if (rank <= TOP() - 2) (c.incomplete ? notDem : cannot).push({ text: td.can, k });
+      if (rank >= TOP() - 1)
         for (const g of c.items) if (g.cert === "partial" || g.cert === "notDemonstrated" || g.cert === "absent") infer.push({ text: T().subs[g.key].infer, k, loss: g.loss });
     }
     notEval.push({ text: T().dims.D7.can, k: "D7" });
@@ -177,12 +211,12 @@
       scoreBlock = `<div class="score-line"><span class="none">${esc(u.noResult)}</span>${badge}</div>`;
       summary = ov.data_sufficiency === "INSUFFICIENT_D1" ? u.noResultD1 : u.noResultCoverage;
     } else {
-      const segs = ["Opaco", "Legible", "Interpretable", "Operable"];
+      const segs = LEVELS.map((l) => l.label);
       const bandCls = `band-${band}`;
       scoreBlock = `
         <div class="score-line"><span class="num">${score}</span><span class="of">/100${incomplete ? ` ${esc(u.scoreDemonstrated)}` : ""}</span><span class="band ${bandCls}">${esc(u.bandLabel[band] || band)}</span>${badge}</div>
         <div class="scale ${bandCls}" role="img" aria-label="${esc(score + "/100 · " + (u.bandLabel[band] || band))}">
-          ${segs.map((s) => `<div><div class="seg ${s === band ? "on" : ""}"></div><div class="lbl ${s === band ? "on" : ""}">${esc(u.bandLabel[s])} <span>${esc(u.bandRange[s])}</span></div></div>`).join("")}
+          ${segs.map((s) => `<div><div class="seg ${s === band ? "on" : ""}"></div><div class="lbl ${s === band ? "on" : ""}">${esc(u.bandLabel[s] || s)} <span>${esc(rangeOf(s))}</span></div></div>`).join("")}
           <div class="marker" style="left:${Math.max(0, Math.min(100, score))}%"></div>
         </div>`;
       summary = T().bands[band].summary;
@@ -207,6 +241,7 @@
         <p class="source"><span>${esc(report.system && report.system.url)}</span><span class="pill">${esc(ctx.mode === "demo" ? u.modeDemo : u.modeLive)}</span></p>
         ${scoreBlock}
         <p class="summary measure">${esc(summary)}</p>
+        ${ctx.mode === "live" ? `<p class="score-note measure">${esc(u.coverageVaries)}</p>` : ""}
         ${incompleteBox}
       </section>`;
     const more = `
@@ -282,6 +317,7 @@
       ["c-abs", cls.absent.length, u.certAbsent],
       ["c-ne", cls.notEvaluated.length, u.certNotEvaluated],
       ["c-na", cls.na.length, u.certNA],
+      ["c-na", cls.scope.length, u.certScope],
     ].filter((p) => p[1] > 0);
     if (!parts.length) return "";
     return `<p class="cert-sum">${parts.map(([c, n, l]) => `<span class="${c}"><i></i>${esc(l)}: ${n}</span>`).join("")}</p>`;
@@ -354,11 +390,12 @@
       if (cls.absent.length) parts.push(`<p>${esc(u.grpAbsent)}</p><ul>${cls.absent.map((i) => li(i, true, false, true)).join("")}</ul>`);
       grouped(u.grpNotEvaluated, cls.notEvaluated, false, true);
       if (cls.na.length) parts.push(`<p>${esc(u.grpNA)}</p><ul>${cls.na.map((i) => `<li><strong>${esc(S[i.key].name)}.</strong> ${esc(S[i.key].na || "")}</li>`).join("")}</ul>`);
-      const onlySolid = cls.items.length && cls.items.every((i) => i.cert === "demonstrated" || i.cert === "na");
+      if (cls.scope.length) parts.push(`<p>${esc(u.grpScope)}</p><ul>${cls.scope.map((i) => `<li><strong>${esc(S[i.key].name)}.</strong> ${esc(reasonText(i))}</li>`).join("")}</ul>`);
+      const onlySolid = cls.items.length && cls.items.every((i) => i.cert === "demonstrated" || i.cert === "na" || i.cert === "scope");
       if (!cls.whole && onlySolid) parts.push(`<p>${esc(u.noGaps)}</p>`);
       if (cls.incomplete && cls.items.length) {
         const ne = cls.notEvaluated.length, nd = cls.notDemonstrated.length + (ctx.complete ? 0 : cls.partial.length);
-        parts.unshift(`<p class="partial-lead">${esc(fmt(u.dimPartialLead, { total: cls.items.length - cls.na.length, dem: cls.demonstrated.length + (ctx.complete ? cls.partial.length : 0), nd, ne }))}</p>`);
+        parts.unshift(`<p class="partial-lead">${esc(fmt(u.dimPartialLead, { total: cls.items.length - cls.na.length - cls.scope.length, dem: cls.demonstrated.length + (ctx.complete ? cls.partial.length : 0), nd, ne }))}</p>`);
       }
       found = `<div class="measure">${parts.join("")}</div>`;
 
@@ -373,7 +410,7 @@
         ? fmt(u.meaningLowIncomplete, { can: td.can })
         : td.meaning[mk];
       if (cls.incomplete) m = `${u.meaningIncomplete} ${m.charAt(0).toLowerCase()}${m.slice(1)}`;
-      if (cls.incomplete && d.score <= 50) m += " " + fmt(u.notDemonstratedCap, { verb: td.verb.toUpperCase() });
+      if (cls.incomplete && dimRank(d.score) <= TOP() - 2) m += " " + fmt(u.notDemonstratedCap, { verb: td.verb.toUpperCase() });
       meaning = `<p class="measure">${esc(m)}</p>`;
 
       // Recomendaciones: primero limitaciones de la evaluación, después gaps.
@@ -412,6 +449,7 @@
     const lbl = {
       demonstrated: ["c-dem", u.certDemonstrated], partial: ["c-par", u.certPartial], notDemonstrated: ["c-nd", u.certNotDemonstrated],
       absent: ["c-abs", u.certAbsent], notEvaluated: ["c-ne", u.certNotEvaluated], na: ["c-na", u.certNA],
+      scope: ["c-na", u.certScope],
     };
     let table = "";
     if (cls && cls.items.length) {
@@ -448,6 +486,12 @@
     const items = [ctx.mode === "demo" ? u.limDemo : u.limLive, u.limDocsOnly];
     items.push(u.limD7);
     if (ctx.mode === "live") items.push(u.limNotEvaluableNow);
+    items.push(u.limAgentFiles);
+    // La búsqueda de contradicciones no está implementada en el rastreo real
+    // (normalize() siempre entrega la lista vacía). Sin este aviso, «no hay
+    // hallazgos de contradicción» se leería como «no hay contradicciones».
+    if (ctx.mode === "live") items.push(u.limNoContradictions);
+    if (ctx.mode === "live") items.push(u.coverageVaries);
     return `<h2 class="section">${esc(u.limitationsTitle)}</h2><div class="limitations"><ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`;
   }
 
@@ -664,6 +708,7 @@
       return;
     }
     const report = stored.report;
+    LEVELS = levelsOf(report);
     const ctx = evidenceContext(report, stored.mode === "demo" ? "demo" : "live");
     ctx.sources = stored.sources || null;
     ctx.discovery = stored.discovery || null;

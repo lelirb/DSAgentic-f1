@@ -117,7 +117,8 @@
       safety: "Cada evaluación lee hasta 45 páginas, con 5 MB como máximo por respuesta. El tiempo máximo es de 45 segundos; si alguna página necesita navegador, puede llegar a unos 4 minutos en total. No se visitan direcciones internas ni privadas. El resultado no se guarda en una base de datos ni en archivos del servidor (ver «Privacidad»).",
       privacyTitle: "Privacidad (nota provisional)",
       privacy: [
-        "No necesitas cuenta. La app no pide nombre, correo ni otros datos personales.",
+        "No necesitas cuenta. Para evaluar no se piden datos personales. El formulario de comentarios pide un contacto solo como dato opcional.",
+        "Si envías un comentario, el servidor lo manda por correo al equipo de Agentic DS a través de Resend, un servicio de envío de correos, junto con la versión de las reglas y los puntajes del informe. El servidor no lo guarda; queda en ese correo y en los registros de Resend, que se rigen por sus propias políticas.",
         "La dirección que escribes se envía al servidor para evaluar ese sitio. El servidor visita sus páginas con su propia conexión; en las lecturas directas se identifica como «AgenticDS».",
         "El servidor no guarda los resultados en una base de datos ni en archivos. Mientras dura la evaluación, y hasta 10 minutos después, el resultado queda en su memoria para recuperarlo si se corta la conexión; luego se descarta.",
         "Para limitar el uso a 5 evaluaciones por minuto, el servidor guarda en memoria, durante uno o dos minutos, la dirección IP desde la que se pide cada evaluación.",
@@ -125,7 +126,7 @@
         "Tu navegador guarda el idioma elegido y el último resultado. El resultado se borra al cerrar la pestaña.",
         "La app no usa herramientas de analítica ni cookies de seguimiento. Las páginas cargan tipografías de Google Fonts, así que al abrirlas tu navegador se conecta a Google.",
         "La app está publicada en Render. No revisamos qué registros técnicos guarda Render (por ejemplo, direcciones IP u horas de acceso); se rigen por sus propias políticas.",
-        "Los términos de uso y la política de privacidad completos están pendientes. Esta nota describe lo que se comprobó en el código de la app.",
+        "La política de privacidad completa está pendiente; los términos y condiciones están en su propia página. Esta nota describe lo que se comprobó en el código de la app.",
       ],
       cta: "Evaluar un Design System",
     },
@@ -169,7 +170,8 @@
       safety: "Each evaluation reads up to 45 pages, with at most 5 MB per response. The time limit is 45 seconds; if any page needs a browser, it can reach about 4 minutes in total. Internal or private addresses are never visited. The result isn't stored in a database or in files on the server (see “Privacy”).",
       privacyTitle: "Privacy (provisional note)",
       privacy: [
-        "You don't need an account. The app doesn't ask for your name, email or other personal data.",
+        "You don't need an account. No personal data is requested to run an evaluation. The feedback form asks for contact details only as an optional field.",
+        "If you send feedback, the server emails it to the Agentic DS team through Resend, an email delivery service, together with the report's rules version and scores. The server doesn't store it; it stays in that email and in Resend's logs, which are governed by Resend's own policies.",
         "The address you type is sent to the server to evaluate that site. The server visits its pages through its own connection; in direct reads it identifies itself as “AgenticDS”.",
         "The server doesn't store results in a database or in files. While the evaluation runs, and for up to 10 minutes after, the result stays in its memory so it can be recovered if the connection drops; then it's discarded.",
         "To limit use to 5 evaluations per minute, the server keeps in memory, for one or two minutes, the IP address each evaluation is requested from.",
@@ -177,7 +179,7 @@
         "Your browser stores the language you chose and the latest result. The result is deleted when you close the tab.",
         "The app doesn't use analytics tools or tracking cookies. The pages load fonts from Google Fonts, so when you open them your browser connects to Google.",
         "The app is hosted on Render. We haven't reviewed which technical logs Render keeps (for example, IP addresses or access times); they're governed by Render's own policies.",
-        "The full terms of use and privacy policy are still pending. This note describes what was checked in the app's code.",
+        "The full privacy policy is still pending; the terms and conditions have their own page. This note describes what was checked in the app's code.",
       ],
       cta: "Evaluate a Design System",
     },
@@ -221,5 +223,7 @@
   render();
 })();
 </script>
+<footer id="site-footer"></footer>
+<script src="footer.js"></script>
 </body>
 </html>

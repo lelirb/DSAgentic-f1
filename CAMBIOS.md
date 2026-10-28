@@ -1085,3 +1085,43 @@ resultado del motor que en 0.1.
 
 Sin verificar: el aspecto en un navegador real y evaluaciones de sitios
 reales (el entorno de trabajo no llega a internet).
+
+## Formulario de comentarios por correo — 2026-10-26 (sin publicar)
+
+76. **Botón «Califica este resultado» junto al resultado** y página aparte
+    (`feedback.html`, ES y EN): URL del Design System y valoración del 1 al 5
+    (obligatorias); comentario libre, nombre y correo (opcionales). Muestra el
+    resultado que se califica; la URL viene cargada y se corrige en un
+    desplegable. En el resultado, el acceso es una tarjeta («¿Qué te parece
+    este resultado?») con un botón secundario, para no competir con «Descargar
+    PDF». Si dejan correo, el mensaje se puede responder directamente.
+    Envía también la versión de reglas y los puntajes. Revisada con la lista
+    UX y accesibilidad (WCAG 2.2 AA): etiquetas visibles, obligatorios en
+    texto, errores junto al campo y resumen con foco, bordes 4,76:1, objetivos
+    de 48 px, sin desplazamiento horizontal a 320 px. El botón no va en el PDF.
+77. **`/api/feedback` en el servidor** (`feedback.js`): valida, limita a 5
+    envíos por IP cada 10 minutos, descarta robots con un campo trampa y manda
+    un correo de texto plano por la API HTTP de Resend (el plan gratuito de
+    Render bloquea SMTP). No se guarda nada. Sin configurar responde «no
+    disponible». Variables: `RESEND_API_KEY`, `FEEDBACK_TO_EMAIL` y, opcional,
+    `FEEDBACK_FROM_EMAIL`.
+78. Privacidad en «Cómo funciona» actualizada (contacto opcional, Resend).
+79. Pruebas: `tests/feedback.test.js` (16) y un recorrido en navegador real (27 comprobaciones). Reglas y puntuación sin cambio.
+
+Sin verificar: la entrega real de un correo (requiere la cuenta de Resend).
+
+## Pie de página y términos y condiciones — 2026-10-27 (sin publicar)
+
+80. **Pie de página en todas las páginas** (`footer.js`): «© 2026 Agentic DS.
+    Todos los derechos reservados.» y enlace a «Términos y condiciones». Sigue
+    el idioma elegido y no aparece en el PDF.
+81. **Página de términos** (`terminos.html`, ES y EN), borrador para revisión:
+    qué es el servicio, alcance de la Fase 1, uso de los resultados, uso
+    aceptable, disponibilidad, propiedad intelectual, comentarios, privacidad,
+    limitación de responsabilidad, ley aplicable (Perú) y cambios. Solo afirma
+    lo que hace el código (límite de 5 por minuto, identificación «AgenticDS»).
+82. La nota de privacidad ya no dice que los términos están pendientes; sigue
+    pendiente la política de privacidad completa.
+83. Pruebas: 2 nuevas en `tests/feedback.test.js`; un ayudante de
+    `tests/report-claims.test.js` ajustado porque leía el último `<script>`
+    de la página y ahora ese es el del pie.

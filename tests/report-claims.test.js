@@ -417,7 +417,9 @@ test("«Cómo funciona» usa los mismos nombres de nivel que el informe y declar
 
 function renderComoFunciona(lang) {
   const html = read("public/como-funciona.html");
-  const script = html.slice(html.lastIndexOf("<script>") + 8, html.lastIndexOf("</script>"));
+  // El script propio de la página (el pie de página se carga aparte, con src).
+  const start = html.lastIndexOf("<script>") + 8;
+  const script = html.slice(start, html.indexOf("</script>", start));
   const content = { innerHTML: "" };
   const el = () => ({ textContent: "", setAttribute() {}, addEventListener() {} });
   const els = { content, "btn-es": el(), "btn-en": el() };
@@ -443,7 +445,7 @@ test("privacidad: la nota de «Cómo funciona» se muestra en ES y EN y dice lo 
   const es = plain(renderComoFunciona("es")), en = plain(renderComoFunciona("en"));
   assert.ok(es.includes("privacidad (nota provisional)") && en.includes("privacy (provisional note)"));
   for (const [a, b] of [["google fonts", "google fonts"], ["render", "render"], ["10 minutos", "10 minutes"],
-    ["5 evaluaciones por minuto", "5 evaluations per minute"], ["pendientes", "still pending"], ["agenticds", "agenticds"]]) {
+    ["5 evaluaciones por minuto", "5 evaluations per minute"], ["pendiente", "still pending"], ["agenticds", "agenticds"]]) {
     assert.ok(es.includes(a), `es: ${a}`);
     assert.ok(en.includes(b), `en: ${b}`);
   }

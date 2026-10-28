@@ -165,6 +165,7 @@ test("la pantalla de inicio guarda la fecha de la evaluación (solo en el navega
 test("estilos de impresión: ocultan botones y navegación, y evitan que la tabla de capacidades se corte", () => {
   const css = read("public/results.html");
   const print = css.slice(css.indexOf("@media print{\n"));
-  assert.ok(print.includes("header,.report-actions,.src-jump{display:none!important;}"));
+  // El botón para calificar el resultado tampoco va en el PDF.
+  assert.ok(print.includes("header,.report-actions,.src-jump,.rate-cta{display:none!important;}"));
   assert.ok(print.includes(".chain{grid-template-columns:repeat(4,minmax(0,1fr));}"));
 });

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { evaluate } from "./engine/src/evaluator/index.js";
 import { evaluateUrl } from "./engine/src/pipeline.js";
 import { createRenderer } from "./engine/src/crawler/renderer.js";
+import { validateFeedback, sendFeedbackEmail } from "./feedback.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -26,6 +27,22 @@ const DEMO_FIXTURES = new Set(["good", "partial", "poor", "contradictory", "not_
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
 const rateLimitLog = new Map();
+
+// Feedback: límite aparte y más estricto (cada envío es un correo).
+const FEEDBACK_WINDOW_MS = 10 * 60_000;
+const FEEDBACK_MAX = 5;
+const feedbackLog = new Map();
+function isFeedbackRateLimited(ip) {
+  const now = Date.now();
+  const recent = (feedbackLog.get(ip) || []).filter((t) => now - t < FEEDBACK_WINDOW_MS);
+  recent.push(now);
+  feedbackLog.set(ip, recent);
+  return recent.length > FEEDBACK_MAX;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, times] of feedbackLog) if (!times.some((t) => now - t < FEEDBACK_WINDOW_MS)) feedbackLog.delete(ip);
+}, 60_000).unref();
 
 // Global cap on simultaneous live crawls. The per-IP limit alone does not stop
 // several different visitors from crawling heavy sites at once, and each crawl can
@@ -176,6 +193,10 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && typeof req.url === "string" && req.url.startsWith("/api/progress")) {
     return handleProgress(req, res);
+  }
+
+  if (req.method === "POST" && req.url === "/api/feedback") {
+    return handleFeedback(req, res);
   }
 
   if (req.method === "POST" && req.url === "/api/evaluate") {
@@ -346,6 +367,39 @@ export function publicDiscovery(d) {
       empty: d.render.empty || 0, skipped: d.render.skipped || 0, unavailable: Boolean(d.render.unavailable),
     } : null,
   };
+}
+
+// Recibe el formulario de feedback y lo manda por correo (ver feedback.js).
+// No se guarda nada: si el correo no sale, la página lo dice y no se reintenta.
+function handleFeedback(req, res) {
+  let body = "";
+  let tooLarge = false;
+  req.on("data", (chunk) => {
+    if (tooLarge) return;
+    body += chunk;
+    if (body.length > MAX_API_BODY_BYTES) {
+      tooLarge = true;
+      sendJson(res, 413, { error: "Request body too large", code: "BAD_REQUEST" });
+      req.destroy();
+    }
+  });
+  req.on("end", async () => {
+    if (tooLarge) return;
+    let parsed;
+    try { parsed = JSON.parse(body || "{}"); } catch { return sendJson(res, 400, { code: "BAD_REQUEST" }); }
+    if (isFeedbackRateLimited(clientIp(req))) return sendJson(res, 429, { code: "RATE_LIMITED" });
+    const v = validateFeedback(parsed);
+    // A un robot que llenó la trampa se le responde como si se hubiera enviado.
+    if (!v.ok && v.code === "SPAM") return sendJson(res, 200, { ok: true });
+    if (!v.ok) return sendJson(res, 400, { code: v.code, field: v.field || null });
+    const r = await sendFeedbackEmail(v.value);
+    if (!r.ok) {
+      // Solo el estado del proveedor: nunca la clave ni el contenido del feedback.
+      if (r.code === "FEEDBACK_SEND_FAILED") console.error("[feedback] envío fallido, estado del proveedor:", r.provider_status);
+      return sendJson(res, r.status, { code: r.code });
+    }
+    return sendJson(res, 200, { ok: true });
+  });
 }
 
 function sendJson(res, status, obj) {

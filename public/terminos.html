@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic DS — Términos y condiciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#0B1220; --ink-800:#12172B; --ink-600:#3B4258;
+    --gray-500:#5B6472; --gray-100:#E7EAF0;
+    --paper:#FFFFFF; --paper-tint:#F3F5FA;
+    --indigo-600:#3D5AFE; --indigo-700:#2F46D6; --indigo-050:#F3F5FF;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'IBM Plex Sans', system-ui, sans-serif;color:var(--ink-800);background:var(--paper-tint);-webkit-font-smoothing:antialiased;line-height:1.6;}
+  a{color:var(--indigo-700);}
+  button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:3px solid var(--indigo-600);outline-offset:2px;border-radius:4px;}
+  .skip{position:absolute;left:12px;top:-60px;background:var(--paper);color:var(--indigo-700);font-weight:600;padding:10px 14px;border-radius:8px;z-index:100;}
+  .skip:focus{top:12px;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px;}
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--gray-100);}
+  nav.wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;color:var(--ink-900);text-decoration:none;}
+  .back-link{font-size:14px;font-weight:600;color:var(--indigo-700);text-decoration:none;}
+  .lang-toggle{display:flex;align-items:center;background:var(--gray-100);border-radius:999px;padding:3px;gap:2px;}
+  .lang-toggle button{border:none;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--gray-500);min-height:32px;}
+  .lang-toggle button[aria-pressed="true"]{background:var(--paper);color:var(--indigo-700);}
+  main{padding:40px 0 24px;}
+  .doc{max-width:680px;margin:0 auto;}
+  h1{font-size:32px;line-height:1.2;font-weight:600;color:var(--ink-900);margin:0 0 6px;}
+  .updated{font-size:14px;color:var(--gray-500);margin:0 0 20px;}
+  .intro{font-size:16.5px;color:var(--ink-600);margin:0 0 28px;}
+  .toc{background:var(--paper);border:1px solid var(--gray-100);border-radius:12px;padding:14px 20px;margin:0 0 32px;}
+  .toc p{margin:0 0 6px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px;font-size:14.5px;}
+  .toc li{margin:3px 0;break-inside:avoid;}
+  section{scroll-margin-top:84px;}
+  h2{font-size:19px;color:var(--ink-900);margin:32px 0 8px;}
+  p{margin:0 0 12px;}
+  ul{margin:0 0 12px;padding-left:20px;}
+  li{margin:4px 0;}
+  @media (max-width:600px){ h1{font-size:26px;} .toc ol{columns:1;} .back-link{display:none;} }
+</style>
+</head>
+<body>
+<a class="skip" href="#content" data-t="skip">Saltar al contenido principal</a>
+<header>
+  <nav class="wrap">
+    <a href="index.html" class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      Agentic DS
+    </a>
+    <a href="index.html" class="back-link" data-t="back">← Volver al inicio</a>
+    <div class="lang-toggle" role="group" aria-label="Language selector / Selector de idioma">
+      <button type="button" id="btn-es" aria-pressed="true">ES</button>
+      <button type="button" id="btn-en" aria-pressed="false">EN</button>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap" id="content" tabindex="-1"><article class="doc" id="doc"></article></main>
+<footer id="site-footer"></footer>
+
+<script>
+(function () {
+  const UPDATED = { es: "27 de octubre de 2026", en: "October 27, 2026" };
+  const T = {
+    es: {
+      title: "Agentic DS — Términos y condiciones",
+      skip: "Saltar al contenido principal",
+      back: "← Volver al inicio",
+      h1: "Términos y condiciones",
+      updated: "Última actualización: {date}",
+      intro: "Estos términos explican qué es Agentic DS, hasta dónde llega su evaluación y cómo puedes usarlo. Al usar el sitio aceptas estos términos.",
+      toc: "Contenido",
+      sections: [
+        ["servicio", "Qué es Agentic DS", [
+          "Agentic DS es una herramienta gratuita que revisa la documentación pública de un Design System y mide cuánto de lo que un agente de IA necesitaría para descubrirlo, entenderlo y usarlo está publicado en un formato que se puede recuperar.",
+          "La puntuación se calcula con reglas fijas, sin inteligencia artificial: la misma evidencia da el mismo resultado. Cada informe indica la versión de las reglas con que se calculó.",
+        ]],
+        ["alcance", "Alcance de la evaluación", [
+          "La evaluación actual corresponde a la Fase 1. Revisa lo que el sistema publica; no pone a un agente a ejecutar tareas con él.",
+          { list: [
+            "Lee las páginas públicas que encuentra desde la dirección indicada, dentro de límites de cantidad de páginas y de tiempo. Por eso la cantidad de páginas leídas puede variar entre una evaluación y otra.",
+            "No lee páginas con inicio de sesión, archivos de Figma, Storybook, repositorios de código ni paquetes publicados. Lo que solo está ahí queda fuera de la nota.",
+            "Detecta si existen un servidor MCP, una API, un llms.txt o un AGENTS.md, pero no comprueba si funcionan ni si piden credenciales.",
+            "No busca contradicciones entre fuentes ni detecta qué componentes se parecen entre sí.",
+            "Lo que no se pudo revisar queda fuera de la nota y se indica en el informe.",
+          ] },
+          "El detalle está en «Cómo funciona».",
+        ]],
+        ["resultados", "Uso de los resultados", [
+          "Los resultados son informativos. Reflejan la evidencia que se pudo leer en la fecha y hora de la evaluación.",
+          { list: [
+            "No son una certificación, una auditoría ni una asesoría profesional.",
+            "No miden la calidad del Design System para las personas que lo usan.",
+            "No garantizan cómo se comportará un agente de IA con ese sistema.",
+          ] },
+          "Las decisiones que tomes a partir de un resultado son tu responsabilidad. Puedes descargar, guardar y compartir los resultados que generes.",
+        ]],
+        ["uso", "Uso aceptable", [
+          "Al usar Agentic DS te comprometes a:",
+          { list: [
+            "Evaluar solo sitios públicos que tengas derecho a consultar.",
+            "No usarlo para sobrecargar un sitio, eludir los límites de uso (por ejemplo, 5 evaluaciones por minuto) ni intentar llegar a direcciones internas o privadas.",
+            "No intentar alterar, desactivar o eludir la seguridad del servicio.",
+          ] },
+          "Cuando lee un sitio, el evaluador se identifica como «AgenticDS». Podemos bloquear el uso que no respete estos términos.",
+        ]],
+        ["disponibilidad", "Disponibilidad y cambios del servicio", [
+          "Agentic DS se ofrece tal como está, sin garantía de disponibilidad continua. El servidor puede tardar en responder si estuvo inactivo, y una evaluación de un sitio que necesita navegador puede tomar varios minutos.",
+          "Podemos cambiar las reglas de evaluación, las funciones o el servicio, o dejar de ofrecerlo. Por eso cada informe indica su versión de reglas: resultados de versiones distintas no siempre son comparables.",
+        ]],
+        ["propiedad", "Propiedad intelectual", [
+          "El software, los textos, el diseño, el nombre Agentic DS y su mascota Niko pertenecen a su titular. Todos los derechos reservados.",
+          "El contenido de los Design Systems evaluados pertenece a sus dueños. Agentic DS no reclama derechos sobre ese contenido. Los nombres de sistemas como Carbon, Fluent o Material pertenecen a sus titulares; mencionarlos no implica afiliación ni respaldo.",
+        ]],
+        ["comentarios", "Comentarios", [
+          "Si nos envías un comentario con el formulario «Califica este resultado», aceptas que lo usemos para mejorar el evaluador. El contacto es opcional. No incluyas datos personales de terceros ni información confidencial.",
+        ]],
+        ["privacidad", "Privacidad", [
+          { html: "Qué datos se procesan y dónde está descrito en la sección <a href=\"como-funciona.html#privacidad\">Privacidad</a> de «Cómo funciona»." },
+        ]],
+        ["responsabilidad", "Limitación de responsabilidad", [
+          "En la medida en que lo permita la ley, Agentic DS no se hace responsable de daños o perjuicios derivados del uso del servicio o de los resultados, ni de interrupciones o errores del servicio.",
+        ]],
+        ["ley", "Ley aplicable", [
+          "Estos términos se rigen por las leyes de la República del Perú.",
+        ]],
+        ["actualizaciones", "Cambios a estos términos", [
+          "Podemos actualizar estos términos. La fecha de la última actualización figura al inicio de esta página. Si sigues usando el servicio después de un cambio, aceptas la versión actualizada.",
+          "Para consultas, usa el formulario de comentarios.",
+        ]],
+      ],
+    },
+    en: {
+      title: "Agentic DS — Terms and conditions",
+      skip: "Skip to main content",
+      back: "← Back to home",
+      h1: "Terms and conditions",
+      updated: "Last updated: {date}",
+      intro: "These terms explain what Agentic DS is, how far its evaluation goes and how you may use it. By using the site you accept these terms.",
+      toc: "Contents",
+      sections: [
+        ["servicio", "What Agentic DS is", [
+          "Agentic DS is a free tool that reviews a Design System's public documentation and measures how much of what an AI agent would need to discover, understand and use it is published in a retrievable format.",
+          "The score is calculated with fixed rules, without artificial intelligence: the same evidence gives the same result. Each report states the rules version it was calculated with.",
+        ]],
+        ["alcance", "Scope of the evaluation", [
+          "The current evaluation is Phase 1. It reviews what the system publishes; it doesn't put an agent to work on tasks with it.",
+          { list: [
+            "It reads the public pages it finds from the address provided, within limits on number of pages and time. That's why the number of pages read can vary from one evaluation to another.",
+            "It doesn't read pages behind a login, Figma files, Storybook, code repositories or published packages. Whatever lives only there is left out of the score.",
+            "It detects whether an MCP server, an API, an llms.txt or an AGENTS.md exist, but doesn't check whether they work or require credentials.",
+            "It doesn't look for contradictions between sources or detect which components are similar to each other.",
+            "Whatever couldn't be reviewed is left out of the score and noted in the report.",
+          ] },
+          "Details are in “How it works”.",
+        ]],
+        ["resultados", "Use of results", [
+          "Results are informational. They reflect the evidence that could be read at the date and time of the evaluation.",
+          { list: [
+            "They aren't a certification, an audit or professional advice.",
+            "They don't measure the Design System's quality for the people who use it.",
+            "They don't guarantee how an AI agent will behave with that system.",
+          ] },
+          "Decisions you make based on a result are your responsibility. You may download, keep and share the results you generate.",
+        ]],
+        ["uso", "Acceptable use", [
+          "By using Agentic DS you agree to:",
+          { list: [
+            "Evaluate only public sites you have the right to access.",
+            "Not use it to overload a site, get around usage limits (for example, 5 evaluations per minute) or try to reach internal or private addresses.",
+            "Not try to alter, disable or get around the service's security.",
+          ] },
+          "When it reads a site, the evaluator identifies itself as “AgenticDS”. We may block use that doesn't respect these terms.",
+        ]],
+        ["disponibilidad", "Availability and changes to the service", [
+          "Agentic DS is provided as is, with no guarantee of continuous availability. The server may be slow to respond after being idle, and evaluating a site that needs a browser can take several minutes.",
+          "We may change the evaluation rules, the features or the service, or stop offering it. That's why each report states its rules version: results from different versions aren't always comparable.",
+        ]],
+        ["propiedad", "Intellectual property", [
+          "The software, texts, design, the Agentic DS name and its mascot Niko belong to their owner. All rights reserved.",
+          "The content of the evaluated Design Systems belongs to their owners. Agentic DS claims no rights over that content. Names of systems such as Carbon, Fluent or Material belong to their owners; mentioning them doesn't imply affiliation or endorsement.",
+        ]],
+        ["comentarios", "Feedback", [
+          "If you send us feedback with the “Rate this result” form, you agree that we may use it to improve the evaluator. Contact details are optional. Don't include other people's personal data or confidential information.",
+        ]],
+        ["privacidad", "Privacy", [
+          { html: "Which data is processed and where is described in the <a href=\"como-funciona.html#privacidad\">Privacy</a> section of “How it works”." },
+        ]],
+        ["responsabilidad", "Limitation of liability", [
+          "To the extent permitted by law, Agentic DS isn't liable for damages arising from the use of the service or its results, or from interruptions or errors in the service.",
+        ]],
+        ["ley", "Governing law", [
+          "These terms are governed by the laws of the Republic of Peru.",
+        ]],
+        ["actualizaciones", "Changes to these terms", [
+          "We may update these terms. The date of the last update appears at the top of this page. If you keep using the service after a change, you accept the updated version.",
+          "For questions, use the feedback form.",
+        ]],
+      ],
+    },
+  };
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const block = (b) =>
+    typeof b === "string" ? `<p>${esc(b)}</p>`
+    : b.list ? `<ul>${b.list.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
+    : `<p>${b.html}</p>`; // solo textos fijos de este archivo
+  let lang = "es";
+  try { lang = localStorage.getItem("agentic-ds-lang") === "en" ? "en" : "es"; } catch {}
+  function render() {
+    const t = T[lang];
+    document.documentElement.lang = lang;
+    document.title = t.title;
+    document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = t[el.getAttribute("data-t")]; });
+    document.getElementById("btn-es").setAttribute("aria-pressed", String(lang === "es"));
+    document.getElementById("btn-en").setAttribute("aria-pressed", String(lang === "en"));
+    document.getElementById("doc").innerHTML = `
+      <h1>${esc(t.h1)}</h1>
+      <p class="updated">${esc(t.updated.replace("{date}", UPDATED[lang]))}</p>
+      <p class="intro">${esc(t.intro)}</p>
+      <nav class="toc" aria-label="${esc(t.toc)}"><p>${esc(t.toc)}</p><ol>${t.sections.map(([id, h]) => `<li><a href="#${id}">${esc(h)}</a></li>`).join("")}</ol></nav>
+      ${t.sections.map(([id, h, blocks], i) => `<section id="${id}"><h2>${i + 1}. ${esc(h)}</h2>${blocks.map(block).join("")}</section>`).join("")}`;
+  }
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem("agentic-ds-lang", l); } catch {}
+    render();
+  }
+  document.getElementById("btn-es").addEventListener("click", () => setLang("es"));
+  document.getElementById("btn-en").addEventListener("click", () => setLang("en"));
+  render();
+})();
+</script>
+<script src="footer.js"></script>
+</body>
+</html>

@@ -241,6 +241,13 @@
         <p class="source"><span>${esc(report.system && report.system.url)}</span><span class="pill">${esc(ctx.mode === "demo" ? u.modeDemo : u.modeLive)}</span></p>
         ${scoreBlock}
         <p class="summary measure">${esc(summary)}</p>
+        <div class="rate-cta">
+          <div class="rc-head">
+            <span class="rc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4.5 3.5V17H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M12 13.6s-3.2-1.9-3.2-4a1.7 1.7 0 0 1 3.2-.8 1.7 1.7 0 0 1 3.2.8c0 2.1-3.2 4-3.2 4z"/></svg></span>
+            <div><p class="rc-q">${esc(u.rateQ)}</p><p class="rc-sub">${esc(u.rateSub)}</p></div>
+          </div>
+          <a class="rc-btn" href="feedback.html">${esc(u.rateCta)} <span aria-hidden="true">→</span></a>
+        </div>
         ${ctx.mode === "live" ? `<p class="score-note measure">${esc(u.coverageVaries)}</p>` : ""}
         ${incompleteBox}
       </section>`;

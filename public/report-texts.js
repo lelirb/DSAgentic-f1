@@ -211,6 +211,9 @@
       limNotEvaluableNow:
         "Qué todavía no se puede leer: contenido que solo aparece al ejecutar JavaScript, páginas con login, archivos de Figma y documentación publicada en otros sitios (por ejemplo, Storybook o el repositorio). Eso se marca como «no se pudo leer» y queda fuera de la nota. Si lo que se pudo revisar es menos de la mitad de la nota, no se asigna nivel.",
       limExternal: "Parte de la información está en fuentes oficiales del sistema (Storybook, repositorio o paquetes) que esta versión todavía no lee. Esos criterios quedaron fuera de la nota.",
+      rateQ: "¿Qué te parece este resultado?",
+      rateSub: "Tu feedback ayuda a mejorar Agentic DS.",
+      rateCta: "Califica este resultado",
       limAgentFiles:
         "Detectar un servidor MCP, una API, un llms.txt o un AGENTS.md solo confirma que existen o que la documentación los menciona. El evaluador no comprueba si son accesibles, si funcionan ni si requieren credenciales.",
       limNoContradictions:
@@ -668,6 +671,9 @@
       limNotEvaluableNow:
         "What can't be read yet: content that only appears when JavaScript runs, pages behind a login, Figma files, and documentation published on other sites (for example, Storybook or the repository). That's marked as “couldn't be read” and left out of the score. If what could be reviewed is less than half of the score, no level is assigned.",
       limExternal: "Some information lives in official sources of the system (Storybook, repository or packages) that this version doesn't read yet. Those criteria were left out of the score.",
+      rateQ: "What do you think of this result?",
+      rateSub: "Your feedback helps improve Agentic DS.",
+      rateCta: "Rate this result",
       limAgentFiles:
         "Detecting an MCP server, an API, an llms.txt or an AGENTS.md only confirms that they exist or that the documentation mentions them. The evaluator doesn't check whether they're accessible, whether they work, or whether they require credentials.",
       limNoContradictions:

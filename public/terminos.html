@@ -12,10 +12,12 @@
     --ink-900:#0B1220; --ink-800:#12172B; --ink-600:#3B4258;
     --gray-500:#5B6472; --gray-100:#E7EAF0;
     --paper:#FFFFFF; --paper-tint:#F3F5FA;
-    --indigo-600:#3D5AFE; --indigo-700:#2F46D6; --indigo-050:#F3F5FF;
+    --indigo-600:#3D5AFE; --indigo-700:#2F46D6; --indigo-100:#E8ECFF; --indigo-050:#F3F5FF;
+    --green-700:#15803D; --amber-700:#A15C00; --red-700:#B91C1C;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'IBM Plex Sans', system-ui, sans-serif;color:var(--ink-800);background:var(--paper-tint);-webkit-font-smoothing:antialiased;line-height:1.6;}
+  code{font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:.92em;background:var(--indigo-050);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
   a{color:var(--indigo-700);}
   button{font-family:inherit;cursor:pointer;}
   :focus-visible{outline:3px solid var(--indigo-600);outline-offset:2px;border-radius:4px;}
@@ -33,16 +35,32 @@
   .doc{max-width:680px;margin:0 auto;}
   h1{font-size:32px;line-height:1.2;font-weight:600;color:var(--ink-900);margin:0 0 6px;}
   .updated{font-size:14px;color:var(--gray-500);margin:0 0 20px;}
-  .intro{font-size:16.5px;color:var(--ink-600);margin:0 0 28px;}
+  .intro p{font-size:16.5px;color:var(--ink-600);}
+  .intro{margin:0 0 28px;}
+  .callout{background:var(--paper);border-left:4px solid var(--indigo-600);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 12px;}
   .toc{background:var(--paper);border:1px solid var(--gray-100);border-radius:12px;padding:14px 20px;margin:0 0 32px;}
   .toc p{margin:0 0 6px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);}
   .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px;font-size:14.5px;}
   .toc li{margin:3px 0;break-inside:avoid;}
   section{scroll-margin-top:84px;}
   h2{font-size:19px;color:var(--ink-900);margin:32px 0 8px;}
+  h3{font-size:16px;color:var(--ink-900);margin:20px 0 6px;}
   p{margin:0 0 12px;}
   ul{margin:0 0 12px;padding-left:20px;}
   li{margin:4px 0;}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:16px 0 8px;}
+  ol.steps>li{counter-increment:s;position:relative;padding:0 0 18px 44px;border-left:2px solid var(--indigo-100);margin:0 0 0 15px;}
+  ol.steps>li:last-child{border-left-color:transparent;}
+  ol.steps>li::before{content:counter(s);position:absolute;left:-16px;top:-2px;width:30px;height:30px;border-radius:50%;background:var(--indigo-600);color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  ol.steps h3{margin:0 0 4px;}
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0 16px;}
+  .state{background:var(--paper);border:1px solid var(--gray-100);border-radius:10px;padding:14px;}
+  .state b{display:block;margin-bottom:4px;}
+  .state span{font-size:14px;color:var(--ink-600);}
+  .s-found b,.s-part b{color:var(--green-700);} .s-nf b{color:var(--amber-700);} .s-abs b{color:var(--red-700);} .s-ne b,.s-na b,.s-scope b{color:var(--gray-500);}
+  .outro{border-top:1px solid var(--gray-100);margin-top:32px;padding-top:16px;color:var(--ink-600);}
+  .cta{display:inline-block;margin-top:24px;background:var(--indigo-600);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px;}
+  .cta:hover{background:var(--indigo-700);}
   @media (max-width:600px){ h1{font-size:26px;} .toc ol{columns:1;} .back-link{display:none;} }
 </style>
 </head>
@@ -67,150 +85,371 @@
 
 <script>
 (function () {
-  const UPDATED = { es: "27 de octubre de 2026", en: "October 27, 2026" };
+  // Textos generados a partir de los documentos aprobados (md). Ya vienen
+  // escapados; el único marcado es <strong>, <code> y enlaces internos.
   const T = {
-    es: {
-      title: "Agentic DS — Términos y condiciones",
-      skip: "Saltar al contenido principal",
-      back: "← Volver al inicio",
-      h1: "Términos y condiciones",
-      updated: "Última actualización: {date}",
-      intro: "Estos términos explican qué es Agentic DS, hasta dónde llega su evaluación y cómo puedes usarlo. Al usar el sitio aceptas estos términos.",
-      toc: "Contenido",
-      sections: [
-        ["servicio", "Qué es Agentic DS", [
-          "Agentic DS es una herramienta gratuita que revisa la documentación pública de un Design System y mide cuánto de lo que un agente de IA necesitaría para descubrirlo, entenderlo y usarlo está publicado en un formato que se puede recuperar.",
-          "La puntuación se calcula con reglas fijas, sin inteligencia artificial: la misma evidencia da el mismo resultado. Cada informe indica la versión de las reglas con que se calculó.",
-        ]],
-        ["alcance", "Alcance de la evaluación", [
-          "La evaluación actual corresponde a la Fase 1. Revisa lo que el sistema publica; no pone a un agente a ejecutar tareas con él.",
-          { list: [
-            "Lee las páginas públicas que encuentra desde la dirección indicada, dentro de límites de cantidad de páginas y de tiempo. Por eso la cantidad de páginas leídas puede variar entre una evaluación y otra.",
-            "No lee páginas con inicio de sesión, archivos de Figma, Storybook, repositorios de código ni paquetes publicados. Lo que solo está ahí queda fuera de la nota.",
-            "Detecta si existen un servidor MCP, una API, un llms.txt o un AGENTS.md, pero no comprueba si funcionan ni si piden credenciales.",
-            "No busca contradicciones entre fuentes ni detecta qué componentes se parecen entre sí.",
-            "Lo que no se pudo revisar queda fuera de la nota y se indica en el informe.",
-          ] },
-          "El detalle está en «Cómo funciona».",
-        ]],
-        ["resultados", "Uso de los resultados", [
-          "Los resultados son informativos. Reflejan la evidencia que se pudo leer en la fecha y hora de la evaluación.",
-          { list: [
-            "No son una certificación, una auditoría ni una asesoría profesional.",
-            "No miden la calidad del Design System para las personas que lo usan.",
-            "No garantizan cómo se comportará un agente de IA con ese sistema.",
-          ] },
-          "Las decisiones que tomes a partir de un resultado son tu responsabilidad. Puedes descargar, guardar y compartir los resultados que generes.",
-        ]],
-        ["uso", "Uso aceptable", [
-          "Al usar Agentic DS te comprometes a:",
-          { list: [
-            "Evaluar solo sitios públicos que tengas derecho a consultar.",
-            "No usarlo para sobrecargar un sitio, eludir los límites de uso (por ejemplo, 5 evaluaciones por minuto) ni intentar llegar a direcciones internas o privadas.",
-            "No intentar alterar, desactivar o eludir la seguridad del servicio.",
-          ] },
-          "Cuando lee un sitio, el evaluador se identifica como «AgenticDS». Podemos bloquear el uso que no respete estos términos.",
-        ]],
-        ["disponibilidad", "Disponibilidad y cambios del servicio", [
-          "Agentic DS se ofrece tal como está, sin garantía de disponibilidad continua. El servidor puede tardar en responder si estuvo inactivo, y una evaluación de un sitio que necesita navegador puede tomar varios minutos.",
-          "Podemos cambiar las reglas de evaluación, las funciones o el servicio, o dejar de ofrecerlo. Por eso cada informe indica su versión de reglas: resultados de versiones distintas no siempre son comparables.",
-        ]],
-        ["propiedad", "Propiedad intelectual", [
-          "El software, los textos, el diseño, el nombre Agentic DS y su mascota Niko pertenecen a su titular. Todos los derechos reservados.",
-          "El contenido de los Design Systems evaluados pertenece a sus dueños. Agentic DS no reclama derechos sobre ese contenido. Los nombres de sistemas como Carbon, Fluent o Material pertenecen a sus titulares; mencionarlos no implica afiliación ni respaldo.",
-        ]],
-        ["comentarios", "Comentarios", [
-          "Si nos envías un comentario con el formulario «Califica este resultado», aceptas que lo usemos para mejorar el evaluador. El contacto es opcional. No incluyas datos personales de terceros ni información confidencial.",
-        ]],
-        ["privacidad", "Privacidad", [
-          { html: "Qué datos se procesan y dónde está descrito en la sección <a href=\"como-funciona.html#privacidad\">Privacidad</a> de «Cómo funciona»." },
-        ]],
-        ["responsabilidad", "Limitación de responsabilidad", [
-          "En la medida en que lo permita la ley, Agentic DS no se hace responsable de daños o perjuicios derivados del uso del servicio o de los resultados, ni de interrupciones o errores del servicio.",
-        ]],
-        ["ley", "Ley aplicable", [
-          "Estos términos se rigen por las leyes de la República del Perú.",
-        ]],
-        ["actualizaciones", "Cambios a estos términos", [
-          "Podemos actualizar estos términos. La fecha de la última actualización figura al inicio de esta página. Si sigues usando el servicio después de un cambio, aceptas la versión actualizada.",
-          "Para consultas, usa el formulario de comentarios.",
-        ]],
-      ],
-    },
-    en: {
-      title: "Agentic DS — Terms and conditions",
-      skip: "Skip to main content",
-      back: "← Back to home",
-      h1: "Terms and conditions",
-      updated: "Last updated: {date}",
-      intro: "These terms explain what Agentic DS is, how far its evaluation goes and how you may use it. By using the site you accept these terms.",
-      toc: "Contents",
-      sections: [
-        ["servicio", "What Agentic DS is", [
-          "Agentic DS is a free tool that reviews a Design System's public documentation and measures how much of what an AI agent would need to discover, understand and use it is published in a retrievable format.",
-          "The score is calculated with fixed rules, without artificial intelligence: the same evidence gives the same result. Each report states the rules version it was calculated with.",
-        ]],
-        ["alcance", "Scope of the evaluation", [
-          "The current evaluation is Phase 1. It reviews what the system publishes; it doesn't put an agent to work on tasks with it.",
-          { list: [
-            "It reads the public pages it finds from the address provided, within limits on number of pages and time. That's why the number of pages read can vary from one evaluation to another.",
-            "It doesn't read pages behind a login, Figma files, Storybook, code repositories or published packages. Whatever lives only there is left out of the score.",
-            "It detects whether an MCP server, an API, an llms.txt or an AGENTS.md exist, but doesn't check whether they work or require credentials.",
-            "It doesn't look for contradictions between sources or detect which components are similar to each other.",
-            "Whatever couldn't be reviewed is left out of the score and noted in the report.",
-          ] },
-          "Details are in “How it works”.",
-        ]],
-        ["resultados", "Use of results", [
-          "Results are informational. They reflect the evidence that could be read at the date and time of the evaluation.",
-          { list: [
-            "They aren't a certification, an audit or professional advice.",
-            "They don't measure the Design System's quality for the people who use it.",
-            "They don't guarantee how an AI agent will behave with that system.",
-          ] },
-          "Decisions you make based on a result are your responsibility. You may download, keep and share the results you generate.",
-        ]],
-        ["uso", "Acceptable use", [
-          "By using Agentic DS you agree to:",
-          { list: [
-            "Evaluate only public sites you have the right to access.",
-            "Not use it to overload a site, get around usage limits (for example, 5 evaluations per minute) or try to reach internal or private addresses.",
-            "Not try to alter, disable or get around the service's security.",
-          ] },
-          "When it reads a site, the evaluator identifies itself as “AgenticDS”. We may block use that doesn't respect these terms.",
-        ]],
-        ["disponibilidad", "Availability and changes to the service", [
-          "Agentic DS is provided as is, with no guarantee of continuous availability. The server may be slow to respond after being idle, and evaluating a site that needs a browser can take several minutes.",
-          "We may change the evaluation rules, the features or the service, or stop offering it. That's why each report states its rules version: results from different versions aren't always comparable.",
-        ]],
-        ["propiedad", "Intellectual property", [
-          "The software, texts, design, the Agentic DS name and its mascot Niko belong to their owner. All rights reserved.",
-          "The content of the evaluated Design Systems belongs to their owners. Agentic DS claims no rights over that content. Names of systems such as Carbon, Fluent or Material belong to their owners; mentioning them doesn't imply affiliation or endorsement.",
-        ]],
-        ["comentarios", "Feedback", [
-          "If you send us feedback with the “Rate this result” form, you agree that we may use it to improve the evaluator. Contact details are optional. Don't include other people's personal data or confidential information.",
-        ]],
-        ["privacidad", "Privacy", [
-          { html: "Which data is processed and where is described in the <a href=\"como-funciona.html#privacidad\">Privacy</a> section of “How it works”." },
-        ]],
-        ["responsabilidad", "Limitation of liability", [
-          "To the extent permitted by law, Agentic DS isn't liable for damages arising from the use of the service or its results, or from interruptions or errors in the service.",
-        ]],
-        ["ley", "Governing law", [
-          "These terms are governed by the laws of the Republic of Peru.",
-        ]],
-        ["actualizaciones", "Changes to these terms", [
-          "We may update these terms. The date of the last update appears at the top of this page. If you keep using the service after a change, you accept the updated version.",
-          "For questions, use the feedback form.",
-        ]],
-      ],
-    },
-  };
+ "es": {
+  "title": "Agentic DS — Términos y condiciones",
+  "h1": "Términos y condiciones",
+  "updated": "27 de octubre de 2026",
+  "updatedLabel": "Última actualización",
+  "back": "← Volver al inicio",
+  "skip": "Saltar al contenido principal",
+  "toc": "Contenido",
+  "cta": null,
+  "intro": [],
+  "sections": [
+   [
+    "sobre-agentic-ds",
+    "Sobre Agentic DS",
+    [
+     {
+      "p": "Agentic DS es una herramienta gratuita y en desarrollo que evalúa la preparación de la documentación pública de Design Systems para su uso por agentes de inteligencia artificial."
+     },
+     {
+      "p": "En la Fase 1, la evaluación utiliza reglas determinísticas y no emplea un modelo de IA para asignar la puntuación. Los resultados dependen de las evidencias recuperadas, los criterios aplicados y la versión de las reglas."
+     },
+     {
+      "p": "Agentic DS es un proyecto independiente, sin afiliación, certificación ni respaldo oficial de los Design Systems evaluados."
+     }
+    ]
+   ],
+   [
+    "alcance-del-servicio",
+    "Alcance del servicio",
+    [
+     {
+      "p": "La herramienta analiza documentación pública accesible mediante los mecanismos implementados en la versión vigente. No ejecuta tareas con agentes reales ni garantiza que un agente pueda utilizar correctamente el Design System evaluado."
+     },
+     {
+      "p": "La cobertura está sujeta a límites técnicos, disponibilidad de las páginas, formatos soportados y demás condiciones descritas en <a href=\"como-funciona.html\">«Cómo funciona»</a>."
+     }
+    ]
+   ],
+   [
+    "condiciones-de-uso",
+    "Condiciones de uso",
+    [
+     {
+      "p": "Al utilizar Agentic DS, aceptas:"
+     },
+     {
+      "ul": [
+       "Evaluar únicamente fuentes públicas cuyo acceso y consulta estés autorizado a realizar.",
+       "Respetar los derechos de propiedad intelectual y las condiciones de uso aplicables a los sitios consultados.",
+       "No utilizar la herramienta para sobrecargar sitios, acceder a direcciones internas o privadas, eludir restricciones ni intentar vulnerar la seguridad de sistemas.",
+       "No presentar los resultados como una certificación o garantía de capacidades que no hayan sido verificadas."
+      ]
+     },
+     {
+      "p": "El acceso puede limitarse o suspenderse ante usos abusivos o contrarios a estas condiciones."
+     }
+    ]
+   ],
+   [
+    "naturaleza-de-los-resultados",
+    "Naturaleza de los resultados",
+    [
+     {
+      "p": "Los resultados son informativos y sirven para identificar oportunidades de mejora en la documentación. No constituyen una certificación, auditoría integral ni garantía de preparación para agentes de IA."
+     },
+     {
+      "p": "La puntuación no mide por sí sola la calidad general del Design System, la experiencia de las personas usuarias, la accesibilidad efectiva ni la calidad de implementación."
+     },
+     {
+      "p": "La interpretación y el uso de los resultados corresponden a quien los consulta. Los informes pueden compartirse siempre que se respeten los derechos de terceros y no se presenten de forma engañosa."
+     }
+    ]
+   ],
+   [
+    "disponibilidad-y-cambios",
+    "Disponibilidad y cambios",
+    [
+     {
+      "p": "Agentic DS está en desarrollo. Pueden producirse interrupciones, errores, evaluaciones incompletas o cambios en los criterios, la metodología y los límites técnicos."
+     },
+     {
+      "p": "Cada informe identifica la versión de las reglas utilizada. Los resultados de distintas versiones pueden no ser directamente comparables."
+     },
+     {
+      "p": "Los informes no se conservan de forma permanente en el servidor. Los resultados pueden mantenerse temporalmente en memoria para gestionar la evaluación y permitir recuperar el resultado durante un periodo limitado. Si deseas conservar un informe, descárgalo."
+     }
+    ]
+   ],
+   [
+    "propiedad-intelectual",
+    "Propiedad intelectual",
+    [
+     {
+      "p": "El nombre, la identidad visual, los textos originales, la interfaz y los elementos propios de Agentic DS están sujetos a los derechos de sus respectivos titulares y a las licencias o autorizaciones aplicables."
+     },
+     {
+      "p": "La documentación y los recursos de terceros pertenecen a sus respectivos titulares. Las menciones a Carbon, Fluent, Material u otros Design Systems tienen fines descriptivos y no implican afiliación ni respaldo."
+     }
+    ]
+   ],
+   [
+    "comentarios-y-feedback",
+    "Comentarios y feedback",
+    [
+     {
+      "p": "El formulario «Califica este resultado» permite enviar voluntariamente comentarios, observaciones y reportes de errores. El feedback es recibido directamente por el equipo desarrollador de Agentic DS a través del correo electrónico."
+     },
+     {
+      "p": "Si incluyes datos de contacto, estos podrán utilizarse para responder a tu comentario. Los comentarios se envían mediante Resend, un servicio externo de correo, y no se almacenan en una base de datos propia de Agentic DS."
+     },
+     {
+      "p": "No incluyas contraseñas, credenciales, información confidencial ni datos personales de terceros."
+     },
+     {
+      "p": "El tratamiento de esta información y la intervención de servicios externos se describen en la <a href=\"privacidad.html\">Política de privacidad</a>."
+     }
+    ]
+   ],
+   [
+    "privacidad-y-datos",
+    "Privacidad y datos",
+    [
+     {
+      "p": "Agentic DS no requiere una cuenta de usuario ni mantiene una base de datos propia de usuarios o evaluaciones. Sin embargo, procesa temporalmente la información necesaria para realizar las evaluaciones y gestionar el uso del servicio."
+     },
+     {
+      "p": "Los resultados pueden mantenerse temporalmente en memoria del servidor. Las direcciones IP se procesan para aplicar límites de uso y los registros técnicos de errores pueden incluir las URL evaluadas."
+     },
+     {
+      "p": "Los proveedores externos de alojamiento, envío de correo y tipografías pueden procesar datos técnicos conforme a sus propias condiciones y políticas."
+     },
+     {
+      "p": "Los detalles sobre el tratamiento de información se encuentran en la <a href=\"privacidad.html\">Política de privacidad</a>. El uso de proveedores externos no supone una garantía de que estos no conserven datos."
+     }
+    ]
+   ],
+   [
+    "limitacion-de-responsabilidad",
+    "Limitación de responsabilidad",
+    [
+     {
+      "p": "Agentic DS se ofrece tal como está disponible y dentro de las capacidades de su versión vigente. No se garantiza que funcione de manera ininterrumpida, que recupere toda la documentación o que los resultados estén libres de errores."
+     },
+     {
+      "p": "En la medida permitida por la legislación aplicable, no se garantiza la idoneidad de los resultados para una decisión específica. Esta cláusula no excluye responsabilidades que legalmente no puedan excluirse."
+     }
+    ]
+   ],
+   [
+    "legislacion-aplicable",
+    "Legislación aplicable",
+    [
+     {
+      "p": "Estos términos se interpretan conforme a la legislación peruana, sin perjuicio de las normas imperativas que puedan resultar aplicables."
+     }
+    ]
+   ],
+   [
+    "modificaciones-y-contacto",
+    "Modificaciones y contacto",
+    [
+     {
+      "p": "Estos términos pueden actualizarse a medida que evolucione Agentic DS. La versión vigente estará disponible en el sitio."
+     },
+     {
+      "p": "Para comunicar errores, realizar consultas o plantear observaciones, puedes utilizar el formulario «Califica este resultado»."
+     }
+    ]
+   ]
+  ],
+  "outro": [
+   {
+    "p": "Agentic DS Fase 1 es una herramienta en desarrollo para evaluar evidencia documental. Sus resultados no certifican que un Design System esté preparado para cualquier agente de inteligencia artificial."
+   }
+  ]
+ },
+ "en": {
+  "title": "Agentic DS — Terms and conditions",
+  "h1": "Terms and conditions",
+  "updated": "October 27, 2026",
+  "updatedLabel": "Last updated",
+  "back": "← Back to home",
+  "skip": "Skip to main content",
+  "toc": "Contents",
+  "cta": null,
+  "intro": [],
+  "sections": [
+   [
+    "sobre-agentic-ds",
+    "About Agentic DS",
+    [
+     {
+      "p": "Agentic DS is a free tool, still in development, that evaluates how ready the public documentation of Design Systems is for use by artificial intelligence agents."
+     },
+     {
+      "p": "In Phase 1, the evaluation uses deterministic rules and doesn't use an AI model to assign the score. Results depend on the evidence retrieved, the criteria applied and the rules version."
+     },
+     {
+      "p": "Agentic DS is an independent project, with no affiliation, certification or official endorsement from the Design Systems it evaluates."
+     }
+    ]
+   ],
+   [
+    "alcance-del-servicio",
+    "Scope of the service",
+    [
+     {
+      "p": "The tool analyzes public documentation that can be reached through the mechanisms implemented in the current version. It doesn't run tasks with real agents and doesn't guarantee that an agent can correctly use the evaluated Design System."
+     },
+     {
+      "p": "Coverage is subject to technical limits, page availability, supported formats and the other conditions described in <a href=\"como-funciona.html\">“How it works”</a>."
+     }
+    ]
+   ],
+   [
+    "condiciones-de-uso",
+    "Conditions of use",
+    [
+     {
+      "p": "By using Agentic DS, you agree to:"
+     },
+     {
+      "ul": [
+       "Evaluate only public sources you are authorized to access and consult.",
+       "Respect the intellectual property rights and terms of use that apply to the sites consulted.",
+       "Not use the tool to overload sites, access internal or private addresses, get around restrictions or try to breach the security of systems.",
+       "Not present the results as a certification or guarantee of capabilities that haven't been verified."
+      ]
+     },
+     {
+      "p": "Access may be limited or suspended in case of abusive use or use contrary to these conditions."
+     }
+    ]
+   ],
+   [
+    "naturaleza-de-los-resultados",
+    "Nature of the results",
+    [
+     {
+      "p": "Results are informational and help identify opportunities to improve the documentation. They aren't a certification, a full audit or a guarantee of readiness for AI agents."
+     },
+     {
+      "p": "The score doesn't by itself measure the overall quality of the Design System, the experience of the people who use it, actual accessibility or implementation quality."
+     },
+     {
+      "p": "Interpreting and using the results is up to whoever consults them. Reports may be shared as long as third-party rights are respected and they aren't presented in a misleading way."
+     }
+    ]
+   ],
+   [
+    "disponibilidad-y-cambios",
+    "Availability and changes",
+    [
+     {
+      "p": "Agentic DS is in development. Interruptions, errors, incomplete evaluations or changes to the criteria, methodology and technical limits may occur."
+     },
+     {
+      "p": "Each report states the rules version used. Results from different versions may not be directly comparable."
+     },
+     {
+      "p": "Reports aren't kept permanently on the server. Results may be held temporarily in memory to manage the evaluation and allow the result to be recovered for a limited time. If you want to keep a report, download it."
+     }
+    ]
+   ],
+   [
+    "propiedad-intelectual",
+    "Intellectual property",
+    [
+     {
+      "p": "The name, visual identity, original texts, interface and other elements of Agentic DS are subject to the rights of their respective owners and to the applicable licenses or authorizations."
+     },
+     {
+      "p": "Third-party documentation and resources belong to their respective owners. Mentions of Carbon, Fluent, Material or other Design Systems are descriptive and don't imply affiliation or endorsement."
+     }
+    ]
+   ],
+   [
+    "comentarios-y-feedback",
+    "Comments and feedback",
+    [
+     {
+      "p": "The “Rate this result” form lets you voluntarily send comments, observations and error reports. Feedback is received directly by the Agentic DS development team by email."
+     },
+     {
+      "p": "If you include contact details, they may be used to reply to your comment. Comments are sent through Resend, an external email service, and aren't stored in a database of Agentic DS's own."
+     },
+     {
+      "p": "Don't include passwords, credentials, confidential information or other people's personal data."
+     },
+     {
+      "p": "How this information is handled and which external services are involved is described in the <a href=\"privacidad.html\">Privacy policy</a>."
+     }
+    ]
+   ],
+   [
+    "privacidad-y-datos",
+    "Privacy and data",
+    [
+     {
+      "p": "Agentic DS doesn't require a user account and doesn't keep its own database of users or evaluations. However, it temporarily processes the information needed to run evaluations and manage use of the service."
+     },
+     {
+      "p": "Results may be held temporarily in the server's memory. IP addresses are processed to apply usage limits, and technical error logs may include the evaluated URLs."
+     },
+     {
+      "p": "External hosting, email delivery and font providers may process technical data under their own terms and policies."
+     },
+     {
+      "p": "Details on how information is handled are in the <a href=\"privacidad.html\">Privacy policy</a>. Using external providers is no guarantee that they don't keep data."
+     }
+    ]
+   ],
+   [
+    "limitacion-de-responsabilidad",
+    "Limitation of liability",
+    [
+     {
+      "p": "Agentic DS is offered as available and within the capabilities of its current version. There is no guarantee that it will work without interruption, retrieve all the documentation or produce error-free results."
+     },
+     {
+      "p": "To the extent permitted by applicable law, the suitability of the results for any specific decision isn't guaranteed. This clause doesn't exclude liability that cannot legally be excluded."
+     }
+    ]
+   ],
+   [
+    "legislacion-aplicable",
+    "Governing law",
+    [
+     {
+      "p": "These terms are interpreted under Peruvian law, without prejudice to any mandatory rules that may apply."
+     }
+    ]
+   ],
+   [
+    "modificaciones-y-contacto",
+    "Changes and contact",
+    [
+     {
+      "p": "These terms may be updated as Agentic DS evolves. The current version will be available on the site."
+     },
+     {
+      "p": "To report errors, ask questions or raise observations, you can use the “Rate this result” form."
+     }
+    ]
+   ]
+  ],
+  "outro": [
+   {
+    "p": "Agentic DS Phase 1 is a tool in development for evaluating documentary evidence. Its results don't certify that a Design System is ready for any artificial intelligence agent."
+   }
+  ]
+ }
+};
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const block = (b) =>
-    typeof b === "string" ? `<p>${esc(b)}</p>`
-    : b.list ? `<ul>${b.list.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
-    : `<p>${b.html}</p>`; // solo textos fijos de este archivo
+    b.p !== undefined ? `<p>${b.p}</p>`
+    : b.callout !== undefined ? `<div class="callout"><p style="margin:0">${b.callout}</p></div>`
+    : b.h3 !== undefined ? `<h3>${b.h3}</h3>`
+    : b.ul ? `<ul>${b.ul.map((x) => `<li>${x}</li>`).join("")}</ul>`
+    : b.steps ? `<ol class="steps">${b.steps.map(([h, bs]) => `<li><h3>${h}</h3>${bs.map(block).join("")}</li>`).join("")}</ol>`
+    : b.states ? `<div class="states">${b.states.map(([c, l, s]) => `<div class="state ${c}"><b>${l}</b><span>${s}</span></div>`).join("")}</div>`
+    : "";
   let lang = "es";
   try { lang = localStorage.getItem("agentic-ds-lang") === "en" ? "en" : "es"; } catch {}
   function render() {
@@ -222,10 +461,13 @@
     document.getElementById("btn-en").setAttribute("aria-pressed", String(lang === "en"));
     document.getElementById("doc").innerHTML = `
       <h1>${esc(t.h1)}</h1>
-      <p class="updated">${esc(t.updated.replace("{date}", UPDATED[lang]))}</p>
-      <p class="intro">${esc(t.intro)}</p>
-      <nav class="toc" aria-label="${esc(t.toc)}"><p>${esc(t.toc)}</p><ol>${t.sections.map(([id, h]) => `<li><a href="#${id}">${esc(h)}</a></li>`).join("")}</ol></nav>
-      ${t.sections.map(([id, h, blocks], i) => `<section id="${id}"><h2>${i + 1}. ${esc(h)}</h2>${blocks.map(block).join("")}</section>`).join("")}`;
+      ${t.updated ? `<p class="updated">${esc(t.updatedLabel)}: ${esc(t.updated)}</p>` : ""}
+      <div class="intro">${t.intro.map(block).join("")}</div>
+      <nav class="toc" aria-label="${esc(t.toc)}"><p>${esc(t.toc)}</p><ol>${t.sections.map(([id, h]) => `<li><a href="#${id}">${h}</a></li>`).join("")}</ol></nav>
+      ${t.sections.map(([id, h, blocks], i) => `<section id="${id}"><h2>${i + 1}. ${h}</h2>${blocks.map(block).join("")}</section>`).join("")}
+      ${t.outro.length ? `<div class="outro">${t.outro.map(block).join("")}</div>` : ""}
+      ${t.cta ? `<a class="cta" href="index.html#evaluate">${esc(t.cta)}</a>` : ""}`;
+    if (typeof location !== "undefined" && location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
   }
   function setLang(l) {
     lang = l;

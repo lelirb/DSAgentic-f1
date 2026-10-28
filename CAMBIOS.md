@@ -1125,3 +1125,17 @@ Sin verificar: la entrega real de un correo (requiere la cuenta de Resend).
 83. Pruebas: 2 nuevas en `tests/feedback.test.js`; un ayudante de
     `tests/report-claims.test.js` ajustado porque leía el último `<script>`
     de la página y ahora ese es el del pie.
+
+## Textos legales aprobados — 2026-10-27
+
+82. **«Cómo funciona», «Términos y condiciones» y la nueva «Política de
+    privacidad»** (`privacidad.html`) con los textos aprobados (ES) y su
+    traducción (EN). «Cómo funciona» ya no tiene sección de privacidad; los
+    términos remiten a la política.
+83. El pie de página enlaza a términos y a privacidad; el formulario enlaza a
+    la política. La política refleja los campos actuales (nombre y correo
+    opcionales).
+84. Pruebas: las tres páginas tienen las mismas secciones en ES y EN, la
+    política no tiene datos por completar y lo que afirman coincide con el
+    código (límites, identificación «AgenticDS», robots.txt solo para el mapa
+    del sitio). Reglas y puntuación sin cambio.

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic DS — Política de privacidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#0B1220; --ink-800:#12172B; --ink-600:#3B4258;
+    --gray-500:#5B6472; --gray-100:#E7EAF0;
+    --paper:#FFFFFF; --paper-tint:#F3F5FA;
+    --indigo-600:#3D5AFE; --indigo-700:#2F46D6; --indigo-100:#E8ECFF; --indigo-050:#F3F5FF;
+    --green-700:#15803D; --amber-700:#A15C00; --red-700:#B91C1C;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'IBM Plex Sans', system-ui, sans-serif;color:var(--ink-800);background:var(--paper-tint);-webkit-font-smoothing:antialiased;line-height:1.6;}
+  code{font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:.92em;background:var(--indigo-050);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
+  a{color:var(--indigo-700);}
+  button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:3px solid var(--indigo-600);outline-offset:2px;border-radius:4px;}
+  .skip{position:absolute;left:12px;top:-60px;background:var(--paper);color:var(--indigo-700);font-weight:600;padding:10px 14px;border-radius:8px;z-index:100;}
+  .skip:focus{top:12px;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px;}
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--gray-100);}
+  nav.wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;color:var(--ink-900);text-decoration:none;}
+  .back-link{font-size:14px;font-weight:600;color:var(--indigo-700);text-decoration:none;}
+  .lang-toggle{display:flex;align-items:center;background:var(--gray-100);border-radius:999px;padding:3px;gap:2px;}
+  .lang-toggle button{border:none;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--gray-500);min-height:32px;}
+  .lang-toggle button[aria-pressed="true"]{background:var(--paper);color:var(--indigo-700);}
+  main{padding:40px 0 24px;}
+  .doc{max-width:680px;margin:0 auto;}
+  h1{font-size:32px;line-height:1.2;font-weight:600;color:var(--ink-900);margin:0 0 6px;}
+  .updated{font-size:14px;color:var(--gray-500);margin:0 0 20px;}
+  .intro p{font-size:16.5px;color:var(--ink-600);}
+  .intro{margin:0 0 28px;}
+  .callout{background:var(--paper);border-left:4px solid var(--indigo-600);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 12px;}
+  .toc{background:var(--paper);border:1px solid var(--gray-100);border-radius:12px;padding:14px 20px;margin:0 0 32px;}
+  .toc p{margin:0 0 6px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px;font-size:14.5px;}
+  .toc li{margin:3px 0;break-inside:avoid;}
+  section{scroll-margin-top:84px;}
+  h2{font-size:19px;color:var(--ink-900);margin:32px 0 8px;}
+  h3{font-size:16px;color:var(--ink-900);margin:20px 0 6px;}
+  p{margin:0 0 12px;}
+  ul{margin:0 0 12px;padding-left:20px;}
+  li{margin:4px 0;}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:16px 0 8px;}
+  ol.steps>li{counter-increment:s;position:relative;padding:0 0 18px 44px;border-left:2px solid var(--indigo-100);margin:0 0 0 15px;}
+  ol.steps>li:last-child{border-left-color:transparent;}
+  ol.steps>li::before{content:counter(s);position:absolute;left:-16px;top:-2px;width:30px;height:30px;border-radius:50%;background:var(--indigo-600);color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  ol.steps h3{margin:0 0 4px;}
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0 16px;}
+  .state{background:var(--paper);border:1px solid var(--gray-100);border-radius:10px;padding:14px;}
+  .state b{display:block;margin-bottom:4px;}
+  .state span{font-size:14px;color:var(--ink-600);}
+  .s-found b,.s-part b{color:var(--green-700);} .s-nf b{color:var(--amber-700);} .s-abs b{color:var(--red-700);} .s-ne b,.s-na b,.s-scope b{color:var(--gray-500);}
+  .outro{border-top:1px solid var(--gray-100);margin-top:32px;padding-top:16px;color:var(--ink-600);}
+  .cta{display:inline-block;margin-top:24px;background:var(--indigo-600);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px;}
+  .cta:hover{background:var(--indigo-700);}
+  @media (max-width:600px){ h1{font-size:26px;} .toc ol{columns:1;} .back-link{display:none;} }
+</style>
+</head>
+<body>
+<a class="skip" href="#content" data-t="skip">Saltar al contenido principal</a>
+<header>
+  <nav class="wrap">
+    <a href="index.html" class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      Agentic DS
+    </a>
+    <a href="index.html" class="back-link" data-t="back">← Volver al inicio</a>
+    <div class="lang-toggle" role="group" aria-label="Language selector / Selector de idioma">
+      <button type="button" id="btn-es" aria-pressed="true">ES</button>
+      <button type="button" id="btn-en" aria-pressed="false">EN</button>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap" id="content" tabindex="-1"><article class="doc" id="doc"></article></main>
+<footer id="site-footer"></footer>
+
+<script>
+(function () {
+  // Textos generados a partir de los documentos aprobados (md). Ya vienen
+  // escapados; el único marcado es <strong>, <code> y enlaces internos.
+  const T = {
+ "es": {
+  "title": "Agentic DS — Política de privacidad",
+  "h1": "Política de privacidad",
+  "updated": "27 de octubre de 2026",
+  "updatedLabel": "Última actualización",
+  "back": "← Volver al inicio",
+  "skip": "Saltar al contenido principal",
+  "toc": "Contenido",
+  "cta": null,
+  "intro": [],
+  "sections": [
+   [
+    "responsable",
+    "Responsable",
+    [
+     {
+      "p": "El responsable del tratamiento de los datos personales es la titular de Agentic DS, un proyecto independiente con sede en Lima, Perú. Para cualquier consulta sobre esta política o sobre tus datos, utiliza el formulario «Califica este resultado»."
+     }
+    ]
+   ],
+   [
+    "que-informacion-se-procesa-y-para-que",
+    "Qué información se procesa y para qué",
+    [
+     {
+      "p": "Agentic DS no requiere crear una cuenta para realizar una evaluación ni mantiene una base de datos propia de usuarios o de evaluaciones."
+     },
+     {
+      "p": "Para prestar el servicio, se procesa temporalmente la siguiente información:"
+     },
+     {
+      "ul": [
+       "<strong>URL evaluada:</strong> se envía al servidor para recuperar y analizar la documentación pública correspondiente.",
+       "<strong>Resultados:</strong> se mantienen temporalmente en la memoria del servidor, hasta 10 minutos, para permitir recuperar el resultado si se interrumpe la conexión. Después se descartan. La aplicación no utiliza una base de datos ni guarda informes en archivos.",
+       "<strong>Dirección IP:</strong> se procesa temporalmente para aplicar límites de uso, durante unos minutos para las evaluaciones y hasta unos 10 minutos para el formulario de comentarios.",
+       "<strong>Registros de errores:</strong> los registros técnicos pueden incluir la URL evaluada.",
+       "<strong>Comentarios:</strong> si utilizas «Califica este resultado», el servidor envía el comentario por correo mediante Resend. El mensaje incluye la valoración, la URL del Design System, tu comentario, la versión de las reglas, las puntuaciones del informe y, si los proporcionas, tu nombre y tu correo electrónico, ambos opcionales. El servidor no guarda el comentario en una base de datos propia."
+      ]
+     },
+     {
+      "p": "Esta información se usa solo para prestar el servicio: realizar la evaluación, aplicar los límites de uso, resolver errores y, si envías un comentario, revisarlo y responderte."
+     }
+    ]
+   ],
+   [
+    "cookies-y-almacenamiento-en-el-navegador",
+    "Cookies y almacenamiento en el navegador",
+    [
+     {
+      "p": "Agentic DS no usa cookies de seguimiento, analítica ni publicidad. El navegador guarda el idioma elegido y el último resultado solo para que la aplicación funcione; el resultado se borra al cerrar la pestaña."
+     }
+    ]
+   ],
+   [
+    "servicios-externos-y-transferencias",
+    "Servicios externos y transferencias",
+    [
+     {
+      "p": "Agentic DS utiliza Render para el alojamiento, Resend para el envío de comentarios y Google Fonts para cargar tipografías. Estos proveedores pueden procesar datos técnicos conforme a sus propias políticas y condiciones. La infraestructura de alojamiento también puede generar registros técnicos, como direcciones IP y horas de acceso."
+     },
+     {
+      "p": "Agentic DS no controla las políticas de conservación de datos de estos proveedores y no garantiza que no mantengan registros propios."
+     },
+     {
+      "p": "Render, Resend y Google son empresas con sede en Estados Unidos, por lo que los datos técnicos y, si los envías, tu nombre y tu correo pueden tratarse fuera del Perú."
+     }
+    ]
+   ],
+   [
+    "comentarios",
+    "Comentarios",
+    [
+     {
+      "p": "El formulario «Califica este resultado» permite enviar voluntariamente comentarios, observaciones y reportes de errores. Los mensajes llegan directamente al equipo desarrollador de Agentic DS por correo electrónico mediante Resend."
+     },
+     {
+      "p": "El servidor no guarda los comentarios en una base de datos propia. Sin embargo, los mensajes enviados por correo pueden almacenarse y conservarse en los sistemas del proveedor de correo, conforme a sus políticas y condiciones."
+     },
+     {
+      "p": "Si proporcionas tu nombre y tu correo electrónico, se utilizarán para gestionar tu comentario y responderte cuando corresponda."
+     }
+    ]
+   ],
+   [
+    "cuanto-tiempo-se-conservan-los-datos",
+    "Cuánto tiempo se conservan los datos",
+    [
+     {
+      "ul": [
+       "Resultados: hasta 10 minutos en la memoria del servidor.",
+       "Dirección IP: unos minutos para las evaluaciones y hasta unos 10 minutos para el formulario de comentarios.",
+       "Registros de errores: el tiempo que los conserve el servicio de alojamiento (Render), según su propia política.",
+       "Comentarios recibidos por correo, incluidos el nombre y el correo: hasta 12 meses desde su recepción."
+      ]
+     }
+    ]
+   ],
+   [
+    "uso-responsable",
+    "Uso responsable",
+    [
+     {
+      "p": "La herramienta está diseñada para evaluar documentación pública. No introduzcas contraseñas, credenciales, información confidencial ni datos personales de terceros en los campos de evaluación o de comentarios."
+     }
+    ]
+   ],
+   [
+    "medidas-de-seguridad",
+    "Medidas de seguridad",
+    [
+     {
+      "p": "El servidor no usa bases de datos ni guarda informes o comentarios en archivos, limita la cantidad de solicitudes por dirección IP y restringe las direcciones que el evaluador puede consultar. Ninguna medida es infalible, pero se reduce al mínimo la información que se conserva."
+     }
+    ]
+   ],
+   [
+    "consultas-y-derechos",
+    "Consultas y derechos",
+    [
+     {
+      "p": "Puedes ejercer tus derechos de acceso, rectificación, cancelación y oposición (derechos ARCO) sobre los datos que nos hayas enviado mediante el formulario «Califica este resultado». Responderemos dentro de los plazos que establecen la Ley 29733, Ley de Protección de Datos Personales, y su reglamento."
+     },
+     {
+      "p": "Si consideras que tus derechos no fueron atendidos, puedes acudir a la Autoridad Nacional de Protección de Datos Personales del Ministerio de Justicia y Derechos Humanos."
+     }
+    ]
+   ],
+   [
+    "cambios-en-esta-politica",
+    "Cambios en esta política",
+    [
+     {
+      "p": "Podemos actualizar esta política cuando cambie el servicio o los requisitos aplicables. La fecha de la última actualización figura al inicio."
+     }
+    ]
+   ]
+  ],
+  "outro": []
+ },
+ "en": {
+  "title": "Agentic DS — Privacy policy",
+  "h1": "Privacy policy",
+  "updated": "October 27, 2026",
+  "updatedLabel": "Last updated",
+  "back": "← Back to home",
+  "skip": "Skip to main content",
+  "toc": "Contents",
+  "cta": null,
+  "intro": [],
+  "sections": [
+   [
+    "responsable",
+    "Data controller",
+    [
+     {
+      "p": "The controller of personal data is the owner of Agentic DS, an independent project based in Lima, Peru. For any question about this policy or your data, use the “Rate this result” form."
+     }
+    ]
+   ],
+   [
+    "que-informacion-se-procesa-y-para-que",
+    "What information is processed and why",
+    [
+     {
+      "p": "Agentic DS doesn't require an account to run an evaluation and doesn't keep its own database of users or evaluations."
+     },
+     {
+      "p": "To provide the service, the following information is processed temporarily:"
+     },
+     {
+      "ul": [
+       "<strong>Evaluated URL:</strong> sent to the server to retrieve and analyze the corresponding public documentation.",
+       "<strong>Results:</strong> held temporarily in the server's memory, for up to 10 minutes, so the result can be recovered if the connection drops. They are then discarded. The application doesn't use a database or store reports in files.",
+       "<strong>IP address:</strong> processed temporarily to apply usage limits, for a few minutes for evaluations and for up to about 10 minutes for the feedback form.",
+       "<strong>Error logs:</strong> technical logs may include the evaluated URL.",
+       "<strong>Comments:</strong> if you use “Rate this result”, the server sends the comment by email through Resend. The message includes the rating, the Design System URL, your comment, the rules version, the report's scores and, if you provide them, your name and email, both optional. The server doesn't store the comment in a database of its own."
+      ]
+     },
+     {
+      "p": "This information is used only to provide the service: running the evaluation, applying usage limits, fixing errors and, if you send a comment, reviewing it and replying to you."
+     }
+    ]
+   ],
+   [
+    "cookies-y-almacenamiento-en-el-navegador",
+    "Cookies and browser storage",
+    [
+     {
+      "p": "Agentic DS doesn't use tracking, analytics or advertising cookies. Your browser stores the language you chose and the latest result only so the application works; the result is deleted when you close the tab."
+     }
+    ]
+   ],
+   [
+    "servicios-externos-y-transferencias",
+    "External services and transfers",
+    [
+     {
+      "p": "Agentic DS uses Render for hosting, Resend for sending comments and Google Fonts for loading typefaces. These providers may process technical data under their own policies and terms. The hosting infrastructure may also generate technical logs, such as IP addresses and access times."
+     },
+     {
+      "p": "Agentic DS doesn't control these providers' data retention policies and doesn't guarantee that they don't keep their own logs."
+     },
+     {
+      "p": "Render, Resend and Google are companies based in the United States, so technical data and, if you send them, your name and email may be processed outside Peru."
+     }
+    ]
+   ],
+   [
+    "comentarios",
+    "Comments",
+    [
+     {
+      "p": "The “Rate this result” form lets you voluntarily send comments, observations and error reports. Messages go directly to the Agentic DS development team by email through Resend."
+     },
+     {
+      "p": "The server doesn't store comments in a database of its own. However, messages sent by email may be stored and kept in the email provider's systems, under its policies and terms."
+     },
+     {
+      "p": "If you provide your name and email, they will be used to handle your comment and reply to you when appropriate."
+     }
+    ]
+   ],
+   [
+    "cuanto-tiempo-se-conservan-los-datos",
+    "How long data is kept",
+    [
+     {
+      "ul": [
+       "Results: up to 10 minutes in the server's memory.",
+       "IP address: a few minutes for evaluations and up to about 10 minutes for the feedback form.",
+       "Error logs: as long as the hosting service (Render) keeps them, under its own policy.",
+       "Comments received by email, including name and email: up to 12 months from receipt."
+      ]
+     }
+    ]
+   ],
+   [
+    "uso-responsable",
+    "Responsible use",
+    [
+     {
+      "p": "The tool is designed to evaluate public documentation. Don't enter passwords, credentials, confidential information or other people's personal data in the evaluation or feedback fields."
+     }
+    ]
+   ],
+   [
+    "medidas-de-seguridad",
+    "Security measures",
+    [
+     {
+      "p": "The server doesn't use databases or store reports or comments in files, limits the number of requests per IP address and restricts the addresses the evaluator can consult. No measure is infallible, but the information kept is reduced to a minimum."
+     }
+    ]
+   ],
+   [
+    "consultas-y-derechos",
+    "Questions and rights",
+    [
+     {
+      "p": "You can exercise your rights of access, rectification, cancellation and objection (ARCO rights) over the data you sent us through the “Rate this result” form. We will reply within the time limits set by Law 29733, the Personal Data Protection Law, and its regulations."
+     },
+     {
+      "p": "If you believe your rights weren't addressed, you can contact Peru's National Authority for Personal Data Protection, part of the Ministry of Justice and Human Rights."
+     }
+    ]
+   ],
+   [
+    "cambios-en-esta-politica",
+    "Changes to this policy",
+    [
+     {
+      "p": "We may update this policy when the service or the applicable requirements change. The date of the last update appears at the top."
+     }
+    ]
+   ]
+  ],
+  "outro": []
+ }
+};
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const block = (b) =>
+    b.p !== undefined ? `<p>${b.p}</p>`
+    : b.callout !== undefined ? `<div class="callout"><p style="margin:0">${b.callout}</p></div>`
+    : b.h3 !== undefined ? `<h3>${b.h3}</h3>`
+    : b.ul ? `<ul>${b.ul.map((x) => `<li>${x}</li>`).join("")}</ul>`
+    : b.steps ? `<ol class="steps">${b.steps.map(([h, bs]) => `<li><h3>${h}</h3>${bs.map(block).join("")}</li>`).join("")}</ol>`
+    : b.states ? `<div class="states">${b.states.map(([c, l, s]) => `<div class="state ${c}"><b>${l}</b><span>${s}</span></div>`).join("")}</div>`
+    : "";
+  let lang = "es";
+  try { lang = localStorage.getItem("agentic-ds-lang") === "en" ? "en" : "es"; } catch {}
+  function render() {
+    const t = T[lang];
+    document.documentElement.lang = lang;
+    document.title = t.title;
+    document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = t[el.getAttribute("data-t")]; });
+    document.getElementById("btn-es").setAttribute("aria-pressed", String(lang === "es"));
+    document.getElementById("btn-en").setAttribute("aria-pressed", String(lang === "en"));
+    document.getElementById("doc").innerHTML = `
+      <h1>${esc(t.h1)}</h1>
+      ${t.updated ? `<p class="updated">${esc(t.updatedLabel)}: ${esc(t.updated)}</p>` : ""}
+      <div class="intro">${t.intro.map(block).join("")}</div>
+      <nav class="toc" aria-label="${esc(t.toc)}"><p>${esc(t.toc)}</p><ol>${t.sections.map(([id, h]) => `<li><a href="#${id}">${h}</a></li>`).join("")}</ol></nav>
+      ${t.sections.map(([id, h, blocks], i) => `<section id="${id}"><h2>${i + 1}. ${h}</h2>${blocks.map(block).join("")}</section>`).join("")}
+      ${t.outro.length ? `<div class="outro">${t.outro.map(block).join("")}</div>` : ""}
+      ${t.cta ? `<a class="cta" href="index.html#evaluate">${esc(t.cta)}</a>` : ""}`;
+    if (typeof location !== "undefined" && location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
+  }
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem("agentic-ds-lang", l); } catch {}
+    render();
+  }
+  document.getElementById("btn-es").addEventListener("click", () => setLang("es"));
+  document.getElementById("btn-en").addEventListener("click", () => setLang("en"));
+  render();
+})();
+</script>
+<script src="footer.js"></script>
+</body>
+</html>

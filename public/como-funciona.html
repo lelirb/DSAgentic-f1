@@ -10,208 +10,674 @@
 <style>
   :root{
     --ink-900:#0B1220; --ink-800:#12172B; --ink-600:#3B4258;
-    --gray-500:#5B6472; --gray-300:#9AA3B2; --gray-100:#E7EAF0;
+    --gray-500:#5B6472; --gray-100:#E7EAF0;
     --paper:#FFFFFF; --paper-tint:#F3F5FA;
     --indigo-600:#3D5AFE; --indigo-700:#2F46D6; --indigo-100:#E8ECFF; --indigo-050:#F3F5FF;
-    --green-700:#15803D; --green-100:#DCFCE7;
-    --amber-700:#A15C00; --amber-100:#FEF3C7;
-    --red-700:#B91C1C; --red-100:#FEE2E2;
+    --green-700:#15803D; --amber-700:#A15C00; --red-700:#B91C1C;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'IBM Plex Sans', system-ui, sans-serif;color:var(--ink-800);background:var(--paper-tint);-webkit-font-smoothing:antialiased;line-height:1.6;}
-  code{font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:.92em;background:var(--indigo-050);padding:1px 5px;border-radius:4px;}
+  code{font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:.92em;background:var(--indigo-050);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
   a{color:var(--indigo-700);}
   button{font-family:inherit;cursor:pointer;}
   :focus-visible{outline:3px solid var(--indigo-600);outline-offset:2px;border-radius:4px;}
-  .wrap{max-width:760px;margin:0 auto;padding:0 24px;}
+  .skip{position:absolute;left:12px;top:-60px;background:var(--paper);color:var(--indigo-700);font-weight:600;padding:10px 14px;border-radius:8px;z-index:100;}
+  .skip:focus{top:12px;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px;}
   header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--gray-100);}
-  nav.wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px;max-width:880px;}
+  nav.wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px;}
   .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;color:var(--ink-900);text-decoration:none;}
-  .nav-right{display:flex;align-items:center;gap:16px;}
   .back-link{font-size:14px;font-weight:600;color:var(--indigo-700);text-decoration:none;}
   .lang-toggle{display:flex;align-items:center;background:var(--gray-100);border-radius:999px;padding:3px;gap:2px;}
-  .lang-toggle button{border:none;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--gray-500);}
+  .lang-toggle button{border:none;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--gray-500);min-height:32px;}
   .lang-toggle button[aria-pressed="true"]{background:var(--paper);color:var(--indigo-700);}
-  main{padding:48px 0 96px;}
-  h1{font-size:40px;line-height:1.15;letter-spacing:-.02em;margin:0 0 16px;color:var(--ink-900);}
-  .lead{font-size:19px;color:var(--ink-600);margin:0 0 40px;}
-  h2{font-size:22px;margin:48px 0 12px;color:var(--ink-900);}
-  p{margin:0 0 14px;}
-  ol.steps{list-style:none;counter-reset:s;padding:0;margin:20px 0 0;}
-  ol.steps li{counter-increment:s;position:relative;padding:0 0 22px 52px;border-left:2px solid var(--indigo-100);margin-left:17px;}
-  ol.steps li:last-child{border-left-color:transparent;}
-  ol.steps li::before{content:counter(s);position:absolute;left:-18px;top:-2px;width:34px;height:34px;border-radius:50%;background:var(--indigo-600);color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;}
-  ol.steps h3{margin:0 0 4px;font-size:17px;color:var(--ink-900);}
-  ol.steps p{margin:0;color:var(--ink-600);}
-  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px;}
+  main{padding:40px 0 24px;}
+  .doc{max-width:680px;margin:0 auto;}
+  h1{font-size:32px;line-height:1.2;font-weight:600;color:var(--ink-900);margin:0 0 6px;}
+  .updated{font-size:14px;color:var(--gray-500);margin:0 0 20px;}
+  .intro p{font-size:16.5px;color:var(--ink-600);}
+  .intro{margin:0 0 28px;}
+  .callout{background:var(--paper);border-left:4px solid var(--indigo-600);padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 12px;}
+  .toc{background:var(--paper);border:1px solid var(--gray-100);border-radius:12px;padding:14px 20px;margin:0 0 32px;}
+  .toc p{margin:0 0 6px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px;font-size:14.5px;}
+  .toc li{margin:3px 0;break-inside:avoid;}
+  section{scroll-margin-top:84px;}
+  h2{font-size:19px;color:var(--ink-900);margin:32px 0 8px;}
+  h3{font-size:16px;color:var(--ink-900);margin:20px 0 6px;}
+  p{margin:0 0 12px;}
+  ul{margin:0 0 12px;padding-left:20px;}
+  li{margin:4px 0;}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:16px 0 8px;}
+  ol.steps>li{counter-increment:s;position:relative;padding:0 0 18px 44px;border-left:2px solid var(--indigo-100);margin:0 0 0 15px;}
+  ol.steps>li:last-child{border-left-color:transparent;}
+  ol.steps>li::before{content:counter(s);position:absolute;left:-16px;top:-2px;width:30px;height:30px;border-radius:50%;background:var(--indigo-600);color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  ol.steps h3{margin:0 0 4px;}
+  .states{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0 16px;}
   .state{background:var(--paper);border:1px solid var(--gray-100);border-radius:10px;padding:14px;}
   .state b{display:block;margin-bottom:4px;}
   .state span{font-size:14px;color:var(--ink-600);}
-  .s-found b{color:var(--green-700);} .s-nf b{color:var(--amber-700);} .s-abs b{color:var(--red-700);} .s-ne b{color:var(--gray-500);}
-  .rule{background:var(--paper);border-left:4px solid var(--indigo-600);padding:16px 18px;border-radius:0 8px 8px 0;margin-top:16px;}
-  ul.plain{padding-left:20px;margin:8px 0 0;}
-  ul.plain li{margin-bottom:6px;}
-  .cta{display:inline-block;margin-top:40px;background:var(--indigo-600);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px;}
+  .s-found b,.s-part b{color:var(--green-700);} .s-nf b{color:var(--amber-700);} .s-abs b{color:var(--red-700);} .s-ne b,.s-na b,.s-scope b{color:var(--gray-500);}
+  .outro{border-top:1px solid var(--gray-100);margin-top:32px;padding-top:16px;color:var(--ink-600);}
+  .cta{display:inline-block;margin-top:24px;background:var(--indigo-600);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:8px;}
   .cta:hover{background:var(--indigo-700);}
-  @media (max-width:560px){h1{font-size:30px;}.lead{font-size:17px;}}
+  @media (max-width:600px){ h1{font-size:26px;} .toc ol{columns:1;} .back-link{display:none;} }
 </style>
 </head>
 <body>
+<a class="skip" href="#content" data-t="skip">Saltar al contenido principal</a>
 <header>
   <nav class="wrap">
     <a href="index.html" class="brand">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 17l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/><path d="M2 12l10 5 10-5" stroke="#3D5AFE" stroke-width="1.6" stroke-linejoin="round"/></svg>
       Agentic DS
     </a>
-    <div class="nav-right">
-      <a href="index.html" class="back-link" data-t="back"></a>
-      <div class="lang-toggle" role="group" aria-label="Language selector / Selector de idioma">
-        <button type="button" id="btn-es" aria-pressed="true">ES</button>
-        <button type="button" id="btn-en" aria-pressed="false">EN</button>
-      </div>
+    <a href="index.html" class="back-link" data-t="back">← Volver al inicio</a>
+    <div class="lang-toggle" role="group" aria-label="Language selector / Selector de idioma">
+      <button type="button" id="btn-es" aria-pressed="true">ES</button>
+      <button type="button" id="btn-en" aria-pressed="false">EN</button>
     </div>
   </nav>
 </header>
-<main class="wrap" id="content"></main>
+
+<main class="wrap" id="content" tabindex="-1"><article class="doc" id="doc"></article></main>
+<footer id="site-footer"></footer>
 
 <script>
 (function () {
+  // Textos generados a partir de los documentos aprobados (md). Ya vienen
+  // escapados; el único marcado es <strong>, <code> y enlaces internos.
   const T = {
-    es: {
-      title: "Agentic DS — Cómo funciona",
-      back: "Volver al inicio",
-      h1: "Cómo funciona",
-      lead: "Agentic DS revisa la documentación pública de un Design System y mide qué tan bien la podría usar un agente de IA. No usa IA para calificar: el resultado sale de reglas fijas, y siempre da lo mismo con la misma evidencia.",
-      stepsTitle: "Qué pasa cuando pegas una dirección",
-      steps: [
-        ["Reconoce el Design System", "Puedes pegar la dirección principal o la de cualquier componente. Si pegas, por ejemplo, la página del botón, la herramienta detecta dónde empieza el Design System (todo lo que está antes de secciones como «components», «foundations» o «patterns»)."],
-        ["Busca la lista de páginas", "Primero busca un llms.txt y un sitemap.xml en el inicio del Design System y del sitio. Si no los encuentra, usa el menú de navegación. Si tampoco hay menú legible, sigue los enlaces desde la dirección que pegaste."],
-        ["Arma una muestra ordenada", "En lugar de leer las primeras páginas que aparezcan, elige algunos componentes repartidos a lo largo de la lista (con todas sus pestañas: uso, estilo, código, accesibilidad), algunos patrones, las páginas de tokens y el changelog. Lee hasta 45 páginas en menos de un minuto."],
-        ["Abre con un navegador las páginas que lo necesitan", "Algunos sitios entregan una página vacía y arman su contenido con JavaScript. Cuando pasa eso, la herramienta carga la página con un navegador, espera a que termine y recién entonces la lee. Es más lento: una evaluación así puede tardar unos 4 minutos. El informe lo avisa, y D1 registra que ese contenido no está disponible sin JavaScript, porque muchos agentes no lo ejecutan."],
-        ["Lee cada página", "Reconoce tablas de propiedades, variantes y tokens; secciones de estados, accesibilidad y anatomía; guías de uso («Cuándo usar», «When not to use»); restricciones («No uses…», «Don't…»); alternativas («en lugar de», «instead of»); demos en vivo; versión o fecha de actualización; y si el sistema declara un servidor MCP. Todo en español y en inglés."],
-        ["Anota las fuentes oficiales", "Si la documentación enlaza su Storybook, su repositorio o sus paquetes publicados, los anota como fuentes oficiales. Esta versión todavía no las lee: lo que vive solo ahí queda fuera de la nota, no cuenta como 0."],
-      ],
-      statesTitle: "Cuatro estados para cada cosa que busca",
-      states: [
-        ["s-found", "Encontrado", "Lo buscó y está. Suma puntos."],
-        ["s-nf", "No encontrado", "Lo buscó en lo que leyó y no apareció. Podría estar en otra página. Cuenta como 0."],
-        ["s-abs", "No existe", "Hay certeza de que falta; por ejemplo, un llms.txt buscado en su dirección estándar. Cuenta como 0."],
-        ["s-ne", "No se pudo leer", "No lo pudo buscar: la página no abrió, no se pudo cargar con el navegador o está en una fuente que todavía no lee. Queda fuera de la nota."],
-      ],
-      statesNote: "La diferencia entre «No encontrado» y «No existe» cambia la recomendación: en el primer caso se sugiere verificar si existe y hacerlo más fácil de encontrar; en el segundo, crearlo.",
-      ruleTitle: "La regla de la mitad",
-      rule: "La nota se calcula solo con lo que se pudo revisar. Si eso es menos de la mitad de lo que compone la nota, el informe muestra el número con un aviso y no asigna nivel (Opaco, Legible, Interpretable u Operable), porque con tan poca evidencia el nivel afirmaría más de lo que se sabe.",
-      limitsTitle: "Qué todavía no puede leer",
-      limits: [
-        "Contenido que solo aparece al ejecutar JavaScript, cuando la página no llega a cargar a tiempo en el navegador del evaluador. Si carga, sí se lee; el informe lo avisa y D1 registra que el contenido no está disponible sin JavaScript.",
-        "Páginas que piden iniciar sesión.",
-        "Archivos de Figma (por eso D7, la consistencia entre diseño y código, no se evalúa).",
-        "Storybook, repositorios y paquetes publicados: se anotan, pero todavía no se leen.",
-        "Sitios de otros dominios que la documentación no declara como oficiales.",
-        "Si un servidor MCP, una API, un llms.txt o un AGENTS.md funcionan o piden credenciales: solo se detecta que existen o que la documentación los menciona.",
-        "Contradicciones entre fuentes (por ejemplo, entre una página y un archivo de tokens): esta versión no las busca.",
-        "Qué componentes se parecen entre sí: no se detectan por separado, así que el criterio de desambiguación de D4 no cuenta en la nota. Las frases que comparan componentes se muestran como evidencia.",
-        "La cantidad de páginas leídas puede variar entre una evaluación y otra del mismo sitio, sobre todo en sitios lentos o cuando se alcanza el límite de tiempo. Por eso dos evaluaciones pueden dar resultados algo distintos. El informe lista lo que se leyó en cada una.",
-      ],
-      safetyTitle: "Límites y seguridad",
-      safety: "Cada evaluación lee hasta 45 páginas, con 5 MB como máximo por respuesta. El tiempo máximo es de 45 segundos; si alguna página necesita navegador, puede llegar a unos 4 minutos en total. No se visitan direcciones internas ni privadas. El resultado no se guarda en una base de datos ni en archivos del servidor (ver «Privacidad»).",
-      privacyTitle: "Privacidad (nota provisional)",
-      privacy: [
-        "No necesitas cuenta. Para evaluar no se piden datos personales. El formulario de comentarios pide un contacto solo como dato opcional.",
-        "Si envías un comentario, el servidor lo manda por correo al equipo de Agentic DS a través de Resend, un servicio de envío de correos, junto con la versión de las reglas y los puntajes del informe. El servidor no lo guarda; queda en ese correo y en los registros de Resend, que se rigen por sus propias políticas.",
-        "La dirección que escribes se envía al servidor para evaluar ese sitio. El servidor visita sus páginas con su propia conexión; en las lecturas directas se identifica como «AgenticDS».",
-        "El servidor no guarda los resultados en una base de datos ni en archivos. Mientras dura la evaluación, y hasta 10 minutos después, el resultado queda en su memoria para recuperarlo si se corta la conexión; luego se descarta.",
-        "Para limitar el uso a 5 evaluaciones por minuto, el servidor guarda en memoria, durante uno o dos minutos, la dirección IP desde la que se pide cada evaluación.",
-        "Si una evaluación falla por un error interno, el servidor registra ese error, que puede incluir la dirección evaluada.",
-        "Tu navegador guarda el idioma elegido y el último resultado. El resultado se borra al cerrar la pestaña.",
-        "La app no usa herramientas de analítica ni cookies de seguimiento. Las páginas cargan tipografías de Google Fonts, así que al abrirlas tu navegador se conecta a Google.",
-        "La app está publicada en Render. No revisamos qué registros técnicos guarda Render (por ejemplo, direcciones IP u horas de acceso); se rigen por sus propias políticas.",
-        "La política de privacidad completa está pendiente; los términos y condiciones están en su propia página. Esta nota describe lo que se comprobó en el código de la app.",
-      ],
-      cta: "Evaluar un Design System",
-    },
-    en: {
-      title: "Agentic DS — How it works",
-      back: "Back to home",
-      h1: "How it works",
-      lead: "Agentic DS reviews a Design System's public documentation and measures how well an AI agent could use it. It doesn't use AI to score: the result comes from fixed rules, and the same evidence always gives the same result.",
-      stepsTitle: "What happens when you paste an address",
-      steps: [
-        ["It recognizes the Design System", "You can paste the main address or any component's address. If you paste, say, the button page, the tool detects where the Design System starts (everything before sections like “components”, “foundations” or “patterns”)."],
-        ["It looks for the page list", "First it looks for llms.txt and sitemap.xml at the Design System's home and at the site's root. If it can't find them, it uses the navigation menu. If there's no readable menu either, it follows links from the address you pasted."],
-        ["It builds an ordered sample", "Instead of reading whichever pages show up first, it picks components spread across the list (with all their tabs: usage, style, code, accessibility), some patterns, the token pages and the changelog. It reads up to 45 pages in under a minute."],
-        ["It opens in a browser the pages that need it", "Some sites deliver an empty page and build their content with JavaScript. When that happens, the tool loads the page in a browser, waits for it to finish, and only then reads it. This is slower: such an evaluation can take about 4 minutes. The report says so, and D1 records that the content isn't available without JavaScript, because many agents don't run it."],
-        ["It reads each page", "It recognizes property, variant and token tables; state, accessibility and anatomy sections; usage guidance (“When to use”, “Cuándo usar”); restrictions (“Don't…”, “No uses…”); alternatives (“instead of”, “en lugar de”); live demos; version or last-updated date; and whether the system declares an MCP server. All in English and Spanish."],
-        ["It notes the official sources", "If the documentation links to its Storybook, repository or published packages, it notes them as official sources. This version doesn't read them yet: whatever lives only there is left out of the score, not counted as 0."],
-      ],
-      statesTitle: "Four states for everything it looks for",
-      states: [
-        ["s-found", "Found", "It looked and it's there. Adds points."],
-        ["s-nf", "Not found", "It looked in what it read and it didn't show up. It may be on another page. Counts as 0."],
-        ["s-abs", "Doesn't exist", "It's certain it's missing; for example, an llms.txt checked at its standard address. Counts as 0."],
-        ["s-ne", "Couldn't be read", "It couldn't look: the page didn't open, couldn't be loaded in the browser, or lives in a source not read yet. Left out of the score."],
-      ],
-      statesNote: "The difference between “Not found” and “Doesn't exist” changes the recommendation: in the first case, check whether it exists and make it easier to find; in the second, create it.",
-      ruleTitle: "The half rule",
-      rule: "The score is calculated only from what could be reviewed. If that's less than half of what makes up the score, the report shows the number with a notice and doesn't assign a level (Opaque, Legible, Interpretable or Operable), because with so little evidence the level would claim more than is known.",
-      limitsTitle: "What it can't read yet",
-      limits: [
-        "Content that only appears when JavaScript runs, when the page doesn\u2019t finish loading in time in the evaluator\u2019s browser. If it loads, it is read; the report says so and D1 records that the content isn\u2019t available without JavaScript.",
-        "Pages behind a login.",
-        "Figma files (that's why D7, design–code consistency, isn't evaluated).",
-        "Storybook, repositories and published packages: they're noted, but not read yet.",
-        "Sites on other domains that the documentation doesn't declare as official.",
-        "Whether an MCP server, an API, an llms.txt or an AGENTS.md works or requires credentials: it only detects that they exist or that the documentation mentions them.",
-        "Contradictions between sources (for example, between a page and a token file): this version doesn't look for them.",
-        "Which components are similar to each other: they aren't detected separately, so D4's disambiguation criterion isn't part of the score. Sentences comparing components are shown as evidence.",
-        "The number of pages read can vary from one evaluation of the same site to another, especially on slow sites or when the time limit is reached. So two evaluations may give somewhat different results. The report lists what was read in each one.",
-      ],
-      safetyTitle: "Limits and safety",
-      safety: "Each evaluation reads up to 45 pages, with at most 5 MB per response. The time limit is 45 seconds; if any page needs a browser, it can reach about 4 minutes in total. Internal or private addresses are never visited. The result isn't stored in a database or in files on the server (see “Privacy”).",
-      privacyTitle: "Privacy (provisional note)",
-      privacy: [
-        "You don't need an account. No personal data is requested to run an evaluation. The feedback form asks for contact details only as an optional field.",
-        "If you send feedback, the server emails it to the Agentic DS team through Resend, an email delivery service, together with the report's rules version and scores. The server doesn't store it; it stays in that email and in Resend's logs, which are governed by Resend's own policies.",
-        "The address you type is sent to the server to evaluate that site. The server visits its pages through its own connection; in direct reads it identifies itself as “AgenticDS”.",
-        "The server doesn't store results in a database or in files. While the evaluation runs, and for up to 10 minutes after, the result stays in its memory so it can be recovered if the connection drops; then it's discarded.",
-        "To limit use to 5 evaluations per minute, the server keeps in memory, for one or two minutes, the IP address each evaluation is requested from.",
-        "If an evaluation fails because of an internal error, the server logs that error, which may include the evaluated address.",
-        "Your browser stores the language you chose and the latest result. The result is deleted when you close the tab.",
-        "The app doesn't use analytics tools or tracking cookies. The pages load fonts from Google Fonts, so when you open them your browser connects to Google.",
-        "The app is hosted on Render. We haven't reviewed which technical logs Render keeps (for example, IP addresses or access times); they're governed by Render's own policies.",
-        "The full privacy policy is still pending; the terms and conditions have their own page. This note describes what was checked in the app's code.",
-      ],
-      cta: "Evaluate a Design System",
-    },
-  };
+ "es": {
+  "title": "Agentic DS — Cómo funciona",
+  "h1": "Cómo funciona",
+  "updated": null,
+  "updatedLabel": "Última actualización",
+  "back": "← Volver al inicio",
+  "skip": "Saltar al contenido principal",
+  "toc": "Contenido",
+  "cta": "Evaluar un Design System",
+  "intro": [
+   {
+    "p": "Agentic DS evalúa qué tan preparada está la documentación pública de un Design System para que un agente de inteligencia artificial pueda descubrirla, interpretarla y utilizarla como fuente de información."
+   },
+   {
+    "p": "La Fase 1 utiliza reglas determinísticas: no emplea un modelo de IA para asignar la puntuación. Analiza las evidencias que consigue recuperar y aplica los criterios de la versión de reglas indicada en el informe."
+   },
+   {
+    "callout": "<strong>Importante:</strong> esta evaluación mide la evidencia publicada que puede leer la herramienta. No demuestra, por sí sola, que un agente real pueda ejecutar correctamente una tarea con ese Design System."
+   }
+  ],
+  "sections": [
+   [
+    "que-ocurre-cuando-evaluas-un-design-system",
+    "Qué ocurre cuando evalúas un Design System",
+    [
+     {
+      "steps": [
+       [
+        "Recibir la dirección",
+        [
+         {
+          "p": "Introduces la dirección pública del Design System o de una página que pertenezca a su documentación."
+         },
+         {
+          "p": "La herramienta intenta identificar el ámbito de la documentación que debe evaluar. El resultado depende de que pueda reconocer y acceder a ese contenido."
+         }
+        ]
+       ],
+       [
+        "Descubrir las páginas",
+        [
+         {
+          "p": "El evaluador busca fuentes que permitan identificar páginas relevantes: primero <code>llms.txt</code> y el mapa del sitio (<code>sitemap.xml</code>); si no los encuentra, la navegación del sitio y, por último, los enlaces de la página indicada. Consulta <code>robots.txt</code> solo para encontrar el mapa del sitio; no aplica sus reglas de rastreo."
+         },
+         {
+          "p": "Con esa información construye una muestra de páginas que intenta cubrir distintas partes de la documentación, como componentes, patrones, fundamentos, tokens y cambios publicados."
+         },
+         {
+          "p": "La muestra no incluye todas las páginas del sitio."
+         }
+        ]
+       ],
+       [
+        "Recuperar el contenido",
+        [
+         {
+          "p": "La herramienta lee las páginas dentro de sus límites operativos (ver «Límites técnicos»). Cuando el contenido no está disponible mediante una solicitud HTTP convencional porque el sitio lo arma con JavaScript, intenta cargarlo con un navegador."
+         },
+         {
+          "p": "El uso del navegador aumenta considerablemente el tiempo de evaluación. Algunas páginas pueden quedar fuera si no terminan de cargar, requieren autenticación o exceden los límites de tiempo o tamaño."
+         },
+         {
+          "p": "Cuando lee un sitio, el evaluador se identifica como «AgenticDS»."
+         }
+        ]
+       ],
+       [
+        "Identificar evidencias",
+        [
+         {
+          "p": "El evaluador busca señales relevantes para la preparación de un Design System para agentes, como:"
+         },
+         {
+          "ul": [
+           "Documentación de componentes y sus propiedades.",
+           "Variantes, estados, restricciones y recomendaciones de uso.",
+           "Información de accesibilidad.",
+           "Tokens publicados en tablas o en archivos JSON. En esta versión no lee las referencias entre tokens dentro de un archivo.",
+           "Convenciones de nombres y documentación de fundamentos.",
+           "Información de versiones y cambios.",
+           "Referencias a fuentes complementarias, como repositorios, Storybook, paquetes, API o servidores MCP."
+          ]
+         },
+         {
+          "p": "Identificar una referencia no implica que la herramienta pueda leer o validar la fuente a la que apunta."
+         }
+        ]
+       ],
+       [
+        "Calcular el resultado",
+        [
+         {
+          "p": "Las reglas aplican los criterios y las ponderaciones de la versión utilizada. El informe muestra la puntuación, las evidencias encontradas y, cuando corresponde, los criterios que no se pudieron evaluar."
+         },
+         {
+          "p": "La misma evidencia procesada con la misma versión de las reglas produce el mismo resultado. Sin embargo, dos evaluaciones del mismo sitio pueden diferir si cambia su contenido o si se recupera una muestra distinta de páginas, por ejemplo en sitios lentos o cuando se alcanza el límite de tiempo."
+         }
+        ]
+       ]
+      ]
+     }
+    ]
+   ],
+   [
+    "que-significan-los-estados-de-la-evidencia",
+    "Qué significan los estados de la evidencia",
+    [
+     {
+      "p": "La interpretación de los resultados distingue entre encontrar algo, no encontrarlo y no haber podido comprobarlo. El informe usa estos estados:"
+     },
+     {
+      "states": [
+       [
+        "s-found",
+        "Encontrado",
+        "La herramienta identificó evidencia que satisface el criterio. Suma puntos."
+       ],
+       [
+        "s-part",
+        "Encontrado en parte",
+        "Hay evidencia, pero no cubre todo lo que pide el criterio. Suma una parte de los puntos."
+       ],
+       [
+        "s-nf",
+        "No encontrado",
+        "La herramienta buscó en el contenido que pudo revisar, pero no encontró evidencia suficiente. Cuenta como 0. Esto no demuestra que la información no exista en otra parte del sistema."
+       ],
+       [
+        "s-abs",
+        "No existe",
+        "La herramienta comprobó que el elemento no está disponible en el lugar donde el criterio permite verificarlo; por ejemplo, un <code>llms.txt</code> buscado en su dirección estándar. Cuenta como 0."
+       ],
+       [
+        "s-ne",
+        "No se pudo leer",
+        "La herramienta no pudo obtener evidencia suficiente para emitir un juicio fiable: una página no cargó, la fuente no está soportada o el formato no pudo interpretarse. Queda fuera de la nota."
+       ],
+       [
+        "s-na",
+        "No aplica",
+        "El criterio no corresponde a este sistema. Queda fuera de la nota."
+       ],
+       [
+        "s-scope",
+        "Fuera de esta fase",
+        "El criterio no se puede medir en la Fase 1 con evidencia independiente. Hoy es el caso de la desambiguación entre componentes parecidos (D4). Queda fuera de la nota."
+       ]
+      ]
+     },
+     {
+      "p": "Un criterio que no se pudo leer no debe interpretarse como un defecto del Design System. La ausencia de evidencia recuperable no siempre equivale a evidencia de ausencia."
+     }
+    ]
+   ],
+   [
+    "como-interpretar-la-puntuacion",
+    "Cómo interpretar la puntuación",
+    [
+     {
+      "p": "La puntuación resume las evidencias que pudieron evaluarse mediante las reglas vigentes. No es una medida absoluta de la calidad del Design System ni una predicción directa del rendimiento de un agente."
+     },
+     {
+      "p": "Cuando parte de la evaluación no puede completarse, el informe distingue entre la puntuación obtenida y la cobertura de evidencia disponible."
+     },
+     {
+      "p": "Si se pudo revisar menos de la mitad de lo que compone la nota, el informe muestra la puntuación sin asignar un nivel de preparación. Esto evita presentar como concluyente un resultado basado en evidencia insuficiente."
+     },
+     {
+      "p": "Las comparaciones entre Design Systems son más útiles cuando se han evaluado con la misma versión de reglas y con una cobertura de evidencia razonablemente comparable."
+     }
+    ]
+   ],
+   [
+    "que-cubre-la-fase-1",
+    "Qué cubre la Fase 1",
+    [
+     {
+      "p": "La Fase 1 se centra en la evidencia documental que puede recuperar y procesar la herramienta."
+     },
+     {
+      "p": "Incluye, según las fuentes disponibles y los formatos soportados:"
+     },
+     {
+      "ul": [
+       "Descubrimiento de documentación pública.",
+       "Lectura de páginas y extracción de evidencias documentales.",
+       "Evaluación determinística de los criterios implementados.",
+       "Identificación de algunas fuentes complementarias declaradas por el sistema y lectura del índice de componentes de Storybook cuando la documentación lo enlaza.",
+       "Generación de un informe con puntuaciones y limitaciones."
+      ]
+     },
+     {
+      "p": "La cobertura concreta depende del contenido del sitio, de la accesibilidad de sus páginas y de los formatos que la versión vigente pueda interpretar."
+     }
+    ]
+   ],
+   [
+    "que-no-evalua-todavia",
+    "Qué no evalúa todavía",
+    [
+     {
+      "p": "La Fase 1 tiene limitaciones importantes:"
+     },
+     {
+      "ul": [
+       "<strong>No ejecuta tareas con un agente real.</strong> No comprueba si un agente puede implementar un componente, completar un flujo de trabajo o resolver una tarea de principio a fin.",
+       "<strong>No garantiza la cobertura completa.</strong> Solo evalúa la evidencia que consigue recuperar dentro de sus límites.",
+       "<strong>No accede a contenido protegido.</strong> Las páginas que requieren inicio de sesión y los recursos privados quedan fuera de la evaluación.",
+       "<strong>No lee la mayoría de las fuentes externas.</strong> No lee archivos de Figma (por eso D7, la consistencia entre diseño y código, no se evalúa), repositorios ni paquetes publicados. De Storybook lee solo el índice de componentes, no sus propiedades. Lo que solo está en esas fuentes queda fuera de la nota.",
+       "<strong>No comprueba las integraciones.</strong> Detectar una mención a MCP, una API, <code>llms.txt</code> o <code>AGENTS.md</code> no demuestra que el recurso funcione, sea accesible o esté correctamente configurado, ni si requiere credenciales.",
+       "<strong>No busca contradicciones entre fuentes.</strong> Que el informe no muestre contradicciones no significa que no existan.",
+       "<strong>No detecta qué componentes se parecen entre sí.</strong> Por eso el criterio de desambiguación de D4 no cuenta en la nota; las frases que comparan componentes se muestran como evidencia.",
+       "<strong>No mide la experiencia de las personas.</strong> No sustituye las pruebas de usabilidad, accesibilidad, calidad de implementación o evaluación con usuarios.",
+       "<strong>No certifica la preparación para agentes.</strong> El resultado es una evaluación documental, no una garantía de interoperabilidad o rendimiento."
+      ]
+     }
+    ]
+   ],
+   [
+    "limites-tecnicos",
+    "Límites técnicos",
+    [
+     {
+      "p": "Para evitar sobrecargar los sitios evaluados, la herramienta aplica estos límites en la versión actual:"
+     },
+     {
+      "ul": [
+       "Hasta 45 páginas por evaluación.",
+       "Hasta 5 MB por respuesta.",
+       "45 segundos de lectura. Si alguna página necesita navegador, la evaluación puede llegar a unos 4 minutos en total, a veces algo más.",
+       "Hasta 5 evaluaciones por minuto desde una misma dirección IP, y como máximo 2 evaluaciones simultáneas en el servidor."
+      ]
+     },
+     {
+      "p": "Estos valores pueden cambiar entre versiones."
+     },
+     {
+      "p": "Los sitios lentos, las restricciones de acceso, los cambios de estructura y la generación de contenido mediante JavaScript pueden afectar las páginas recuperadas."
+     },
+     {
+      "p": "La herramienta aplica controles para restringir los destinos que puede consultar. Estos controles forman parte de las medidas de seguridad del servicio, pero no deben interpretarse como una garantía absoluta frente a todas las técnicas de acceso indebido a redes o infraestructura."
+     },
+     {
+      "p": "No utilices el evaluador para consultar direcciones internas, privadas o restringidas. Si detectas un comportamiento de seguridad inesperado, evita seguir probándolo contra sistemas de terceros y comunícalo mediante el formulario «Califica este resultado»."
+     }
+    ]
+   ],
+   [
+    "versiones-y-evolucion",
+    "Versiones y evolución",
+    [
+     {
+      "p": "Cada informe identifica la versión de las reglas con la que se calculó la puntuación. Las reglas pueden cambiar a medida que se corrigen errores, se amplía la cobertura de formatos y se incorporan nuevas capacidades."
+     },
+     {
+      "p": "Un cambio en la puntuación entre versiones no significa necesariamente que el Design System haya mejorado o empeorado: también puede reflejar cambios en los criterios o en la interpretación de la evidencia."
+     },
+     {
+      "p": "Las futuras fases podrán incorporar pruebas con agentes reales u otras formas de evaluación. Esas capacidades no deben atribuirse a la Fase 1 hasta que estén implementadas y documentadas."
+     }
+    ]
+   ],
+   [
+    "como-reportar-un-problema",
+    "Cómo reportar un problema",
+    [
+     {
+      "p": "Si identificas una evidencia mal interpretada, una página omitida o una puntuación que parece inconsistente, utiliza el formulario «Califica este resultado» e indica, si es posible, el criterio afectado y la evidencia que consideras relevante."
+     },
+     {
+      "p": "Los comentarios ayudan a revisar la herramienta, pero su recepción no implica que un cambio vaya a realizarse ni que la puntuación de un informe anterior se modifique automáticamente."
+     }
+    ]
+   ]
+  ],
+  "outro": [
+   {
+    "p": "<strong>En resumen:</strong> Agentic DS Fase 1 evalúa la evidencia documental que puede recuperar mediante reglas fijas. Su resultado sirve para identificar oportunidades de mejora en la documentación, no para certificar que un Design System esté preparado para cualquier agente de IA."
+   }
+  ]
+ },
+ "en": {
+  "title": "Agentic DS — How it works",
+  "h1": "How it works",
+  "updated": null,
+  "updatedLabel": "Last updated",
+  "back": "← Back to home",
+  "skip": "Skip to main content",
+  "toc": "Contents",
+  "cta": "Evaluate a Design System",
+  "intro": [
+   {
+    "p": "Agentic DS evaluates how ready a Design System's public documentation is for an artificial intelligence agent to discover, interpret and use it as a source of information."
+   },
+   {
+    "p": "Phase 1 uses deterministic rules: it doesn't use an AI model to assign the score. It analyzes the evidence it manages to retrieve and applies the criteria of the rules version stated in the report."
+   },
+   {
+    "callout": "<strong>Important:</strong> this evaluation measures the published evidence the tool can read. It doesn't, by itself, show that a real agent can correctly carry out a task with that Design System."
+   }
+  ],
+  "sections": [
+   [
+    "que-ocurre-cuando-evaluas-un-design-system",
+    "What happens when you evaluate a Design System",
+    [
+     {
+      "steps": [
+       [
+        "Receive the address",
+        [
+         {
+          "p": "You enter the public address of the Design System or of a page that belongs to its documentation."
+         },
+         {
+          "p": "The tool tries to identify the scope of documentation it should evaluate. The result depends on it being able to recognize and access that content."
+         }
+        ]
+       ],
+       [
+        "Discover the pages",
+        [
+         {
+          "p": "The evaluator looks for sources that help identify relevant pages: first <code>llms.txt</code> and the sitemap (<code>sitemap.xml</code>); if it doesn't find them, the site's navigation and, lastly, the links on the page provided. It checks <code>robots.txt</code> only to find the sitemap; it doesn't apply its crawling rules."
+         },
+         {
+          "p": "With that information it builds a sample of pages that tries to cover different parts of the documentation, such as components, patterns, foundations, tokens and published changes."
+         },
+         {
+          "p": "The sample doesn't include every page on the site."
+         }
+        ]
+       ],
+       [
+        "Retrieve the content",
+        [
+         {
+          "p": "The tool reads the pages within its operating limits (see “Technical limits”). When content isn't available through a conventional HTTP request because the site builds it with JavaScript, it tries to load it with a browser."
+         },
+         {
+          "p": "Using the browser considerably increases evaluation time. Some pages may be left out if they don't finish loading, require authentication or exceed the time or size limits."
+         },
+         {
+          "p": "When it reads a site, the evaluator identifies itself as “AgenticDS”."
+         }
+        ]
+       ],
+       [
+        "Identify evidence",
+        [
+         {
+          "p": "The evaluator looks for signals relevant to a Design System's readiness for agents, such as:"
+         },
+         {
+          "ul": [
+           "Documentation of components and their properties.",
+           "Variants, states, restrictions and usage recommendations.",
+           "Accessibility information.",
+           "Tokens published in tables or in JSON files. This version doesn't read references between tokens inside a file.",
+           "Naming conventions and foundations documentation.",
+           "Version and change information.",
+           "References to complementary sources, such as repositories, Storybook, packages, APIs or MCP servers."
+          ]
+         },
+         {
+          "p": "Identifying a reference doesn't mean the tool can read or validate the source it points to."
+         }
+        ]
+       ],
+       [
+        "Calculate the result",
+        [
+         {
+          "p": "The rules apply the criteria and weights of the version used. The report shows the score, the evidence found and, where applicable, the criteria that couldn't be evaluated."
+         },
+         {
+          "p": "The same evidence processed with the same rules version produces the same result. However, two evaluations of the same site may differ if its content changes or if a different sample of pages is retrieved, for example on slow sites or when the time limit is reached."
+         }
+        ]
+       ]
+      ]
+     }
+    ]
+   ],
+   [
+    "que-significan-los-estados-de-la-evidencia",
+    "What the evidence states mean",
+    [
+     {
+      "p": "Interpreting the results means telling apart finding something, not finding it and not having been able to check it. The report uses these states:"
+     },
+     {
+      "states": [
+       [
+        "s-found",
+        "Found",
+        "The tool identified evidence that meets the criterion. Adds points."
+       ],
+       [
+        "s-part",
+        "Partly found",
+        "There is evidence, but it doesn't cover everything the criterion asks for. Adds part of the points."
+       ],
+       [
+        "s-nf",
+        "Not found",
+        "The tool searched the content it could review but didn't find enough evidence. Counts as 0. This doesn't show that the information doesn't exist elsewhere in the system."
+       ],
+       [
+        "s-abs",
+        "Doesn't exist",
+        "The tool confirmed the item isn't available where the criterion allows it to be checked; for example, an <code>llms.txt</code> looked for at its standard address. Counts as 0."
+       ],
+       [
+        "s-ne",
+        "Couldn't be read",
+        "The tool couldn't obtain enough evidence for a reliable judgment: a page didn't load, the source isn't supported or the format couldn't be interpreted. Left out of the score."
+       ],
+       [
+        "s-na",
+        "Doesn't apply",
+        "The criterion doesn't apply to this system. Left out of the score."
+       ],
+       [
+        "s-scope",
+        "Out of this phase",
+        "The criterion can't be measured in Phase 1 with independent evidence. Today that's the case for disambiguation between similar components (D4). Left out of the score."
+       ]
+      ]
+     },
+     {
+      "p": "A criterion that couldn't be read shouldn't be taken as a defect of the Design System. Absence of retrievable evidence isn't always evidence of absence."
+     }
+    ]
+   ],
+   [
+    "como-interpretar-la-puntuacion",
+    "How to interpret the score",
+    [
+     {
+      "p": "The score summarizes the evidence that could be evaluated with the current rules. It isn't an absolute measure of the Design System's quality or a direct prediction of an agent's performance."
+     },
+     {
+      "p": "When part of the evaluation can't be completed, the report distinguishes between the score obtained and the coverage of evidence available."
+     },
+     {
+      "p": "If less than half of what makes up the score could be reviewed, the report shows the score without assigning a readiness level. This avoids presenting a result based on insufficient evidence as conclusive."
+     },
+     {
+      "p": "Comparisons between Design Systems are more useful when they were evaluated with the same rules version and with reasonably comparable evidence coverage."
+     }
+    ]
+   ],
+   [
+    "que-cubre-la-fase-1",
+    "What Phase 1 covers",
+    [
+     {
+      "p": "Phase 1 focuses on the documentary evidence the tool can retrieve and process."
+     },
+     {
+      "p": "Depending on the sources available and the supported formats, it includes:"
+     },
+     {
+      "ul": [
+       "Discovery of public documentation.",
+       "Reading pages and extracting documentary evidence.",
+       "Deterministic evaluation of the implemented criteria.",
+       "Identifying some complementary sources declared by the system, and reading the Storybook component index when the documentation links to it.",
+       "Generating a report with scores and limitations."
+      ]
+     },
+     {
+      "p": "Actual coverage depends on the site's content, the accessibility of its pages and the formats the current version can interpret."
+     }
+    ]
+   ],
+   [
+    "que-no-evalua-todavia",
+    "What it doesn't evaluate yet",
+    [
+     {
+      "p": "Phase 1 has important limitations:"
+     },
+     {
+      "ul": [
+       "<strong>It doesn't run tasks with a real agent.</strong> It doesn't check whether an agent can implement a component, complete a workflow or solve a task end to end.",
+       "<strong>It doesn't guarantee full coverage.</strong> It only evaluates the evidence it manages to retrieve within its limits.",
+       "<strong>It doesn't access protected content.</strong> Pages that require signing in and private resources are left out of the evaluation.",
+       "<strong>It doesn't read most external sources.</strong> It doesn't read Figma files (that's why D7, design–code consistency, isn't evaluated), repositories or published packages. From Storybook it reads only the component index, not its properties. Whatever lives only in those sources is left out of the score.",
+       "<strong>It doesn't check integrations.</strong> Detecting a mention of MCP, an API, <code>llms.txt</code> or <code>AGENTS.md</code> doesn't show that the resource works, is accessible or is correctly configured, or whether it requires credentials.",
+       "<strong>It doesn't look for contradictions between sources.</strong> The report not showing contradictions doesn't mean there are none.",
+       "<strong>It doesn't detect which components are similar to each other.</strong> That's why D4's disambiguation criterion doesn't count toward the score; sentences comparing components are shown as evidence.",
+       "<strong>It doesn't measure people's experience.</strong> It doesn't replace usability, accessibility or implementation-quality testing, or evaluation with users.",
+       "<strong>It doesn't certify readiness for agents.</strong> The result is a documentary evaluation, not a guarantee of interoperability or performance."
+      ]
+     }
+    ]
+   ],
+   [
+    "limites-tecnicos",
+    "Technical limits",
+    [
+     {
+      "p": "To avoid overloading the evaluated sites, the tool applies these limits in the current version:"
+     },
+     {
+      "ul": [
+       "Up to 45 pages per evaluation.",
+       "Up to 5 MB per response.",
+       "45 seconds of reading. If any page needs a browser, the evaluation can take about 4 minutes in total, sometimes a little more.",
+       "Up to 5 evaluations per minute from the same IP address, and at most 2 simultaneous evaluations on the server."
+      ]
+     },
+     {
+      "p": "These values may change between versions."
+     },
+     {
+      "p": "Slow sites, access restrictions, structural changes and content generated with JavaScript can affect which pages are retrieved."
+     },
+     {
+      "p": "The tool applies controls to restrict the destinations it can consult. These controls are part of the service's security measures, but shouldn't be read as an absolute guarantee against every technique for improperly accessing networks or infrastructure."
+     },
+     {
+      "p": "Don't use the evaluator to consult internal, private or restricted addresses. If you notice unexpected security behavior, avoid testing it further against third-party systems and report it through the “Rate this result” form."
+     }
+    ]
+   ],
+   [
+    "versiones-y-evolucion",
+    "Versions and evolution",
+    [
+     {
+      "p": "Each report states the rules version used to calculate the score. Rules may change as errors are fixed, format coverage expands and new capabilities are added."
+     },
+     {
+      "p": "A change in score between versions doesn't necessarily mean the Design System got better or worse: it may also reflect changes in the criteria or in how the evidence is interpreted."
+     },
+     {
+      "p": "Future phases may add tests with real agents or other forms of evaluation. Those capabilities shouldn't be attributed to Phase 1 until they are implemented and documented."
+     }
+    ]
+   ],
+   [
+    "como-reportar-un-problema",
+    "How to report a problem",
+    [
+     {
+      "p": "If you find evidence that was misinterpreted, a page that was left out or a score that seems inconsistent, use the “Rate this result” form and, if possible, mention the affected criterion and the evidence you consider relevant."
+     },
+     {
+      "p": "Comments help review the tool, but receiving them doesn't mean a change will be made or that the score of an earlier report will be changed automatically."
+     }
+    ]
+   ]
+  ],
+  "outro": [
+   {
+    "p": "<strong>In short:</strong> Agentic DS Phase 1 evaluates the documentary evidence it can retrieve using fixed rules. Its result helps identify opportunities to improve the documentation, not to certify that a Design System is ready for any AI agent."
+   }
+  ]
+ }
+};
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const block = (b) =>
+    b.p !== undefined ? `<p>${b.p}</p>`
+    : b.callout !== undefined ? `<div class="callout"><p style="margin:0">${b.callout}</p></div>`
+    : b.h3 !== undefined ? `<h3>${b.h3}</h3>`
+    : b.ul ? `<ul>${b.ul.map((x) => `<li>${x}</li>`).join("")}</ul>`
+    : b.steps ? `<ol class="steps">${b.steps.map(([h, bs]) => `<li><h3>${h}</h3>${bs.map(block).join("")}</li>`).join("")}</ol>`
+    : b.states ? `<div class="states">${b.states.map(([c, l, s]) => `<div class="state ${c}"><b>${l}</b><span>${s}</span></div>`).join("")}</div>`
+    : "";
   let lang = "es";
   try { lang = localStorage.getItem("agentic-ds-lang") === "en" ? "en" : "es"; } catch {}
-
   function render() {
     const t = T[lang];
     document.documentElement.lang = lang;
     document.title = t.title;
-    document.querySelector('[data-t="back"]').textContent = t.back;
+    document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = t[el.getAttribute("data-t")]; });
     document.getElementById("btn-es").setAttribute("aria-pressed", String(lang === "es"));
     document.getElementById("btn-en").setAttribute("aria-pressed", String(lang === "en"));
-    document.getElementById("content").innerHTML = `
+    document.getElementById("doc").innerHTML = `
       <h1>${esc(t.h1)}</h1>
-      <p class="lead">${esc(t.lead)}</p>
-      <h2>${esc(t.stepsTitle)}</h2>
-      <ol class="steps">${t.steps.map(([h, p]) => `<li><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join("")}</ol>
-      <h2>${esc(t.statesTitle)}</h2>
-      <div class="states">${t.states.map(([c, b, s]) => `<div class="state ${c}"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
-      <p style="margin-top:14px">${esc(t.statesNote)}</p>
-      <h2>${esc(t.ruleTitle)}</h2>
-      <div class="rule"><p style="margin:0">${esc(t.rule)}</p></div>
-      <h2>${esc(t.limitsTitle)}</h2>
-      <ul class="plain">${t.limits.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-      <h2>${esc(t.safetyTitle)}</h2>
-      <p>${esc(t.safety)}</p>
-      <h2 id="privacidad">${esc(t.privacyTitle)}</h2>
-      <ul class="plain">${t.privacy.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-      <a class="cta" href="index.html#evaluate">${esc(t.cta)}</a>`;
+      ${t.updated ? `<p class="updated">${esc(t.updatedLabel)}: ${esc(t.updated)}</p>` : ""}
+      <div class="intro">${t.intro.map(block).join("")}</div>
+      <nav class="toc" aria-label="${esc(t.toc)}"><p>${esc(t.toc)}</p><ol>${t.sections.map(([id, h]) => `<li><a href="#${id}">${h}</a></li>`).join("")}</ol></nav>
+      ${t.sections.map(([id, h, blocks], i) => `<section id="${id}"><h2>${i + 1}. ${h}</h2>${blocks.map(block).join("")}</section>`).join("")}
+      ${t.outro.length ? `<div class="outro">${t.outro.map(block).join("")}</div>` : ""}
+      ${t.cta ? `<a class="cta" href="index.html#evaluate">${esc(t.cta)}</a>` : ""}`;
+    if (typeof location !== "undefined" && location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
   }
   function setLang(l) {
     lang = l;
@@ -223,7 +689,6 @@
   render();
 })();
 </script>
-<footer id="site-footer"></footer>
 <script src="footer.js"></script>
 </body>
 </html>

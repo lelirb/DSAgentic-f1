@@ -29,7 +29,7 @@
       email: "Correo electrónico",
       emailHint: "Solo si quieres que te respondamos.",
       fine: "El comentario se envía por correo mediante Resend, un servicio de envío de correos, y no se guarda en el servidor.",
-      privacy: "Ver privacidad",
+      privacy: "Ver la Política de privacidad",
       send: "Enviar calificación",
       sending: "Enviando…",
       sumTitle: "Revisa lo siguiente antes de enviar",
@@ -70,7 +70,7 @@
       email: "Email",
       emailHint: "Only if you'd like a reply.",
       fine: "Your comment is emailed through Resend, an email delivery service, and isn't stored on the server.",
-      privacy: "See privacy",
+      privacy: "See the Privacy policy",
       send: "Send rating",
       sending: "Sending…",
       sumTitle: "Check the following before sending",
@@ -185,7 +185,7 @@
           <p class="err" id="email-err" hidden></p>
         </div>
         <div class="trap" aria-hidden="true"><label for="website">Website</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
-        <p class="fine">${esc(t.fine)} <a href="como-funciona.html#privacidad">${esc(t.privacy)}</a></p>
+        <p class="fine">${esc(t.fine)} <a href="privacidad.html">${esc(t.privacy)}</a></p>
         <div class="actions"><button type="submit" class="btn">${esc(t.send)}</button><p class="status" id="status" role="status" aria-live="polite"></p></div>
       </form>`;
     document.getElementById("fb").addEventListener("submit", onSubmit);

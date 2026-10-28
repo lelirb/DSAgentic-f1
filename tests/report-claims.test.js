@@ -309,18 +309,35 @@ test("ES/EN: los avisos nuevos dicen lo mismo en los dos idiomas", () => {
   }
 });
 
-test("ES/EN: las listas de límites de «Cómo funciona» tienen el mismo largo y los mismos avisos", () => {
-  const html = read("public/como-funciona.html");
-  const block = (lang) => {
-    const a = html.indexOf(`${lang}: {`);
-    const s = html.slice(a);
-    const l = s.slice(s.indexOf("limits: ["), s.indexOf("],", s.indexOf("limits: [")));
-    return l.split("\n").filter((x) => x.trim().startsWith('"'));
-  };
-  const es = block("es"), en = block("en");
-  assert.equal(es.length, en.length);
-  assert.ok(es.some((x) => /credenciales/.test(x)) && en.some((x) => /credentials/.test(x)));
-  assert.ok(es.some((x) => /contradicciones/i.test(x)) && en.some((x) => /contradictions/i.test(x)));
+// Los textos de «Cómo funciona», «Términos» y «Privacidad» vienen como datos en cada página.
+function loadDoc(file) {
+  const h = read(`public/${file}`);
+  const start = h.indexOf("const T = ") + "const T = ".length;
+  return JSON.parse(h.slice(start, h.indexOf(";\n  const esc", start)));
+}
+const docText = (d) => JSON.stringify(d).replace(/<[^>]+>/g, "");
+
+test("ES/EN: «Cómo funciona», «Términos» y «Privacidad» tienen las mismas secciones y la misma forma", () => {
+  for (const f of ["como-funciona.html", "terminos.html", "privacidad.html"]) {
+    const T = loadDoc(f);
+    assert.deepEqual(T.en.sections.map((x) => x[0]), T.es.sections.map((x) => x[0]), f);
+    const shape = (bs) => bs.map((b) => Object.keys(b).join() + (b.ul ? b.ul.length : "") + (b.steps ? b.steps.length : "") + (b.states ? b.states.length : ""));
+    T.es.sections.forEach((sec, i) => assert.deepEqual(shape(T.en.sections[i][2]), shape(sec[2]), `${f} §${i + 1}`));
+  }
+});
+
+test("«Cómo funciona»: lo que no evalúa está en ES y EN, con credenciales y contradicciones", () => {
+  const T = loadDoc("como-funciona.html");
+  const limits = (lang) => T[lang].sections.find((x) => x[0] === "que-no-evalua-todavia")[2].find((b) => b.ul).ul;
+  assert.equal(limits("es").length, limits("en").length);
+  assert.ok(limits("es").some((x) => /credenciales/.test(x)) && limits("en").some((x) => /credentials/.test(x)));
+  assert.ok(limits("es").some((x) => /contradicciones/i.test(x)) && limits("en").some((x) => /contradictions/i.test(x)));
+  // Los siete estados que usa el informe, con los mismos nombres
+  const L = loadTexts();
+  const states = (lang) => T[lang].sections.find((x) => x[0] === "que-significan-los-estados-de-la-evidencia")[2].find((b) => b.states).states.map((x) => x[1]);
+  assert.deepEqual(states("es"), ["Encontrado", "Encontrado en parte", "No encontrado", "No existe", "No se pudo leer", "No aplica", "Fuera de esta fase"]);
+  assert.equal(states("en").length, 7);
+  assert.ok(L.es.ui.certScope && L.en.ui.certScope);
 });
 
 // ------------------------------------------------------------------ 6. D4 desambiguación (0.1.1)
@@ -401,34 +418,30 @@ test("los pesos copiados en la interfaz son iguales a weights.json", () => {
   assert.deepEqual(JSON.parse(JSON.stringify(T.WEIGHTS)), weights.weights);
 });
 
-test("«Cómo funciona» usa los mismos nombres de nivel que el informe y declara el tiempo real", () => {
+test("«Cómo funciona» no usa nombres de nivel distintos al informe y declara los límites reales", () => {
   const T = loadTexts();
   const html = read("public/como-funciona.html");
-  for (const lang of ["es", "en"]) for (const l of LEVELS) assert.ok(html.includes(T[lang].ui.bandLabel[l.label]), `${lang}: ${l.label}`);
+  const all = docText(loadDoc("como-funciona.html"));
+  for (const name of ["Opaco", "Opaque", "Readable", "Comprensible"]) {
+    const used = all.includes(name);
+    if (used) assert.ok([...Object.values(T.es.ui.bandLabel), ...Object.values(T.en.ui.bandLabel)].includes(name), `${name} no es un nivel del informe`);
+  }
   assert.ok(!/Readable/.test(html), "en el informe el nivel se llama Legible");
   // server.js: 45 s de rastreo + RENDER_EXTRA_MS (195 s) con navegador ≈ 4 minutos
   assert.match(read("server.js"), /max_duration_ms: 45000/);
   assert.match(read("server.js"), /RENDER_EXTRA_MS\) \|\| 195_000/);
-  assert.match(html, /unos 4 minutos/);
-  assert.match(html, /about 4 minutes/);
+  assert.match(all, /unos 4 minutos/);
+  assert.match(all, /about 4 minutes/);
+  // límite por IP, identificación del lector y robots.txt (solo para el mapa del sitio)
+  assert.match(all, /5 evaluaciones por minuto/);
+  assert.match(all, /5 evaluations per minute/);
+  assert.match(read("server.js"), /RATE_LIMIT_MAX = 5;/);
+  assert.ok(all.includes("«AgenticDS»") && all.includes("“AgenticDS”"));
+  assert.match(read("engine/src/crawler/fetcher.js"), /"user-agent": "AgenticDS\//);
+  assert.match(all, /no aplica sus reglas de rastreo/);
 });
 
 // ------------------------------------------------------------------ 9. notas de lanzamiento (cobertura variable y privacidad)
-
-function renderComoFunciona(lang) {
-  const html = read("public/como-funciona.html");
-  // El script propio de la página (el pie de página se carga aparte, con src).
-  const start = html.lastIndexOf("<script>") + 8;
-  const script = html.slice(start, html.indexOf("</script>", start));
-  const content = { innerHTML: "" };
-  const el = () => ({ textContent: "", setAttribute() {}, addEventListener() {} });
-  const els = { content, "btn-es": el(), "btn-en": el() };
-  const storage = { getItem: () => lang, setItem() {} };
-  const ctx = { localStorage: storage, document: { documentElement: {}, title: "", getElementById: (id) => els[id] || el(), querySelector: () => el(), querySelectorAll: () => [] } };
-  vm.createContext(ctx);
-  vm.runInContext(script, ctx);
-  return content.innerHTML;
-}
 
 test("cobertura variable: aviso visible junto al resultado y en limitaciones (solo en vivo)", () => {
   const T = loadTexts();
@@ -441,15 +454,20 @@ test("cobertura variable: aviso visible junto al resultado y en limitaciones (so
   }
 });
 
-test("privacidad: la nota de «Cómo funciona» se muestra en ES y EN y dice lo mismo", () => {
-  const es = plain(renderComoFunciona("es")), en = plain(renderComoFunciona("en"));
-  assert.ok(es.includes("privacidad (nota provisional)") && en.includes("privacy (provisional note)"));
-  for (const [a, b] of [["google fonts", "google fonts"], ["render", "render"], ["10 minutos", "10 minutes"],
-    ["5 evaluaciones por minuto", "5 evaluations per minute"], ["pendiente", "still pending"], ["agenticds", "agenticds"]]) {
+test("privacidad: la política está en ES y EN, sin datos por completar, y nombra lo que de verdad interviene", () => {
+  const T = loadDoc("privacidad.html");
+  const es = docText(T.es).toLowerCase(), en = docText(T.en).toLowerCase();
+  assert.ok(!/\[[a-záéíóú]/i.test(docText(T.es) + docText(T.en)), "no quedan marcadores [ ] sin completar");
+  for (const [a, b] of [["google fonts", "google fonts"], ["render", "render"], ["resend", "resend"], ["10 minutos", "10 minutes"],
+    ["ley 29733", "law 29733"], ["arco", "arco"], ["estados unidos", "united states"]]) {
     assert.ok(es.includes(a), `es: ${a}`);
     assert.ok(en.includes(b), `en: ${b}`);
   }
+  // Lo que pide el formulario: nombre y correo opcionales, ya no «dato de contacto»
+  assert.ok(es.includes("tu nombre y tu correo") && en.includes("your name and email"));
   assert.ok(!/no se guarda nada en el servidor|nothing is stored on the server/.test(es + en), "afirmación más fuerte que lo comprobado");
+  // «Cómo funciona» ya no es una política
+  assert.ok(!loadDoc("como-funciona.html").es.sections.some((x) => /privacidad/i.test(x[1])));
 });
 
 test("privacidad: lo que dice la nota coincide con el código", () => {
@@ -459,7 +477,7 @@ test("privacidad: lo que dice la nota coincide con el código", () => {
   assert.match(server, /RATE_LIMIT_WINDOW_MS = 60_000;/);
   assert.ok(!/writeFile|appendFile|createWriteStream/.test(server), "el servidor no escribe archivos");
   assert.match(read("engine/src/crawler/fetcher.js"), /"user-agent": "AgenticDS\//);
-  for (const p of ["public/index.html", "public/results.html", "public/como-funciona.html"]) {
+  for (const p of ["public/index.html", "public/results.html", "public/como-funciona.html", "public/privacidad.html", "public/terminos.html"]) {
     const h = read(p);
     assert.ok(h.includes("fonts.googleapis.com"), `${p}: carga Google Fonts (la nota lo declara)`);
     assert.ok(!/gtag\(|google-analytics|googletagmanager|plausible|hotjar|document\.cookie/.test(h), `${p}: sin analítica ni cookies`);

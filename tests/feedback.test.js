@@ -276,26 +276,24 @@ test("ninguna clave ni dirección de destino está escrita en el código", () =>
 
 // ------------------------------------------------------------------ pie de página y términos
 
-test("pie de página: está en todas las páginas y enlaza a los términos", () => {
-  for (const f of ["index.html", "results.html", "como-funciona.html", "feedback.html", "terminos.html"]) {
+test("pie de página: está en todas las páginas y enlaza a términos y privacidad", () => {
+  for (const f of ["index.html", "results.html", "como-funciona.html", "feedback.html", "terminos.html", "privacidad.html"]) {
     const h = read(`public/${f}`);
     assert.ok(h.includes('<footer id="site-footer"></footer>') && h.includes('<script src="footer.js"></script>'), f);
   }
   const js = read("public/footer.js");
   assert.ok(js.includes("© ${YEAR} Agentic DS.") && js.includes("Todos los derechos reservados.") && js.includes("All rights reserved."));
-  assert.ok(js.includes('href="terminos.html"'));
+  assert.ok(js.includes('href="terminos.html"') && js.includes('href="privacidad.html"'));
   assert.ok(/@media print\{#site-footer\{display:none/.test(js), "no va en el PDF");
 });
 
-test("términos: ES y EN tienen las mismas secciones y no prometen lo que el evaluador no hace", () => {
+test("términos: remiten a la Política de privacidad y no prometen lo que el evaluador no hace", () => {
   const h = read("public/terminos.html");
-  const code = h.slice(h.indexOf("const T = {"), h.indexOf("const esc ="));
-  const T = vm.runInNewContext(`(() => { ${code.replace("const T =", "return")} })()`);
+  const T = JSON.parse(h.slice(h.indexOf("const T = ") + 10, h.indexOf(";\n  const esc")));
   assert.deepEqual(T.en.sections.map((s) => s[0]), T.es.sections.map((s) => s[0]));
   const all = JSON.stringify(T);
   assert.ok(!/robots\.txt/i.test(all), "el rastreo no aplica las reglas de robots.txt: no se afirma");
-  assert.ok(/5 evaluaciones por minuto/.test(all) && /5 evaluations per minute/.test(all));
-  assert.match(read("server.js"), /RATE_LIMIT_MAX = 5;/, "el límite citado en los términos es el del servidor");
-  assert.ok(/«AgenticDS»/.test(all));
-  assert.match(read("engine/src/crawler/fetcher.js"), /"user-agent": "AgenticDS\//);
+  assert.ok(all.includes('href=\\"privacidad.html\\"'), "enlaza a la política");
+  assert.ok(!all.includes("como-funciona.html#privacidad"), "ya no remite a una sección de privacidad en «Cómo funciona»");
+  assert.ok(read("public/feedback-page.js").includes('href="privacidad.html"'), "el formulario enlaza a la política");
 });
